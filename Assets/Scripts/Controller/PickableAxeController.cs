@@ -10,7 +10,7 @@ namespace Controller
             Debug.Log("OnCollisionEnter2D " + col.gameObject.name);
             if (col.gameObject.CompareTag("Player"))
             {
-                Debug.Log("Mario Collision! Fire Flower");
+                Debug.Log("Mario Collision! Pickable Axe!");
                 gameObject.SetActive(false);
                 col.gameObject.GetComponent<PlayerPowerUp>().CollectPowerUp(new PickableAxePowerUp());
 

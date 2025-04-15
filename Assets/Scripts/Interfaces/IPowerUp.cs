@@ -6,4 +6,5 @@ namespace Interfaces
     {
         void ApplyPowerUp(GameObject player);
     }
+
 }
