@@ -6,9 +6,10 @@ namespace Hazards
     public class EnemyHazard : MonoBehaviour, IDamageDealer
     {
 
+        [SerializeField] private int damageAmount = 1;
         public int GetDamageAmount()
         {
-            return 1;
+            return damageAmount;
         }
     }
 }
