@@ -45,18 +45,6 @@ namespace Enemy
             }
         }
 
-        private void OnDrawGizmosSelected()
-        {
-            if (_col == null) return;
-
-            Vector2 origin = Application.isPlaying
-                ? new Vector2(_col.bounds.center.x + _direction * (_col.bounds.extents.x + 0.05f), _col.bounds.min.y)
-                : transform.position;
-
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(origin + Vector2.down * GroundCheckDistance, GroundCheckRadius);
-        }
-
         private void Flip()
         {
             _direction = -_direction;

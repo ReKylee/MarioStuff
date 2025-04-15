@@ -15,7 +15,9 @@ public class FireballWeapon : MonoBehaviour, IUseableWeapon
             ProjectileFireball scFireball = curFireball.GetComponent<ProjectileFireball>();
             if (scFireball)
             {
+                curFireball.layer = gameObject.layer;
                 float direction = transform.parent?.localScale.x ?? 1;
+
                 scFireball.Shoot(direction);
             }
         }

@@ -1,18 +1,16 @@
-﻿using Controller;
-using Resettables;
+using Controller;
 using UnityEngine;
 
-namespace Managers
+namespace Enemy
 {
-    public class PlayerDeath : MonoBehaviour
+    public class EnemyDeath : MonoBehaviour
     {
+
         private HealthController _health;
-        private HealthResetter _healthResetter;
 
         private void Awake()
         {
             _health = GetComponent<HealthController>();
-            _healthResetter = new HealthResetter(_health);
         }
 
         private void OnEnable()
@@ -27,7 +25,7 @@ namespace Managers
 
         private void HandleDeath()
         {
-            ResetManager.Instance?.ResetAll();
+            Destroy(gameObject);
         }
     }
 }

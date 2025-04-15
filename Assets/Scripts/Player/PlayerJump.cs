@@ -4,42 +4,48 @@ namespace Player
 {
     public class PlayerJump : MonoBehaviour
     {
-        public float jumpSpeed = 100;
-        private bool _isJumping;
-        private Rigidbody2D _rigid;
+        [SerializeField] private float jumpForce = 10f;
+
+        [SerializeField] private LayerMask groundLayer;
+
+        [SerializeField] private float groundCheckRadius = 0.05f;
+
+        [SerializeField] private float groundCheckDistance = 1f;
+        private bool _isGrounded;
+
+        private Rigidbody2D _rb;
 
         private void Awake()
         {
-            _rigid = GetComponent<Rigidbody2D>();
+            _rb = GetComponent<Rigidbody2D>();
         }
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            CheckGround();
+
+            if (_isGrounded && Input.GetKeyDown(KeyCode.Space))
+            {
                 Jump();
+            }
         }
 
-        private void OnEnable()
-        {
-            SC_Floor.OnFloorCollision += OnFloorCollision;
-        }
 
-        private void OnDisable()
+        private void CheckGround()
         {
-            SC_Floor.OnFloorCollision -= OnFloorCollision;
+            _isGrounded = Physics2D.CircleCast(
+                transform.position,
+                groundCheckRadius,
+                Vector2.down,
+                groundCheckDistance,
+                groundLayer
+            );
+
         }
 
         private void Jump()
         {
-            if (!_isJumping)
-            {
-                _rigid.AddForce(new Vector2(0, jumpSpeed));
-                _isJumping = true;
-            }
-        }
-        private void OnFloorCollision()
-        {
-            _isJumping = false;
+            _rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         }
     }
 }

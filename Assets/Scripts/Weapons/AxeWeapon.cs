@@ -12,7 +12,6 @@ public class AxeWeapon : MonoBehaviour, IAmmoWeapon
         CurrentAmmo = ammo;
     }
 
-
     public void Shoot()
     {
         if (axe && CurrentAmmo != 0)
@@ -21,6 +20,8 @@ public class AxeWeapon : MonoBehaviour, IAmmoWeapon
             ProjectileAxe scAxe = curAxe.GetComponent<ProjectileAxe>();
             if (scAxe)
             {
+
+                curAxe.layer = gameObject.layer;
                 CurrentAmmo--;
                 OnAxeFired?.Invoke(CurrentAmmo);
                 float direction = transform.parent?.localScale.x ?? 1;
@@ -33,6 +34,7 @@ public class AxeWeapon : MonoBehaviour, IAmmoWeapon
         CurrentAmmo++;
         OnAxeCollected?.Invoke(CurrentAmmo);
     }
+
     public static event Action<int> OnAxeCollected;
     public static event Action<int> OnAxeFired;
 }

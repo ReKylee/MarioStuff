@@ -14,13 +14,7 @@ namespace Hazards
             if (_damaged) return;
             if (other.gameObject.CompareTag("Player"))
             {
-                IDamageable damageable = other.gameObject.GetComponent<IDamageable>();
-                if (damageable != null)
-                {
-                    damageable.Damage(GetDamageAmount());
-                    _damaged = true;
-                }
-
+                _damaged = true;
                 TransformResetter transformResetter = other.gameObject.GetComponent<TransformResetter>();
                 transformResetter?.ResetState();
             }
