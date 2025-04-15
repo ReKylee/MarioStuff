@@ -8,7 +8,7 @@ namespace Weapons
         public FireballWeapon fireballWeapon;
         public AxeWeapon axeWeapon;
         private AmmoResetter _axeResetter;
-        private AmmoResetter _fireballResetter;
+        private UsableWeaponResetter _fireballResetter;
         private void Awake()
         {
             InjectDependencies();
@@ -19,10 +19,10 @@ namespace Weapons
         }
         private void InjectDependencies()
         {
-            // if (fireballWeapon)
-            // {
-            // _fireballResetter = new AmmoResetter(fireballWeapon);
-            // }
+            if (fireballWeapon)
+            {
+                _fireballResetter = new UsableWeaponResetter(fireballWeapon);
+            }
 
             if (axeWeapon)
             {

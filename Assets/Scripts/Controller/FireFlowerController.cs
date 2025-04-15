@@ -1,20 +1,12 @@
-using Player;
-using UnityEngine;
+using Interfaces;
 
 namespace Controller
 {
-    public class FireFlowerController : MonoBehaviour
+    public class FireFlowerController : PowerUpController
     {
-
-        private void OnTriggerEnter2D(Collider2D col)
+        protected override IPowerUp CreatePowerUp()
         {
-            Debug.Log("OnCollisionEnter2D " + col.gameObject.name);
-            if (col.gameObject.CompareTag("Player"))
-            {
-                Debug.Log("Mario Collision! Fire Flower");
-                gameObject.SetActive(false);
-                col.gameObject.GetComponent<PlayerPowerUp>().CollectPowerUp(new FireFlowerPowerUp());
-            }
+            return new FireFlowerPowerUp();
         }
     }
 }

@@ -1,20 +1,13 @@
-using Player;
-using UnityEngine;
+using Interfaces;
 
 namespace Controller
 {
-    public class PickableAxeController : MonoBehaviour
+    public class PickableAxeController : PowerUpController
     {
-        private void OnTriggerEnter2D(Collider2D col)
-        {
-            Debug.Log("OnCollisionEnter2D " + col.gameObject.name);
-            if (col.gameObject.CompareTag("Player"))
-            {
-                Debug.Log("Mario Collision! Pickable Axe!");
-                gameObject.SetActive(false);
-                col.gameObject.GetComponent<PlayerPowerUp>().CollectPowerUp(new PickableAxePowerUp());
 
-            }
+        protected override IPowerUp CreatePowerUp()
+        {
+            return new PickableAxePowerUp();
         }
     }
 }
