@@ -25,7 +25,7 @@ namespace Enemy
 
         private void HandleDeath()
         {
-            Destroy(gameObject);
+            gameObject.SetActive(false);
         }
     }
 }

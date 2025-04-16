@@ -7,12 +7,16 @@ namespace Enemy
 
         [SerializeField] private FireballWeapon fireballWeapon;
         [SerializeField] private float repeatRate;
-        private void Start()
+        private void OnEnable()
         {
             fireballWeapon.Equip();
             InvokeRepeating(nameof(Shoot), 0f, repeatRate);
         }
+        private void OnDisable()
+        {
+            CancelInvoke(nameof(Shoot));
 
+        }
         private void Shoot()
         {
             fireballWeapon.Shoot();
