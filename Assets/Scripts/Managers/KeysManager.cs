@@ -6,15 +6,23 @@ namespace Managers
 {
     public class KeysManager
     {
-        private readonly List<IKey> _keychain = new();
+        private readonly HashSet<IKey> _keychain = new();
         public void PickUpKey(IKey key)
         {
-            if (!_keychain.Contains(key)) _keychain.Add(key);
+            _keychain.Add(key);
+        }
+        public void RemoveKey(IKey key)
+        {
+            _keychain.Remove(key);
         }
 
-        public bool TryUnlock(ILock lockComponent)
+        public IKey TryUnlock(ILock lockComponent)
         {
-            return _keychain.Any(lockComponent.TryUnlock);
+            return _keychain.FirstOrDefault(lockComponent.TryUnlock);
+        }
+        public void Reset()
+        {
+            _keychain.Clear();
         }
     }
 }

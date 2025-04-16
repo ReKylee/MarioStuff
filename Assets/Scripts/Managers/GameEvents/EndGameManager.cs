@@ -1,16 +1,17 @@
+using System.Collections;
+using Managers;
 using UnityEngine;
 
 public class EndGameManager : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public void EndGame()
     {
-        
+        StartCoroutine(EndGameRoutine());
     }
-
-    // Update is called once per frame
-    void Update()
+    private IEnumerator EndGameRoutine()
     {
-        
+        Debug.Log("Game Won! Closing in 5 seconds.");
+        yield return new WaitForSeconds(5f);
+        ResetManager.Instance?.ResetAll();
     }
 }

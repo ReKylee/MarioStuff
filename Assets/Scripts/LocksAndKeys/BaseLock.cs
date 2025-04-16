@@ -5,11 +5,10 @@ namespace LocksAndKeys
 {
     public abstract class BaseLock : MonoBehaviour, ILock
     {
-
         [SerializeField] private string requiredKeyId;
-
         [SerializeField] private bool isUnlocked;
-        public string RequiredKeyId => requiredKeyId;
+
+        public bool IsUnlocked => isUnlocked;
 
         public bool TryUnlock(IKey key)
         {
@@ -22,12 +21,19 @@ namespace LocksAndKeys
             isUnlocked = true;
             OnUnlocked();
             return true;
-
+        }
+        public void SetUnlocked(bool unlocked)
+        {
+            isUnlocked = unlocked;
         }
 
         protected virtual bool IsCorrectKey(IKey key)
         {
-            return key.KeyId == RequiredKeyId;
+            return key.KeyId == requiredKeyId;
+        }
+
+        protected virtual void OnLocked()
+        {
         }
 
         protected abstract void OnUnlocked();

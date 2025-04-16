@@ -2,7 +2,8 @@
 {
     public interface ILock
     {
-        public string RequiredKeyId { get; }
+        bool IsUnlocked { get; }
         bool TryUnlock(IKey key);
+        void SetUnlocked(bool unlocked);
     }
 }
