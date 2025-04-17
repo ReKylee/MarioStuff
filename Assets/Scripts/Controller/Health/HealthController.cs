@@ -35,8 +35,6 @@ namespace Controller
             OnHealthChanged?.Invoke(CurrentHp, MaxHp);
         }
         public event Action<int, int> OnHealthChanged;
-
-
         public event Action OnDeath;
     }
 }

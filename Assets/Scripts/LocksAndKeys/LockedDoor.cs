@@ -15,7 +15,6 @@ namespace LocksAndKeys
             _lockResetter = new LockResetter(this);
         }
         private void OnTriggerEnter2D(Collider2D col)
-
         {
             if (col.CompareTag("Player"))
             {
