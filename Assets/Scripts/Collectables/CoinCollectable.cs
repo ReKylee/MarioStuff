@@ -3,18 +3,12 @@ using UnityEngine;
 
 namespace Collectables
 {
-    public class CoinCollectable : MonoBehaviour
+    public class CoinCollectable : CollectibleBase
     {
 
-        private void OnTriggerEnter2D(Collider2D col)
-
+        public override void OnCollect(GameObject collector)
         {
-            if (col.gameObject.CompareTag("Player"))
-            {
-                OnCoinCollected?.Invoke();
-
-                gameObject.SetActive(false);
-            }
+            OnCoinCollected?.Invoke();
         }
         public static event Action OnCoinCollected;
     }

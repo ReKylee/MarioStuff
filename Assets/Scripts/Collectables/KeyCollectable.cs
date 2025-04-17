@@ -4,22 +4,19 @@ using UnityEngine;
 
 namespace Collectables
 {
-    public class KeyCollectable : MonoBehaviour
+    public class KeyCollectable : CollectibleBase
     {
         private IKey _myKey;
         private void Awake()
         {
             _myKey = GetComponent<IKey>();
         }
-        private void OnTriggerEnter2D(Collider2D col)
 
+        public override void OnCollect(GameObject collector)
         {
-            if (col.gameObject.CompareTag("Player"))
-            {
-                OnKeyCollected?.Invoke(_myKey);
+            if (_myKey == null) return;
 
-                gameObject.SetActive(false);
-            }
+            OnKeyCollected?.Invoke(_myKey);
         }
         public static event Action<IKey> OnKeyCollected;
     }

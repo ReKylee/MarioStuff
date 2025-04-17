@@ -1,21 +1,24 @@
-﻿using Interfaces;
-using Player;
+﻿using Collectables;
+using Interfaces;
 using UnityEngine;
 
 namespace Controller
 {
-    public abstract class PowerUpController : MonoBehaviour
+    public abstract class PowerUpController : CollectibleBase, IPowerUpProvider
     {
-        private void OnTriggerEnter2D(Collider2D col)
+        public abstract IPowerUp CreatePowerUp();
+        public override void OnCollect(GameObject collector)
         {
-            Debug.Log("OnTriggerEnter2D " + col.gameObject.name);
-            if (col.gameObject.CompareTag("Player"))
+            IPowerUpCollector powerUpCollector = collector.GetComponent<IPowerUpCollector>();
+
+            if (powerUpCollector is { CanCollectPowerUps: true })
             {
-                Debug.Log("Player Collision! Applying power-up.");
-                gameObject.SetActive(false);
-                col.GetComponent<PlayerPowerUp>().CollectPowerUp(CreatePowerUp());
+                IPowerUp powerUp = CreatePowerUp();
+                if (powerUp != null)
+                {
+                    powerUpCollector.ApplyPowerUp(powerUp);
+                }
             }
         }
-        protected abstract IPowerUp CreatePowerUp();
     }
 }

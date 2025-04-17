@@ -4,7 +4,7 @@ namespace Controller
 {
     public class FireFlowerController : PowerUpController
     {
-        protected override IPowerUp CreatePowerUp()
+        public override IPowerUp CreatePowerUp()
         {
             return new FireFlowerPowerUp();
         }

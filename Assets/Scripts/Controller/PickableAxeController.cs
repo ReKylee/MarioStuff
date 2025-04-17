@@ -5,7 +5,7 @@ namespace Controller
     public class PickableAxeController : PowerUpController
     {
 
-        protected override IPowerUp CreatePowerUp()
+        public override IPowerUp CreatePowerUp()
         {
             return new PickableAxePowerUp();
         }
