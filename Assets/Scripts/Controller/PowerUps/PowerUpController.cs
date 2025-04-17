@@ -11,6 +11,7 @@ namespace Controller
         {
             IPowerUpCollector powerUpCollector = collector.GetComponent<IPowerUpCollector>();
 
+            // NOTE: The Power Up still disappears even if you can't collect it.
             if (powerUpCollector is { CanCollectPowerUps: true })
             {
                 IPowerUp powerUp = CreatePowerUp();
