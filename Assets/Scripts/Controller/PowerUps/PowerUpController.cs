@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Controller
 {
-    public abstract class PowerUpController : CollectibleBase, IPowerUpProvider
+    public abstract class PowerUpController : CollectibleBase
     {
         public abstract IPowerUp CreatePowerUp();
         public override void OnCollect(GameObject collector)
@@ -12,13 +12,13 @@ namespace Controller
             IPowerUpCollector powerUpCollector = collector.GetComponent<IPowerUpCollector>();
 
             // NOTE: The Power Up still disappears even if you can't collect it.
-            if (powerUpCollector is { CanCollectPowerUps: true })
+            if (powerUpCollector?.CanCollectPowerUps != true)
+                return;
+
+            IPowerUp powerUp = CreatePowerUp();
+            if (powerUp != null)
             {
-                IPowerUp powerUp = CreatePowerUp();
-                if (powerUp != null)
-                {
-                    powerUpCollector.ApplyPowerUp(powerUp);
-                }
+                powerUpCollector.ApplyPowerUp(powerUp);
             }
         }
     }
