@@ -4,8 +4,10 @@ namespace Player
 {
     public class PlayerMovement : MonoBehaviour
     {
-        public float speed = 5;
-        private float _direction;
+        [SerializeField] private float maxSpeed = 5f;
+        [SerializeField] private float acceleration = 10f;
+        [SerializeField] private float deceleration = 15f;
+
         private Rigidbody2D _rigid;
 
         private void Awake()
@@ -15,12 +17,17 @@ namespace Player
 
         private void FixedUpdate()
         {
-            _direction = Input.GetAxis("Horizontal");
-            if (_direction != 0 && _rigid)
-            {
-                _rigid.linearVelocity = new Vector2(_direction * speed, _rigid.linearVelocity.y);
+            float direction = Input.GetAxis("Horizontal");
+            float targetSpeed = direction * maxSpeed;
+            float speedDiff = targetSpeed - _rigid.linearVelocityX;
+            float accelRate = Mathf.Abs(targetSpeed) > 0.01f ? acceleration : deceleration;
+            float movement = Mathf.Pow(Mathf.Abs(speedDiff) * accelRate, 0.9f) * Mathf.Sign(speedDiff);
 
-                transform.localScale = _direction > 0 ? new Vector3(1, 1, 1) : new Vector3(-1, 1, 1);
+            _rigid.AddForce(new Vector2(movement, 0));
+
+            if (direction != 0)
+            {
+                transform.localScale = new Vector3(Mathf.Sign(direction), 1, 1);
             }
         }
     }

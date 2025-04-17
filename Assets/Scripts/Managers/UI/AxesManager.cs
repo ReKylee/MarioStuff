@@ -1,10 +1,15 @@
+using Interfaces.Resettable;
+using Managers;
 using TMPro;
 using UnityEngine;
 
-public class AxesManager : MonoBehaviour
+public class AxesManager : MonoBehaviour, IResettable
 {
     [SerializeField] private TextMeshProUGUI axesText;
-
+    private void Start()
+    {
+        ResetManager.Instance?.Register(this);
+    }
     private void OnEnable()
     {
         AxeWeapon.OnAxeCollected += OnAxeCollision;
@@ -16,6 +21,10 @@ public class AxesManager : MonoBehaviour
     {
         AxeWeapon.OnAxeCollected -= OnAxeCollision;
         AxeWeapon.OnAxeFired -= OnAxeFired;
+    }
+    public void ResetState()
+    {
+        OnAxeCollision(0);
     }
 
     private void OnAxeCollision(int axes)

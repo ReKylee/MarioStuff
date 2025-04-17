@@ -186,7 +186,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b5c5598b8196434899e0d5fb974a282, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
+  maxSpeed: 6
+  acceleration: 15
+  deceleration: 15
 --- !u!114 &1665370752881580221
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -200,10 +202,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   jumpForce: 10
+  jumpCutMultiplier: 0.3
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
-  groundCheckRadius: 0.3
   groundCheckDistance: 0.8
 --- !u!114 &1709817759299275656
 MonoBehaviour:

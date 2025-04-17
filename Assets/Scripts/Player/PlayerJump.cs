@@ -4,48 +4,34 @@ namespace Player
 {
     public class PlayerJump : MonoBehaviour
     {
-        [SerializeField] private float jumpForce = 10f;
-
+        [SerializeField] private float jumpForce = 12f;
+        [SerializeField] private float jumpCutMultiplier = 0.5f;
         [SerializeField] private LayerMask groundLayer;
+        [SerializeField] private float groundCheckDistance = 0.2f;
 
-        [SerializeField] private float groundCheckRadius = 0.05f;
-
-        [SerializeField] private float groundCheckDistance = 1f;
-        private bool _isGrounded;
-
-        private Rigidbody2D _rb;
+        private Rigidbody2D _rigid;
 
         private void Awake()
         {
-            _rb = GetComponent<Rigidbody2D>();
+            _rigid = GetComponent<Rigidbody2D>();
         }
 
         private void Update()
         {
-            CheckGround();
-
-            if (_isGrounded && Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Space) && IsGrounded())
             {
-                Jump();
+                _rigid.linearVelocity = new Vector2(_rigid.linearVelocityX, jumpForce);
+            }
+
+            if (Input.GetKeyUp(KeyCode.Space) && _rigid.linearVelocity.y > 0)
+            {
+                _rigid.linearVelocity = new Vector2(_rigid.linearVelocityX, _rigid.linearVelocityY * jumpCutMultiplier);
             }
         }
 
-
-        private void CheckGround()
+        private bool IsGrounded()
         {
-            _isGrounded = Physics2D.CircleCast(
-                transform.position,
-                groundCheckRadius,
-                Vector2.down,
-                groundCheckDistance,
-                groundLayer
-            );
-
-        }
-
-        private void Jump()
-        {
-            _rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            return Physics2D.Raycast(transform.position, Vector2.down, groundCheckDistance, groundLayer);
         }
     }
 }
