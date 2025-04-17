@@ -1,5 +1,5 @@
 ﻿using System;
-using Interfaces;
+using Interfaces.Damage;
 using UnityEngine;
 
 namespace Controller
@@ -9,30 +9,30 @@ namespace Controller
         [SerializeField] private int maximumHp = 3;
         private void Awake()
         {
-            CurrentHP = maximumHp;
-            OnHealthChanged?.Invoke(CurrentHP, MaxHP);
+            CurrentHp = maximumHp;
+            OnHealthChanged?.Invoke(CurrentHp, MaxHp);
         }
 
-        public int CurrentHP { get; private set; }
+        public int CurrentHp { get; private set; }
 
-        public int MaxHP => maximumHp;
+        public int MaxHp => maximumHp;
 
         public void Damage(int amount)
         {
-            CurrentHP = Mathf.Max(0, CurrentHP - amount);
-            OnHealthChanged?.Invoke(CurrentHP, MaxHP);
-            if (CurrentHP == 0) OnDeath?.Invoke();
+            CurrentHp = Mathf.Max(0, CurrentHp - amount);
+            OnHealthChanged?.Invoke(CurrentHp, MaxHp);
+            if (CurrentHp == 0) OnDeath?.Invoke();
         }
 
         public void Heal(int amount)
         {
-            CurrentHP = Mathf.Min(maximumHp, CurrentHP + amount);
-            OnHealthChanged?.Invoke(CurrentHP, MaxHP);
+            CurrentHp = Mathf.Min(maximumHp, CurrentHp + amount);
+            OnHealthChanged?.Invoke(CurrentHp, MaxHp);
         }
-        public void SetHP(int hp)
+        public void SetHp(int hp)
         {
-            CurrentHP = Mathf.Clamp(hp, 0, MaxHP);
-            OnHealthChanged?.Invoke(CurrentHP, MaxHP);
+            CurrentHp = Mathf.Clamp(hp, 0, MaxHp);
+            OnHealthChanged?.Invoke(CurrentHp, MaxHp);
         }
         public event Action<int, int> OnHealthChanged;
 

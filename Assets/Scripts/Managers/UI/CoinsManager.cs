@@ -1,5 +1,5 @@
 using Collectables;
-using Interfaces;
+using Interfaces.Resettable;
 using Managers;
 using TMPro;
 using UnityEngine;

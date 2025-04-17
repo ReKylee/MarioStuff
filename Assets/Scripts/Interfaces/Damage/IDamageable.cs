@@ -1,15 +1,15 @@
 ﻿using System;
 
-namespace Interfaces
+namespace Interfaces.Damage
 {
     public interface IDamageable
     {
-        int CurrentHP { get; }
-        int MaxHP { get; }
+        int CurrentHp { get; }
+        int MaxHp { get; }
 
         void Damage(int amount);
         void Heal(int amount);
-        void SetHP(int hp);
+        void SetHp(int hp);
         event Action<int, int> OnHealthChanged;
     }
 

@@ -1,4 +1,4 @@
-﻿using Interfaces;
+﻿using Interfaces.PowerUps;
 using UnityEngine;
 
 namespace Player

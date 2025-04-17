@@ -1,5 +1,5 @@
 ﻿using Collectables;
-using Interfaces;
+using Interfaces.Locks;
 using Managers;
 using UnityEngine;
 

@@ -1,4 +1,4 @@
-﻿namespace Interfaces
+﻿namespace Interfaces.Damage
 {
     public interface IDamageDealer
     {

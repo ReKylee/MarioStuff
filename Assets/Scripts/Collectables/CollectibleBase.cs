@@ -1,4 +1,4 @@
-﻿using Interfaces;
+﻿using Interfaces.Collectibles;
 using UnityEngine;
 
 namespace Collectables

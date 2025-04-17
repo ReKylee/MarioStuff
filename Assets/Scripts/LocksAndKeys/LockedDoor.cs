@@ -1,5 +1,5 @@
 ﻿using Controller;
-using Interfaces;
+using Interfaces.Locks;
 using Resettables;
 using UnityEngine;
 using UnityEngine.Events;

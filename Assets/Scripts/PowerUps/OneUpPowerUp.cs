@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Interfaces.Damage;
+using Interfaces.PowerUps;
+using UnityEngine;
 
 namespace Interfaces
 {

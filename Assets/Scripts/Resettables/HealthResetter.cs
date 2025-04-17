@@ -1,4 +1,5 @@
-﻿using Interfaces;
+﻿using Interfaces.Damage;
+using Interfaces.Resettable;
 using Managers;
 
 namespace Resettables
@@ -11,13 +12,13 @@ namespace Resettables
         public HealthResetter(IDamageable damageable)
         {
             _damageable = damageable;
-            _initialHp = damageable.MaxHP;
+            _initialHp = damageable.MaxHp;
             ResetManager.Instance?.Register(this);
         }
 
         public void ResetState()
         {
-            _damageable.SetHP(_initialHp);
+            _damageable.SetHp(_initialHp);
         }
     }
 }

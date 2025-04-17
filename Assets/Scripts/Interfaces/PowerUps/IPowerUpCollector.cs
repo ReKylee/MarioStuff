@@ -1,4 +1,4 @@
-﻿namespace Interfaces
+﻿namespace Interfaces.PowerUps
 {
     public interface IPowerUpCollector
     {

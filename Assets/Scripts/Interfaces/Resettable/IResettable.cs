@@ -1,4 +1,4 @@
-﻿namespace Interfaces
+﻿namespace Interfaces.Resettable
 {
     public interface IResettable
     {

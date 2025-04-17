@@ -1,5 +1,5 @@
 using System;
-using Interfaces;
+using Interfaces.Weapons;
 using UnityEngine;
 
 public class AxeWeapon : MonoBehaviour, IAmmoWeapon

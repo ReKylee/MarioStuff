@@ -1,4 +1,4 @@
-﻿using Interfaces;
+﻿using Interfaces.Locks;
 using UnityEngine;
 
 namespace LocksAndKeys

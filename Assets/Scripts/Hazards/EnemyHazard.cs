@@ -1,4 +1,4 @@
-﻿using Interfaces;
+﻿using Interfaces.Damage;
 using UnityEngine;
 
 namespace Hazards

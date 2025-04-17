@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Interfaces;
+using Interfaces.Resettable;
 using UnityEngine;
 
 namespace Managers

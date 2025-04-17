@@ -1,4 +1,4 @@
-namespace Interfaces
+namespace Interfaces.Weapons
 {
     public interface IWeapon
     {

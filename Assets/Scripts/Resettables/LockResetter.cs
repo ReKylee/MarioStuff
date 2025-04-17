@@ -1,4 +1,5 @@
-﻿using Interfaces;
+﻿using Interfaces.Locks;
+using Interfaces.Resettable;
 using Managers;
 
 namespace Resettables

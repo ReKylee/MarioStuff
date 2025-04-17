@@ -1,4 +1,5 @@
-﻿using Interfaces;
+﻿using Interfaces.Resettable;
+using Interfaces.Weapons;
 using Managers;
 
 namespace Resettables

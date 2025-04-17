@@ -1,4 +1,5 @@
 using Interfaces;
+using Interfaces.PowerUps;
 using UnityEngine;
 
 namespace Controller

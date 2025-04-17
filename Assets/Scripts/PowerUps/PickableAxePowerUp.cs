@@ -1,4 +1,4 @@
-using Interfaces;
+using Interfaces.PowerUps;
 using UnityEngine;
 
 public class PickableAxePowerUp : IPowerUp

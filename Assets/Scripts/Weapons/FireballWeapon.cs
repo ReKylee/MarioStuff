@@ -1,4 +1,4 @@
-using Interfaces;
+using Interfaces.Weapons;
 using UnityEngine;
 
 public class FireballWeapon : MonoBehaviour, IUseableWeapon

@@ -1,6 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using Interfaces;
+using Interfaces.PowerUps;
 using UnityEngine;
 
 public class FireFlowerPowerUp : IPowerUp
@@ -8,10 +6,10 @@ public class FireFlowerPowerUp : IPowerUp
     public void ApplyPowerUp(GameObject player)
     {
         Debug.Log("ApplyPowerUp Fire Flower");
-        if(player != null)
+        if (player != null)
         {
             FireballWeapon fireballWeapon = player.GetComponentInChildren<FireballWeapon>();
-            if(fireballWeapon != null)
+            if (fireballWeapon != null)
                 fireballWeapon.Equip();
         }
     }
