@@ -3494,7 +3494,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65f3c8d85ce14a2384111ccca2ca3210, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _text: {fileID: 1608028242}
+  text: {fileID: 1608028242}
+  target: {fileID: 1740480736}
 --- !u!114 &451883182
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3507,7 +3508,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81385886446c42b5ba27000b9edc7511, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _healthSlider: {fileID: 1517918927}
+  healthSlider: {fileID: 1517918927}
+  target: {fileID: 1740480736}
 --- !u!1 &480595499
 GameObject:
   m_ObjectHideFlags: 0
@@ -30104,6 +30106,11 @@ Transform:
 Transform:
   m_CorrespondingSourceObject: {fileID: 7281127244735472477, guid: 281381eeb4ff9e147ae278e1cb84334b, type: 3}
   m_PrefabInstance: {fileID: 5497993677788172691}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1740480736 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3926891512402252426, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+  m_PrefabInstance: {fileID: 2444926084790370511}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1769971387
 PrefabInstance:

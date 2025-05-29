@@ -7,7 +7,7 @@ namespace Player
     public class PlayerLivesModel : IDamageable
     {
 
-        private HealthModel _healthModel;
+        private readonly HealthModel _healthModel;
 
         public PlayerLivesModel(int maxLives, int hpPerLife)
         {
@@ -18,8 +18,8 @@ namespace Player
             _healthModel.OnHealthChanged += (hp, maxHp) => OnHealthChanged?.Invoke(hp, maxHp);
             _healthModel.OnEmpty += LoseLife;
         }
-        public int MaxLives { get; }
-        public int CurrentLives { get; private set; }
+        private int MaxLives { get; }
+        private int CurrentLives { get; set; }
         public int MaxHp { get; }
         public int CurrentHp => _healthModel.CurrentHp;
 
@@ -48,23 +48,18 @@ namespace Player
             OnLivesChanged?.Invoke(CurrentLives, MaxLives);
             if (CurrentLives > 0)
             {
-                _healthModel = new HealthModel(MaxHp, MaxHp);
-                _healthModel.OnHealthChanged += (hp, maxHp) => OnHealthChanged?.Invoke(hp, maxHp);
-                _healthModel.OnEmpty += LoseLife;
+                _healthModel.SetHp(_healthModel.MaxHp);
                 OnHealthChanged?.Invoke(_healthModel.CurrentHp, MaxHp);
+                return;
             }
-            else
-            {
-                OnEmpty?.Invoke();
-            }
+
+            OnEmpty?.Invoke();
         }
 
         public void Reset()
         {
             CurrentLives = MaxLives;
-            _healthModel = new HealthModel(MaxHp, MaxHp);
-            _healthModel.OnHealthChanged += (hp, maxHp) => OnHealthChanged?.Invoke(hp, maxHp);
-            _healthModel.OnEmpty += LoseLife;
+            _healthModel.SetHp(_healthModel.MaxHp);
             OnHealthChanged?.Invoke(_healthModel.CurrentHp, MaxHp);
             OnLivesChanged?.Invoke(CurrentLives, MaxLives);
         }

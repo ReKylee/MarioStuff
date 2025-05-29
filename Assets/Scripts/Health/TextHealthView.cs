@@ -6,15 +6,22 @@ namespace Health
 {
     public class TextHealthView : MonoBehaviour, IHealthView
     {
-        [SerializeField] private TextMeshProUGUI _text;
-        [SerializeField] private IDamageable _damageable;
+        [SerializeField] private TextMeshProUGUI text;
+        [SerializeField] private GameObject target;
+
+
         private void OnEnable()
         {
-            _damageable.OnHealthChanged += UpdateDisplay;
+            if (target && target.TryGetComponent(out IDamageable damageable))
+            {
+                damageable.OnHealthChanged += UpdateDisplay;
+                UpdateDisplay(damageable.CurrentHp, damageable.MaxHp);
+            }
         }
+
         public void UpdateDisplay(int currentHp, int maxHp)
         {
-            _text.text = $"{currentHp}/{maxHp}";
+            text.text = $"{currentHp}/{maxHp}";
         }
     }
 }
