@@ -1,10 +1,12 @@
 ﻿using Interfaces.Damage;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Managers
 {
     public class PlayerDeath : MonoBehaviour
     {
+        public UnityEvent onDeath;
         private IDamageable _livesController;
 
         private void Start()
@@ -18,7 +20,7 @@ namespace Managers
         }
         private void HandleDeath()
         {
-            ResetManager.Instance?.ResetAll();
+            onDeath?.Invoke();
         }
     }
 }

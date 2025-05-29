@@ -14,6 +14,10 @@ namespace Controller
         {
             Keychain = new Keychain();
         }
+        private void Start()
+        {
+            ResetManager.Instance?.Register(this);
+        }
         private void OnEnable()
         {
             KeyCollectable.OnKeyCollected += CollectKey;
@@ -22,10 +26,14 @@ namespace Controller
         {
             KeyCollectable.OnKeyCollected -= CollectKey;
         }
+        private void OnDestroy()
+        {
+            ResetManager.Instance?.Unregister(this);
+        }
+        public void ResetState() => Keychain.Reset();
         private void CollectKey(IKey key)
         {
             Keychain?.PickUpKey(key);
         }
-        public void ResetState() => Keychain.Reset();
     }
 }

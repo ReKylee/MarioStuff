@@ -14,10 +14,13 @@ namespace Resettables
             _initialAmmo = _ammoWeapon?.CurrentAmmo ?? 0;
             ResetManager.Instance?.Register(this);
         }
-
         public void ResetState()
         {
             _ammoWeapon?.SetAmmo(_initialAmmo);
+        }
+        public void Dispose()
+        {
+            ResetManager.Instance?.Unregister(this);
         }
     }
 }

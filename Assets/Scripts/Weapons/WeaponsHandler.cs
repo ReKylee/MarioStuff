@@ -17,6 +17,11 @@ namespace Weapons
         {
             ActivateWeapon();
         }
+        private void OnDestroy()
+        {
+            _fireballResetter.Dispose();
+            _axeResetter.Dispose();
+        }
         private void InjectDependencies()
         {
             if (fireballWeapon)

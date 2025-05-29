@@ -5,15 +5,15 @@ namespace Enemy
 {
     public class EnemyDeath : MonoBehaviour
     {
-        private IDamageable _hitPointsController;
+        private IDamageable _simpleHealthController;
         private void Start()
         {
-            _hitPointsController = GetComponent<IDamageable>();
-            _hitPointsController.OnEmpty += HandleDeath;
+            _simpleHealthController = GetComponent<IDamageable>();
+            _simpleHealthController.OnEmpty += HandleDeath;
         }
         private void OnDisable()
         {
-            _hitPointsController.OnEmpty -= HandleDeath;
+            _simpleHealthController.OnEmpty -= HandleDeath;
         }
 
         private void HandleDeath()

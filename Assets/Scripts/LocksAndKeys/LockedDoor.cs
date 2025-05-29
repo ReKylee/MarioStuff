@@ -1,7 +1,7 @@
 ﻿using Controller;
 using Interfaces.Locks;
 using Interfaces.Resettable;
-using Resettables;
+using Managers;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -10,7 +10,15 @@ namespace LocksAndKeys
     public class LockedDoor : BaseLock, IResettable
     {
         [SerializeField] private UnityEvent doorOpened;
-        
+        private void Start()
+        {
+            ResetManager.Instance?.Register(this);
+        }
+        private void OnDestroy()
+        {
+            ResetManager.Instance?.Unregister(this);
+        }
+
         private void OnTriggerEnter2D(Collider2D col)
         {
             if (col.CompareTag("Player"))
@@ -29,12 +37,11 @@ namespace LocksAndKeys
             }
 
         }
-
+        public void ResetState() => SetUnlocked(false);
         protected override void OnUnlocked()
         {
             Debug.Log($"Unlocked: {gameObject.name}");
             doorOpened?.Invoke();
         }
-        public void ResetState() => SetUnlocked(false);
     }
 }

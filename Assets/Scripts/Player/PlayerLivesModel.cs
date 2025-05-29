@@ -13,15 +13,15 @@ namespace Player
         {
             MaxLives = maxLives;
             CurrentLives = maxLives;
-            MaxHp = hpPerLife;
             _healthModel = new HealthModel(hpPerLife, hpPerLife);
-            _healthModel.OnHealthChanged += (hp, maxHp) => OnHealthChanged?.Invoke(hp, maxHp);
+            _healthModel.OnHealthChanged += HealthChanged;
             _healthModel.OnEmpty += LoseLife;
+
         }
-        private int MaxLives { get; }
-        private int CurrentLives { get; set; }
-        public int MaxHp { get; }
+        public int CurrentLives { get; private set; }
+        public int MaxLives { get; }
         public int CurrentHp => _healthModel.CurrentHp;
+        public int MaxHp => _healthModel.MaxHp;
 
         public event Action<int, int> OnHealthChanged;
         public event Action OnEmpty;
@@ -40,6 +40,15 @@ namespace Player
         {
             _healthModel.SetHp(hp);
         }
+        public void Dispose()
+        {
+            _healthModel.OnHealthChanged -= HealthChanged;
+            _healthModel.OnEmpty -= LoseLife;
+        }
+        private void HealthChanged(int hp, int maxHp)
+        {
+            OnHealthChanged?.Invoke(hp, maxHp);
+        }
         public event Action<int, int> OnLivesChanged;
 
         private void LoseLife()
@@ -48,8 +57,8 @@ namespace Player
             OnLivesChanged?.Invoke(CurrentLives, MaxLives);
             if (CurrentLives > 0)
             {
-                _healthModel.SetHp(_healthModel.MaxHp);
-                OnHealthChanged?.Invoke(_healthModel.CurrentHp, MaxHp);
+                _healthModel.SetHp(MaxHp);
+                OnHealthChanged?.Invoke(CurrentHp, MaxHp);
                 return;
             }
 
@@ -59,8 +68,8 @@ namespace Player
         public void Reset()
         {
             CurrentLives = MaxLives;
-            _healthModel.SetHp(_healthModel.MaxHp);
-            OnHealthChanged?.Invoke(_healthModel.CurrentHp, MaxHp);
+            _healthModel.SetHp(MaxHp);
+            OnHealthChanged?.Invoke(CurrentHp, MaxHp);
             OnLivesChanged?.Invoke(CurrentLives, MaxLives);
         }
     }

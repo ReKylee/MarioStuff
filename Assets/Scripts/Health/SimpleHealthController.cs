@@ -11,6 +11,7 @@ namespace Health
         [SerializeField] private int maxHp = 3;
         private HealthModel _model;
 
+
         private void Awake()
         {
             _model = new HealthModel(maxHp, maxHp);
@@ -18,6 +19,10 @@ namespace Health
         private void Start()
         {
             ResetManager.Instance?.Register(this);
+        }
+        private void OnDestroy()
+        {
+            ResetManager.Instance?.Unregister(this);
         }
 
         public int MaxHp => _model.MaxHp;

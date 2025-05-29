@@ -12,10 +12,13 @@ namespace Resettables
             _usableWeapon = weapon;
             ResetManager.Instance?.Register(this);
         }
-
         public void ResetState()
         {
             _usableWeapon?.UnEquip();
+        }
+        public void Dispose()
+        {
+            ResetManager.Instance?.Unregister(this);
         }
     }
 }

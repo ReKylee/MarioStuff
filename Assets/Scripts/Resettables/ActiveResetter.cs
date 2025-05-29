@@ -14,6 +14,11 @@ namespace Resettables
             ResetManager.Instance?.Register(this);
         }
 
+        private void OnDestroy()
+        {
+            ResetManager.Instance?.Unregister(this);
+        }
+
         public void ResetState()
         {
             gameObject.SetActive(activeOnReset);

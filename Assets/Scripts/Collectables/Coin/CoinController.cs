@@ -1,11 +1,10 @@
-﻿using System;
-using Collectables.Base;
+﻿using Collectables.Base;
 using Collectables.Counter;
 using Interfaces.Resettable;
 using Managers;
 using UnityEngine;
 
-namespace Collectables
+namespace Collectables.Coin
 {
     public class CoinController : MonoBehaviour, IResettable
     {
@@ -16,6 +15,9 @@ namespace Collectables
         private void Awake()
         {
             _model = new CounterModel();
+        }
+        private void Start()
+        {
             ResetManager.Instance?.Register(this);
         }
         private void OnEnable()
@@ -28,9 +30,11 @@ namespace Collectables
             _model.OnCountChanged -= view.UpdateCountDisplay;
             CoinCollectable.OnCoinCollected -= _model.Increment;
         }
+        private void OnDestroy()
+        {
+            ResetManager.Instance?.Unregister(this);
+        }
 
         public void ResetState() => _model.Reset();
-
-
     }
 }

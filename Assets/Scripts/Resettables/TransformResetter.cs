@@ -15,7 +15,10 @@ namespace Resettables
             _initialRotation = transform.rotation;
             ResetManager.Instance?.Register(this);
         }
-
+        public void OnDestroy()
+        {
+            ResetManager.Instance?.Unregister(this);
+        }
 
         public void ResetState()
         {
