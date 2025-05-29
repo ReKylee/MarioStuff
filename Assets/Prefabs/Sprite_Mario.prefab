@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 5241862115288799599}
   - component: {fileID: 9060759746881487098}
   - component: {fileID: 2676873008172135117}
+  - component: {fileID: 2191520941720311735}
   m_Layer: 6
   m_Name: Sprite_Mario
   m_TagString: Player
@@ -295,7 +296,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c535517c8757cd94c90e619137ed4c8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputActions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+--- !u!95 &2191520941720311735
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3926891512402252426}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &5139845219191842715
 GameObject:
   m_ObjectHideFlags: 0
@@ -361,6 +383,7 @@ MonoBehaviour:
   spawnPoint: {fileID: 5618698531668652424}
   maxAmmo: 3
   cooldownTime: 0.5
+  defaultAmmo: 0
 --- !u!114 &5372833804394028595
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -375,11 +398,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponMappings:
   - weaponName: Axe
-    activationKey: 120
     weaponComponent: {fileID: 3354482609634551655}
+    actionName: AxeAttack
   - weaponName: Fireball
-    activationKey: 306
     weaponComponent: {fileID: 3880546536829734273}
+    actionName: FireballAttack
 --- !u!1 &7109441007102391670
 GameObject:
   m_ObjectHideFlags: 0
@@ -405,7 +428,7 @@ Transform:
   m_GameObject: {fileID: 7109441007102391670}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.55, z: 0}
+  m_LocalPosition: {x: 0, y: -0.64, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

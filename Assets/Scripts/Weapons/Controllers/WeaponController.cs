@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Weapons.Interfaces;
@@ -30,9 +29,10 @@ namespace Weapons.Controllers
             }
         }
 
-
         private void OnEnable()
         {
+            _inputActions.Enable(); // Enable the input actions asset
+
             // Subscribe all weapon mappings to their actions
             foreach (WeaponMapping mapping in weaponMappings)
             {
@@ -47,8 +47,9 @@ namespace Weapons.Controllers
             {
                 mapping.Unsubscribe();
             }
-        }
 
+            _inputActions.Disable(); // Disable the input actions asset
+        }
 
         [Serializable]
         public class WeaponMapping
@@ -58,7 +59,7 @@ namespace Weapons.Controllers
             public MonoBehaviour weaponComponent;
 
             [Header("Input Configuration")]
-            [Tooltip("The action name from the Player action map (case-sensitive)")]
+            [Tooltip("The full action path from the Input Actions asset (e.g., 'Player/Fire')")]
             [SerializeField]
             private string actionName;
 
@@ -71,27 +72,25 @@ namespace Weapons.Controllers
             // Initialize with the input actions instance
             public void Initialize(InputSystem_Actions inputActions)
             {
-                // Get the action directly by property name using reflection
-                Type playerActionsType = typeof(InputSystem_Actions.PlayerActions);
-                PropertyInfo propertyInfo = playerActionsType.GetProperty(actionName);
-
-                if (propertyInfo != null)
+                if (weaponComponent == null)
                 {
-                    _action = propertyInfo.GetValue(inputActions.Player) as InputAction;
-                    if (_action == null)
-                    {
-                        Debug.LogError($"Action '{actionName}' found but could not be cast to InputAction type.");
-                    }
+                    Debug.LogError($"Weapon component is null for weapon '{weaponName}'.");
+                    return;
                 }
-                else
-                {
-                    // Try to get the action directly by name as a fallback
-                    _action = inputActions.Player.FindAction($"Player/{actionName}", false);
 
-                    if (_action == null)
-                    {
-                        Debug.LogWarning($"Action '{actionName}' not found in Player action map.");
-                    }
+                if (string.IsNullOrEmpty(actionName))
+                {
+                    Debug.LogError($"Action name is not set for weapon '{weaponName}'.");
+                    return;
+                }
+
+                // Find the action using the full path from the asset.
+                _action = inputActions.asset.FindAction(actionName, throwIfNotFound: false);
+
+                if (_action == null)
+                {
+                    Debug.LogError($"Action '{actionName}' not found for weapon '{weaponName}'. " +
+                                   $"Ensure the action path (e.g., 'Player/Fire') is correct and exists in the Input Actions asset.");
                 }
             }
 
