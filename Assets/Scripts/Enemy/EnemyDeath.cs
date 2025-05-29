@@ -1,26 +1,19 @@
-using Controller;
+using Interfaces.Damage;
 using UnityEngine;
 
 namespace Enemy
 {
     public class EnemyDeath : MonoBehaviour
     {
-
-        private HealthController _health;
-
-        private void Awake()
+        private IDamageable _hitPointsController;
+        private void Start()
         {
-            _health = GetComponent<HealthController>();
+            _hitPointsController = GetComponent<IDamageable>();
+            _hitPointsController.OnEmpty += HandleDeath;
         }
-
-        private void OnEnable()
-        {
-            _health.OnDeath += HandleDeath;
-        }
-
         private void OnDisable()
         {
-            _health.OnDeath -= HandleDeath;
+            _hitPointsController.OnEmpty -= HandleDeath;
         }
 
         private void HandleDeath()

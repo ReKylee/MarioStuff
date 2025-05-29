@@ -16,13 +16,10 @@ GameObject:
   - component: {fileID: 7729757592419721177}
   - component: {fileID: 1665370752881580221}
   - component: {fileID: 1709817759299275656}
-  - component: {fileID: 2193288528926278152}
+  - component: {fileID: 3077431087410073718}
   - component: {fileID: 3213497405300871309}
   - component: {fileID: 6806085336056450057}
   - component: {fileID: 8779933863594023466}
-  - component: {fileID: 3785792273056649984}
-  - component: {fileID: 9021372992499188805}
-  - component: {fileID: 5408846639664119247}
   m_Layer: 6
   m_Name: Sprite_Mario
   m_TagString: Player
@@ -222,19 +219,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canCollectPowerUps: 1
---- !u!114 &2193288528926278152
+--- !u!114 &3077431087410073718
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3926891512402252426}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0378de9ee47f41d79ca9a0e61ef3ddef, type: 3}
+  m_Script: {fileID: 11500000, guid: 9f9672d33e614da5b8247f75916659d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maximumHp: 3
+  maxHp: 3
+  maxLives: 3
 --- !u!114 &3213497405300871309
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -271,44 +269,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21f52027736242a4b4026739a57e132c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &3785792273056649984
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3926891512402252426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e5f4125959a5426d994684cd5dae71b6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &9021372992499188805
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3926891512402252426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8c88c43b36be48e3a0f95987ce2c694d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxHealth: 3
---- !u!114 &5408846639664119247
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3926891512402252426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39b19e6f5d3840fab3725dfbf1a57f29, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maxLives: 3
 --- !u!1 &5139845219191842715
 GameObject:
   m_ObjectHideFlags: 0

@@ -14,10 +14,10 @@ GameObject:
   - component: {fileID: 6942421760355100396}
   - component: {fileID: 1504833350007782490}
   - component: {fileID: 5271617860040963299}
-  - component: {fileID: 5826957912936497320}
   - component: {fileID: 7240263763678714440}
   - component: {fileID: 7982731618563780461}
   - component: {fileID: 5480263241509987596}
+  - component: {fileID: 3394367594213369623}
   m_Layer: 0
   m_Name: Pre_Goom
   m_TagString: Untagged
@@ -188,19 +188,6 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
---- !u!114 &5826957912936497320
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6152468042168506624}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0378de9ee47f41d79ca9a0e61ef3ddef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maximumHp: 1
 --- !u!114 &7240263763678714440
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -238,3 +225,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   activeOnReset: 1
+--- !u!114 &3394367594213369623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6152468042168506624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c1d740874b4466ebf46eb4c396e93dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHp: 3

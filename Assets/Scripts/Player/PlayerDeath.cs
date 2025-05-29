@@ -1,30 +1,21 @@
-﻿using Controller;
-using Resettables;
+﻿using Interfaces.Damage;
 using UnityEngine;
 
 namespace Managers
 {
     public class PlayerDeath : MonoBehaviour
     {
-        private HealthController _health;
-        private HealthResetter _healthResetter;
+        private IDamageable _livesController;
 
-        private void Awake()
+        private void Start()
         {
-            _health = GetComponent<HealthController>();
-            _healthResetter = new HealthResetter(_health);
+            _livesController = GetComponent<IDamageable>();
+            _livesController.OnEmpty += HandleDeath;
         }
-
-        private void OnEnable()
-        {
-            _health.OnDeath += HandleDeath;
-        }
-
         private void OnDisable()
         {
-            _health.OnDeath -= HandleDeath;
+            _livesController.OnEmpty -= HandleDeath;
         }
-
         private void HandleDeath()
         {
             ResetManager.Instance?.ResetAll();

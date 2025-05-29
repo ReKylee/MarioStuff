@@ -11,6 +11,7 @@ namespace Interfaces.Damage
         void Heal(int amount);
         void SetHp(int hp);
         event Action<int, int> OnHealthChanged;
+        event Action OnEmpty;
     }
 
 }

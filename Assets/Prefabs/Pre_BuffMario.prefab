@@ -12,11 +12,11 @@ GameObject:
   - component: {fileID: 734069360122375956}
   - component: {fileID: 7785795968096963856}
   - component: {fileID: 7623829853099636217}
-  - component: {fileID: 5125595362823224874}
   - component: {fileID: 7818152810527482500}
   - component: {fileID: 5075611672214000102}
   - component: {fileID: 364413600775854170}
   - component: {fileID: 6649395392395164413}
+  - component: {fileID: 8044948040430242548}
   m_Layer: 7
   m_Name: Pre_BuffMario
   m_TagString: Untagged
@@ -159,19 +159,6 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.96, y: 1.7460938}
   m_Direction: 0
---- !u!114 &5125595362823224874
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5834558213719639574}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0378de9ee47f41d79ca9a0e61ef3ddef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  maximumHp: 1
 --- !u!114 &7818152810527482500
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -222,6 +209,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   activeOnReset: 1
+--- !u!114 &8044948040430242548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5834558213719639574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c1d740874b4466ebf46eb4c396e93dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHp: 3
 --- !u!1 &9126669805728146567
 GameObject:
   m_ObjectHideFlags: 0
