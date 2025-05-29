@@ -1,5 +1,3 @@
-// filepath: p:\Projects\College\Unity\MarioStuff\Assets\Scripts\Weapons\Interfaces\IWeapon.cs
-
 namespace Weapons.Interfaces
 {
     /// <summary>

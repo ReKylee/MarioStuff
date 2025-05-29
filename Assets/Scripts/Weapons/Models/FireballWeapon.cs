@@ -1,3 +1,4 @@
+using Resettables;
 using UnityEngine;
 using Weapons.Interfaces;
 
@@ -8,9 +9,14 @@ namespace Weapons.Models
         [SerializeField] private GameObject fireball;
         [SerializeField] private Transform spawnPoint;
         [SerializeField] private float cooldownTime = 0.3f;
-
         private bool _isEquipped;
         private float _nextFireTime;
+
+        private UsableWeaponResetter _resetter;
+        private void Start()
+        {
+            _resetter = new UsableWeaponResetter(this);
+        }
 
         public void Shoot()
         {

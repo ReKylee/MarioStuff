@@ -1,4 +1,5 @@
 using System;
+using Resettables;
 using UnityEngine;
 using Weapons.Interfaces;
 
@@ -10,12 +11,24 @@ namespace Weapons.Models
         [SerializeField] private Transform spawnPoint;
         [SerializeField] private int maxAmmo = 3;
         [SerializeField] private float cooldownTime = 0.5f;
+        [SerializeField] private int defaultAmmo; // Ammo to start with and reset to
+        private AmmoResetter _ammoResetter;
 
         private float _nextFireTime;
 
         private void Awake()
         {
-            CurrentAmmo = 0;
+            CurrentAmmo = defaultAmmo;
+        }
+
+        private void Start()
+        {
+            _ammoResetter = new AmmoResetter(this);
+        }
+
+        private void OnDestroy()
+        {
+            _ammoResetter?.Dispose();
         }
 
         public int CurrentAmmo { get; private set; }
@@ -64,6 +77,7 @@ namespace Weapons.Models
             }
         }
 
+        // IAmmoWeapon implementation - Reload now adds ammo in specific increments
         public void Reload()
         {
             // Add one ammo but don't exceed max
