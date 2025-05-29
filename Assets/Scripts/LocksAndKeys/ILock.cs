@@ -1,4 +1,4 @@
-﻿namespace Interfaces.Locks
+﻿namespace LocksAndKeys
 {
     public interface ILock
     {

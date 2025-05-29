@@ -1,7 +1,8 @@
 using System;
+using Collectables._Base;
 using UnityEngine;
 
-namespace Collectables
+namespace Collectables.Coin
 {
     public class CoinCollectable : CollectibleBase
     {

@@ -1,16 +1,16 @@
-using Interfaces.PowerUps;
+using PowerUps._Base;
 using UnityEngine;
+using Weapons.Models;
 
-public class FireFlowerPowerUp : IPowerUp
+namespace PowerUps.FireFlower
 {
-    public void ApplyPowerUp(GameObject player)
+    public class FireFlowerPowerUp : IPowerUp
     {
-        Debug.Log("ApplyPowerUp Fire Flower");
-        if (player != null)
+        public void ApplyPowerUp(GameObject player)
         {
-            FireballWeapon fireballWeapon = player.GetComponentInChildren<FireballWeapon>();
-            if (fireballWeapon != null)
-                fireballWeapon.Equip();
+            Debug.Log("ApplyPowerUp Fire Flower");
+            FireballWeapon fireballWeapon = player?.GetComponentInChildren<FireballWeapon>();
+            fireballWeapon?.Equip();
         }
     }
 }

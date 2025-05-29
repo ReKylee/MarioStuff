@@ -1,5 +1,4 @@
-﻿using Interfaces.Damage;
-using Resettables;
+﻿using Health.Interfaces;
 using UnityEngine;
 
 namespace Hazards
@@ -15,8 +14,6 @@ namespace Hazards
             if (other.gameObject.CompareTag("Player"))
             {
                 _damaged = true;
-                TransformResetter transformResetter = other.gameObject.GetComponent<TransformResetter>();
-                transformResetter?.ResetState();
             }
         }
         private void OnTriggerExit2D(Collider2D other)
@@ -26,9 +23,6 @@ namespace Hazards
                 _damaged = false;
             }
         }
-        public int GetDamageAmount()
-        {
-            return damageAmount;
-        }
+        public int GetDamageAmount() => damageAmount;
     }
 }

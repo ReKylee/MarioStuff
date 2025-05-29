@@ -1,8 +1,8 @@
-﻿using Collectables.Base;
+﻿using Collectables.Counter;
 using TMPro;
 using UnityEngine;
 
-namespace Collectables
+namespace Collectables.Coin
 {
     public class CoinView : MonoBehaviour, ICounterView
     {

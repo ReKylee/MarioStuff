@@ -1,16 +1,13 @@
-using Interfaces;
-using Interfaces.PowerUps;
+using Collectables._Base;
+using PowerUps._Base;
 using UnityEngine;
 
-namespace Controller
+namespace PowerUps.OneUp
 {
     public class OneUpCollectible : PowerUpCollectibleBase
     {
         [SerializeField] private int healAmount = 1;
 
-        public override IPowerUp CreatePowerUp()
-        {
-            return new OneUpPowerUp(healAmount);
-        }
+        public override IPowerUp CreatePowerUp() => new OneUpPowerUp(healAmount);
     }
 }

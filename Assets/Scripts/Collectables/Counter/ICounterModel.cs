@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Collectables.Base
+namespace Collectables.Counter
 {
     public interface ICounterModel
     {

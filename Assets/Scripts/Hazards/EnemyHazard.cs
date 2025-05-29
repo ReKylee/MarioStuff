@@ -1,4 +1,4 @@
-﻿using Interfaces.Damage;
+﻿using Health.Interfaces;
 using UnityEngine;
 
 namespace Hazards
@@ -7,9 +7,6 @@ namespace Hazards
     {
 
         [SerializeField] private int damageAmount = 1;
-        public int GetDamageAmount()
-        {
-            return damageAmount;
-        }
+        public int GetDamageAmount() => damageAmount;
     }
 }

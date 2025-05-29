@@ -1,8 +1,7 @@
-﻿using Collectables;
-using Interfaces.PowerUps;
+﻿using PowerUps._Base;
 using UnityEngine;
 
-namespace Controller
+namespace Collectables._Base
 {
     public abstract class PowerUpCollectibleBase : CollectibleBase
     {

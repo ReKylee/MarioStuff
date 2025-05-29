@@ -1,5 +1,4 @@
-﻿using Controller;
-using Interfaces.Locks;
+﻿using Collectables.Keys;
 using Interfaces.Resettable;
 using Managers;
 using UnityEngine;

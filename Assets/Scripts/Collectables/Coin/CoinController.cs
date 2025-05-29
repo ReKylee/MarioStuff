@@ -1,5 +1,4 @@
-﻿using Collectables.Base;
-using Collectables.Counter;
+﻿using Collectables.Counter;
 using Interfaces.Resettable;
 using Managers;
 using UnityEngine;

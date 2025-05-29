@@ -1,8 +1,8 @@
-﻿using Interfaces.Damage;
-using Interfaces.PowerUps;
+﻿using Health.Interfaces;
+using PowerUps._Base;
 using UnityEngine;
 
-namespace Interfaces
+namespace PowerUps.OneUp
 {
     public class OneUpPowerUp : IPowerUp
     {
@@ -14,8 +14,8 @@ namespace Interfaces
 
         public void ApplyPowerUp(GameObject player)
         {
-            IDamageable damageable = player.GetComponent<IDamageable>();
-            damageable.Heal(_healAmount);
+            IHealable damageable = player?.GetComponent<IHealable>();
+            damageable?.Heal(_healAmount);
         }
     }
 }

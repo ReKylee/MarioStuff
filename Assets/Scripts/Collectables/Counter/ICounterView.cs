@@ -1,4 +1,4 @@
-﻿namespace Collectables.Base
+﻿namespace Collectables.Counter
 {
     public interface ICounterView
     {

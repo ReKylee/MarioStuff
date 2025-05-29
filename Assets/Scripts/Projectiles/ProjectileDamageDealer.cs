@@ -1,4 +1,4 @@
-﻿using Interfaces.Damage;
+﻿using Health.Interfaces;
 using UnityEngine;
 
 namespace Projectiles
@@ -6,9 +6,6 @@ namespace Projectiles
     public class ProjectileDamageDealer : MonoBehaviour, IDamageDealer
     {
         [SerializeField] private int damage = 1;
-        public int GetDamageAmount()
-        {
-            return damage;
-        }
+        public int GetDamageAmount() => damage;
     }
 }

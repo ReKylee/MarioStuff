@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Interfaces.Collectibles
+namespace Collectables._Base
 {
     public interface ICollectable
     {

@@ -1,10 +1,9 @@
-﻿using Collectables;
-using Interfaces.Locks;
-using Interfaces.Resettable;
+﻿using Interfaces.Resettable;
+using LocksAndKeys;
 using Managers;
 using UnityEngine;
 
-namespace Controller
+namespace Collectables.Keys
 {
     public class KeychainController : MonoBehaviour, IResettable
     {

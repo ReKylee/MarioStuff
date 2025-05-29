@@ -1,7 +1,6 @@
-﻿using Interfaces.Collectibles;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Collectables
+namespace Collectables._Base
 {
     public abstract class CollectibleBase : MonoBehaviour, ICollectable
     {

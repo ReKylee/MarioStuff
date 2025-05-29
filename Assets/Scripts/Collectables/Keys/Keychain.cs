@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Interfaces.Locks;
+using LocksAndKeys;
 
-namespace Managers
+namespace Collectables.Keys
 {
     public class Keychain
     {
@@ -16,10 +16,7 @@ namespace Managers
             _keychain.Remove(key);
         }
 
-        public IKey TryUnlock(ILock lockComponent)
-        {
-            return _keychain.FirstOrDefault(lockComponent.TryUnlock);
-        }
+        public IKey TryUnlock(ILock lockComponent) => _keychain.FirstOrDefault(lockComponent.TryUnlock);
         public void Reset()
         {
             _keychain.Clear();

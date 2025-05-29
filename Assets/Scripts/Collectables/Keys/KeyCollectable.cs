@@ -1,8 +1,9 @@
 using System;
-using Interfaces.Locks;
+using Collectables._Base;
+using LocksAndKeys;
 using UnityEngine;
 
-namespace Collectables
+namespace Collectables.Keys
 {
     public class KeyCollectable : CollectibleBase
     {

@@ -1,7 +1,6 @@
-﻿using Interfaces.PowerUps;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Player
+namespace PowerUps._Base
 {
     public class PowerUpCollector : MonoBehaviour, IPowerUpCollector
     {

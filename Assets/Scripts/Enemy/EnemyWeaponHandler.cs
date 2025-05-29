@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Weapons.Models;
 
 namespace Enemy
 {
@@ -15,7 +16,6 @@ namespace Enemy
         private void OnDisable()
         {
             CancelInvoke(nameof(Shoot));
-
         }
         private void Shoot()
         {

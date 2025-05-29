@@ -1,5 +1,6 @@
 using Resettables;
 using UnityEngine;
+using Weapons.Models;
 
 namespace Weapons
 {

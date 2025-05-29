@@ -1,13 +1,11 @@
-using Interfaces.PowerUps;
+using Collectables._Base;
+using PowerUps._Base;
 
-namespace Controller
+namespace PowerUps.Axe
 {
     public class PickableAxeCollectible : PowerUpCollectibleBase
     {
 
-        public override IPowerUp CreatePowerUp()
-        {
-            return new PickableAxePowerUp();
-        }
+        public override IPowerUp CreatePowerUp() => new PickableAxePowerUp();
     }
 }

@@ -1,17 +1,17 @@
-﻿using Interfaces.Damage;
+﻿using Health.Interfaces;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Managers
+namespace Player
 {
     public class PlayerDeath : MonoBehaviour
     {
         public UnityEvent onDeath;
-        private IDamageable _livesController;
+        private IHealthEvents _livesController;
 
         private void Start()
         {
-            _livesController = GetComponent<IDamageable>();
+            _livesController = GetComponent<IHealthEvents>();
             _livesController.OnEmpty += HandleDeath;
         }
         private void OnDisable()

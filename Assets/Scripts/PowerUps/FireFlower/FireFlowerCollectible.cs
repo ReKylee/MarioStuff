@@ -1,12 +1,10 @@
-using Interfaces.PowerUps;
+using Collectables._Base;
+using PowerUps._Base;
 
-namespace Controller
+namespace PowerUps.FireFlower
 {
     public class FireFlowerCollectible : PowerUpCollectibleBase
     {
-        public override IPowerUp CreatePowerUp()
-        {
-            return new FireFlowerPowerUp();
-        }
+        public override IPowerUp CreatePowerUp() => new FireFlowerPowerUp();
     }
 }

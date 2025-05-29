@@ -1,16 +1,16 @@
-using Interfaces.PowerUps;
+using PowerUps._Base;
 using UnityEngine;
+using Weapons.Models;
 
-public class PickableAxePowerUp : IPowerUp
+namespace PowerUps.Axe
 {
-    public void ApplyPowerUp(GameObject player)
+    public class PickableAxePowerUp : IPowerUp
     {
-        Debug.Log("ApplyPowerUp Fire Flower");
-        if (player != null)
+        public void ApplyPowerUp(GameObject player)
         {
-            AxeWeapon axeWeapon = player.GetComponentInChildren<AxeWeapon>();
-            if (axeWeapon != null)
-                axeWeapon.Reload();
+            Debug.Log("ApplyPowerUp Fire Flower");
+            AxeWeapon axeWeapon = player?.GetComponentInChildren<AxeWeapon>();
+            axeWeapon?.Reload();
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Interfaces.Resettable;
-using Interfaces.Weapons;
 using Managers;
+using Weapons.Interfaces;
 
 namespace Resettables
 {

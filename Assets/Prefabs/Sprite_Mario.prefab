@@ -233,6 +233,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHp: 3
   maxLives: 3
+  healthView: {fileID: 0}
+  livesView: {fileID: 0}
+  createModelOnAwake: 1
 --- !u!114 &3213497405300871309
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -245,6 +248,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fa23f738ddb4b758c3c67fa927ce8cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  onDeath:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &6806085336056450057
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -278,9 +284,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5618698531668652424}
-  - component: {fileID: 4936380463802968916}
   - component: {fileID: 3880546536829734273}
   - component: {fileID: 3354482609634551655}
+  - component: {fileID: 5372833804394028595}
   m_Layer: 6
   m_Name: Weapons
   m_TagString: Untagged
@@ -303,20 +309,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3890553521520257432}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4936380463802968916
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5139845219191842715}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7f8ebd8b7844502498d1dda408b97103, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fireballWeapon: {fileID: 3880546536829734273}
-  axeWeapon: {fileID: 3354482609634551655}
 --- !u!114 &3880546536829734273
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -330,6 +322,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fireball: {fileID: 460594579410848658, guid: 749db9f6f469d3843a8558e628486c6e, type: 3}
+  spawnPoint: {fileID: 5618698531668652424}
+  cooldownTime: 0.3
 --- !u!114 &3354482609634551655
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -343,3 +337,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   axe: {fileID: 460594579410848658, guid: 4ab8b6dd74ca8374588c1806bdf74e28, type: 3}
+  spawnPoint: {fileID: 5618698531668652424}
+  maxAmmo: 3
+  cooldownTime: 0.5
+--- !u!114 &5372833804394028595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5139845219191842715}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0dd2343dce6389141bc7e8c488ef2110, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponMappings:
+  - weaponName: Axe
+    activationKey: 120
+    weaponComponent: {fileID: 3354482609634551655}
+  - weaponName: Fireball
+    activationKey: 306
+    weaponComponent: {fileID: 3880546536829734273}
