@@ -1,7 +1,9 @@
 ﻿# Kirby Character Controller Requirements Document
 
-**Project Goal:** To develop a robust, modular, and game designer-friendly 2D character controller for Kirby in Unity. The system must support various transformations, each with unique movement capabilities and animation sets, while adhering to SOLID design principles and leveraging Unity's Scriptable Objects.
-
+**Project Goal:** 
+To develop a robust, modular, and game designer-friendly 2D character controller for Kirby in Unity. 
+The system must support various transformations, each with unique movement capabilities and animation sets, while adhering to SOLID design principles and leveraging Unity's Scriptable Objects.
+The controller should provide a fluid and responsive gameplay experience, jumping, walking and running should feel good to control. 
 ---
 
 ## 1. Core System Architecture & Design Principles
@@ -38,12 +40,16 @@
         * Deep Sloped Surface (`DeepSlopeL.anim`, `DeepSlopeR.anim`)
     * **Walking:** Moving based on analog input. (`Walk.anim`)
     * **Running:** Faster movement based on analog input. (`Run.anim`)
-    * **Jumping:** Initial upward movement. (`Jump.anim`)
+    * **Jumping:** Initial upward movement. Should feel fluid and good to control. (`Jump.anim`)
+        * Should vary on how long you hold the jump button. jump high if you hold it longer, jump low if you tap it.
+        * If you jump high, kirby's fall animation activates with a delay, and he looks like he bounces when he lands. 
     * **Falling:** Descending after a jump or when airborne (standard gravity). (`Fall.anim`)
+        * Kirby can still move left or right while falling. kirby should only fall past a certain height or after a jump, otherwise he just keeps his running animation.
     * **Crouching:** Lowered stance. Cannot walk while crouched. Animations should adapt to:
         * Flat Surface (`Crouch.anim`)
         * Sloped Surface (Potentially reuse `Squashed_SlopeL.anim`, `Squashed_SlopeR.anim` or similar if `Crouch.anim` isn't slope-specific)
         * Deep Sloped Surface (Potentially reuse `Squashed_DeepSlopeL.anim`, `Squashed_DeepSlopeR.anim` or similar)
+    * **Sliding** Pressing attack while crouching slides forward. ('Slide.anim')
     * **Flying:** Sustained aerial movement after a double jump. (`Fly.anim`)
         * Kirby can remain in the air indefinitely by repeatedly "flapping" (jump input) as long as he doesn't touch the ground.
         * Without flapping input, Kirby should gently descend (slow fall).
