@@ -99,6 +99,7 @@ public class KirbyController : CharacterController2D
     /// <summary>
     ///     Configure abilities based on character form
     /// </summary>
+    /// TODO: Refactor to use a more flexible system, possibly to allow changing in inspector
     private void ConfigureAbilitiesForForm(CharacterForm form)
     {
         switch (form)

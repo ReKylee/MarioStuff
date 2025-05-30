@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Movement;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+//TODO: Make this use a CharacterController instead of Rigidbody2D
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class CharacterController2D : MonoBehaviour
 {

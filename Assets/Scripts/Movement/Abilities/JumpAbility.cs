@@ -1,3 +1,4 @@
+using Movement;
 using UnityEngine;
 
 /// <summary>
@@ -5,10 +6,10 @@ using UnityEngine;
 /// </summary>
 public class JumpAbility : MovementAbilityBase
 {
-    private bool _isJumping;
 
     // Parameters
     private readonly float _jumpForce = 10f;
+    private bool _isJumping;
 
     /// <summary>
     ///     Priority of jumping ability

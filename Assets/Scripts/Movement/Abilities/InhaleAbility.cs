@@ -1,3 +1,5 @@
+using Movement;
+
 /// <summary>
 ///     Ability for inhaling objects or enemies
 /// </summary>
