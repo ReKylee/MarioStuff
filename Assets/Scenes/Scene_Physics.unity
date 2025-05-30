@@ -31757,6 +31757,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1887416126}
     m_Modifications:
+    - target: {fileID: 2744869299825136038, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+      propertyPath: m_BodyType
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3077431087410073718, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: textView
       value: 

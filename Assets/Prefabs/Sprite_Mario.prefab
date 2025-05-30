@@ -18,10 +18,8 @@ GameObject:
   - component: {fileID: 3213497405300871309}
   - component: {fileID: 6806085336056450057}
   - component: {fileID: 8779933863594023466}
-  - component: {fileID: 5241862115288799599}
-  - component: {fileID: 9060759746881487098}
-  - component: {fileID: 2676873008172135117}
   - component: {fileID: 2191520941720311735}
+  - component: {fileID: 5563075469149301001}
   m_Layer: 6
   m_Name: Sprite_Mario
   m_TagString: Player
@@ -43,7 +41,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5618698531668652424}
-  - {fileID: 4366391987356097881}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6599342503957296432
@@ -245,57 +242,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21f52027736242a4b4026739a57e132c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &5241862115288799599
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3926891512402252426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 02f625dfcd2778e40b3b76ae9bcde7ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  moveSpeed: 5
-  acceleration: 50
-  deceleration: 60
-  airAcceleration: 30
-  airDeceleration: 20
-  jumpForce: 12
-  fallSpeed: 25
-  floatSpeed: 8
-  jumpCooldown: 0.1
---- !u!114 &9060759746881487098
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3926891512402252426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 261c885c3f9d758418c034190ab0e18c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  groundCheck: {fileID: 4366391987356097881}
-  groundCheckRadius: 0.1
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 8
-  coyoteTime: 0.15
---- !u!114 &2676873008172135117
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3926891512402252426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c535517c8757cd94c90e619137ed4c8d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!95 &2191520941720311735
 Animator:
   serializedVersion: 7
@@ -306,7 +252,7 @@ Animator:
   m_GameObject: {fileID: 3926891512402252426}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: c9a78dc689d94f04a8c060364a492f08, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -318,6 +264,27 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5563075469149301001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3926891512402252426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4187ef75a93bd8d4ab26b4d2e26ee2dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  groundCheckDistance: 0.1
+  slopeThreshold: 30
+  groundCheckSize: {x: 0.9, y: 0.1}
+  groundedGravity: -1
+  maxFallSpeed: 15
+  fullFormSpeedMultiplier: 0.8
 --- !u!1 &5139845219191842715
 GameObject:
   m_ObjectHideFlags: 0
@@ -399,38 +366,7 @@ MonoBehaviour:
   weaponMappings:
   - weaponName: Axe
     weaponComponent: {fileID: 3354482609634551655}
-    actionName: AxeAttack
+    actionName: Attack
   - weaponName: Fireball
     weaponComponent: {fileID: 3880546536829734273}
-    actionName: FireballAttack
---- !u!1 &7109441007102391670
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4366391987356097881}
-  m_Layer: 6
-  m_Name: GroundCheck
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4366391987356097881
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7109441007102391670}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.64, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3890553521520257432}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+    actionName: Attack
