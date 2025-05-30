@@ -31759,7 +31759,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2744869299825136038, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: m_BodyType
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2744869299825136038, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+      propertyPath: m_UseFullKinematicContacts
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3077431087410073718, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: textView
@@ -31862,6 +31866,14 @@ PrefabInstance:
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 3890553521520257432, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3890553521520257432, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3890553521520257432, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: m_LocalPosition.x
       value: -9.52
       objectReference: {fileID: 0}
@@ -31904,6 +31916,14 @@ PrefabInstance:
     - target: {fileID: 3926891512402252426, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: m_Name
       value: Sprite_Mario
+      objectReference: {fileID: 0}
+    - target: {fileID: 5563075469149301001, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+      propertyPath: collisionMask.m_Bits
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6599342503957296432, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+      propertyPath: m_DrawMode
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1665370752881580221, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}

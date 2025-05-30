@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b162c58c497a5014aacd33b018fbb355, type: 3}
+  m_Name: Normal
+  m_EditorClassIdentifier: 
+  transformationName: Normal
+  animationSet: {fileID: 11400000, guid: 4f717ddc12f967747a17b30433ab15ff, type: 2}
+  movementOverrides: {fileID: 11400000, guid: 9918bae440e711a4690ba305e35d1615, type: 2}
+  canFly: 1
+  canInhale: 1
+  canCrouch: 1
+  abilityObjects: []
