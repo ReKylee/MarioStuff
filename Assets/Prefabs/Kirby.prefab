@@ -19,7 +19,8 @@ GameObject:
   - component: {fileID: 6806085336056450057}
   - component: {fileID: 8779933863594023466}
   - component: {fileID: 644453172252926475}
-  - component: {fileID: 6813473837812024176}
+  - component: {fileID: 6721081069958752657}
+  - component: {fileID: 8999338311238094815}
   m_Layer: 6
   m_Name: Kirby
   m_TagString: Player
@@ -257,7 +258,7 @@ MonoBehaviour:
   _playAutomatically: 1
   _spriteAnimationObject: {fileID: 11400000, guid: b71bad9cf2ac21e478a2aa875304ab44, type: 2}
   _spriteRenderer: {fileID: 6599342503957296432}
---- !u!114 &6813473837812024176
+--- !u!114 &6721081069958752657
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -266,25 +267,55 @@ MonoBehaviour:
   m_GameObject: {fileID: 3926891512402252426}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f0038c16c34866b4f9e25c9c0dc0f7e6, type: 3}
+  m_Script: {fileID: 11500000, guid: 63c15cadc10d124458db767c35eb3a92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Graph: {fileID: -5368151231568928108, guid: a3359fbfbf0aff54b96989b36f2a80d3, type: 2}
-  m_BlackboardVariableOverridesList:
-  - rid: 4451810023565689453
-  m_IsInitialised: 0
-  m_IsStarted: 0
-  references:
-    version: 2
-    RefIds:
-    - rid: 4451810023565689453
-      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
-      data:
-        GUID:
-          m_Value0: 1
-          m_Value1: 0
-        Name: Self
-        m_Value: {fileID: 0}
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  groundCheckSize: {x: 0.8, y: 0.1}
+  groundCheckDistance: 0.1
+  drawGizmos: 1
+  maxSlopeAngle: 45
+  slopeThreshold: 10
+  deepSlopeThreshold: 35
+--- !u!114 &8999338311238094815
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3926891512402252426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ba1a343a8fc1d94d87824e9c3ae83dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  baseStats:
+    walkSpeed: 120
+    runSpeed: 200
+    groundAcceleration: 500
+    groundDeceleration: 800
+    airAcceleration: 200
+    airDeceleration: 0
+    jumpVelocity: 300
+    jumpReleaseGravityMultiplier: 2
+    maxFallSpeed: 500
+    coyoteTime: 0.1
+    jumpBufferTime: 0.15
+    floatAscendSpeed: 70
+    floatDescentSpeed: 40
+    flapImpulse: 85
+    flyMaxHeight: 1000
+    gravityScale: 2
+    gravityScaleDescending: 1.5
+    groundCheckRadius: 0.1
+    attackDamage: 10
+    attackRange: 1
+    attackSpeed: 1
+    inhaleRange: 2
+    inhalePower: 1
+  currentCopyAbility: {fileID: 11400000, guid: 93d3dd7efcee3664b82913cdc905ad48, type: 2}
 --- !u!1 &5139845219191842715
 GameObject:
   m_ObjectHideFlags: 0
