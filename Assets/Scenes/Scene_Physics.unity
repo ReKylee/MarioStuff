@@ -3619,6 +3619,82 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &499747554
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 499747556}
+  - component: {fileID: 499747557}
+  - component: {fileID: 499747558}
+  m_Layer: 0
+  m_Name: reanimator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &499747556
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 499747554}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.140962, y: 1.3046876, z: 0.024965648}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &499747557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 499747554}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d4337bea670e194ca021e2a54e31bf8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _playAutomatically: 1
+  _spriteAnimationObject: {fileID: 11400000, guid: b71bad9cf2ac21e478a2aa875304ab44, type: 2}
+  _spriteRenderer: {fileID: 1853782885}
+--- !u!114 &499747558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 499747554}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0038c16c34866b4f9e25c9c0dc0f7e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Graph: {fileID: -5368151231568928108, guid: a3359fbfbf0aff54b96989b36f2a80d3, type: 2}
+  m_BlackboardVariableOverridesList:
+  - rid: 4451810023565689453
+  m_IsInitialised: 0
+  m_IsStarted: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 4451810023565689453
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        m_Value: {fileID: 499747554}
 --- !u!1 &508361301
 GameObject:
   m_ObjectHideFlags: 0
@@ -6643,7 +6719,7 @@ GameObject:
   - component: {fileID: 1171389828}
   - component: {fileID: 1171389827}
   m_Layer: 0
-  m_Name: A
+  m_Name: Slope
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30467,6 +30543,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5592594574291024354, guid: ab419e5e6025bac4690e06c8abfdcaad, type: 3}
   m_PrefabInstance: {fileID: 1816338434}
   m_PrefabAsset: {fileID: 0}
+--- !u!212 &1853782885 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 6599342503957296432, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+  m_PrefabInstance: {fileID: 2444926084790370511}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1887416125
 GameObject:
   m_ObjectHideFlags: 0
@@ -32010,6 +32091,8 @@ PrefabInstance:
     m_RemovedComponents:
     - {fileID: 1665370752881580221, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
     - {fileID: 7729757592419721177, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+    - {fileID: 4266577581806705282, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+    - {fileID: 2191520941720311735, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -32363,3 +32446,4 @@ SceneRoots:
   - {fileID: 359280866}
   - {fileID: 72274837}
   - {fileID: 1171389828}
+  - {fileID: 499747556}

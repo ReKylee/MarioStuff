@@ -1,0 +1,573 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5368151231568928108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db920e62f70f420bb33c771449926fa4, type: 3}
+  m_Name: KirbyBehavior
+  m_EditorClassIdentifier: 
+  Graphs:
+  - rid: 4451810034807210099
+  RootGraph:
+    rid: 4451810034807210099
+  m_DebugInfo: {fileID: -3012109898665066247}
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 4451810034807210096
+      type: {class: 'BlackboardVariable`1[[System.String, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 0
+          m_Value1: 0
+        Name: 
+        m_Value: Walk
+    - rid: 4451810034807210098
+      type: {class: 'BlackboardVariable`1[[System.String, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 0
+          m_Value1: 0
+        Name: 
+        m_Value: Idle
+    - rid: 4451810034807210099
+      type: {class: BehaviorGraphModule, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        AuthoringAssetID:
+          m_Value0: 6124625836917077411
+          m_Value1: 15240227798263622073
+        m_DebugInfo: {fileID: 0}
+        BlackboardReference:
+          rid: 4451810034807210100
+        BlackboardGroupReferences: []
+        Root:
+          rid: 4451810034807210101
+        m_ActiveNodes: []
+        m_NodesToTick: []
+        m_NodesToEnd:
+          rid: 4451810034807210102
+        m_EndedNodes:
+          rid: 4451810034807210103
+        m_VersionTimestamp: 638842632840438328
+    - rid: 4451810034807210100
+      type: {class: BlackboardReference, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        m_Blackboard:
+          rid: 4451810034807210104
+        m_Source: {fileID: 3001091093958333479}
+    - rid: 4451810034807210101
+      type: {class: Start, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        ID:
+          m_Value0: 1336052783891062879
+          m_Value1: 3715531117380775558
+        Graph:
+          rid: 4451810034807210099
+        m_Parent:
+          rid: -2
+        m_Child:
+          rid: 4451810034807210105
+        Repeat: 1
+        AllowMultipleRepeatsPerTick: 0
+    - rid: 4451810034807210102
+      type: {class: 'Stack`1[[Unity.Behavior.Node, Unity.Behavior]]', ns: System.Collections.Generic, asm: mscorlib}
+      data: 
+    - rid: 4451810034807210103
+      type: {class: 'HashSet`1[[Unity.Behavior.Node, Unity.Behavior]]', ns: System.Collections.Generic, asm: System.Core}
+      data: 
+    - rid: 4451810034807210104
+      type: {class: Blackboard, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        m_Variables:
+        - rid: 4451810034807210106
+    - rid: 4451810034807210105
+      type: {class: SequenceComposite, ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        ID:
+          m_Value0: 9381099327209680610
+          m_Value1: 15702459338466557543
+        Graph:
+          rid: 4451810034807210099
+        m_Parent:
+          rid: 4451810034807210101
+        m_Children:
+        - rid: 4451810034807210107
+        - rid: 4451810034807210108
+    - rid: 4451810034807210106
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        m_Value: {fileID: 0}
+    - rid: 4451810034807210107
+      type: {class: PlayAction, ns: , asm: Assembly-CSharp}
+      data:
+        ID:
+          m_Value0: 17583319461247528249
+          m_Value1: 15460438579394278622
+        Graph:
+          rid: 4451810034807210099
+        m_Parent:
+          rid: 4451810034807210105
+        SpriteAnimator:
+          rid: 4451810034807210109
+        Animation:
+          rid: 4451810034807210096
+    - rid: 4451810034807210108
+      type: {class: PlayAction, ns: , asm: Assembly-CSharp}
+      data:
+        ID:
+          m_Value0: 13073795768240438633
+          m_Value1: 16866497489251284861
+        Graph:
+          rid: 4451810034807210099
+        m_Parent:
+          rid: 4451810034807210105
+        SpriteAnimator:
+          rid: 4451810034807210110
+        Animation:
+          rid: 4451810034807210098
+    - rid: 4451810034807210109
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[GabrielBigardi.SpriteAnimator.SpriteAnimator, GabrielBigardi.SpriteAnimator]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 0
+          m_Value1: 0
+        Name: 
+        m_Value: {fileID: 0}
+        m_LinkedVariable:
+          rid: 4451810034807210106
+    - rid: 4451810034807210110
+      type: {class: 'GameObjectToComponentBlackboardVariable`1[[GabrielBigardi.SpriteAnimator.SpriteAnimator, GabrielBigardi.SpriteAnimator]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 0
+          m_Value1: 0
+        Name: 
+        m_Value: {fileID: 0}
+        m_LinkedVariable:
+          rid: 4451810034807210106
+--- !u!114 &-4320468582789842125
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd922ae02c94c87a66e46a10a7319b9, type: 3}
+  m_Name: KirbyBehavior Blackboard
+  m_EditorClassIdentifier: 
+  AssetID:
+    m_Value0: 6124625836917077411
+    m_Value1: 15240227798263622073
+  m_Variables:
+  - rid: 4451810023565689260
+  m_VersionTimestamp: 638842619979576113
+  m_CommandBuffer:
+    m_Commands: []
+  m_RuntimeBlackboardAsset: {fileID: 3001091093958333479}
+  references:
+    version: 2
+    RefIds:
+    - rid: 4451810023565689260
+      type: {class: 'TypedVariableModel`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        ID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        IsExposed: 1
+        m_IsShared: 0
+        m_Value: {fileID: 0}
+--- !u!114 &-3012109898665066247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b27bb6d9a2c8d540a10dff10acc543e, type: 3}
+  m_Name: KirbyBehavior Debug Info
+  m_EditorClassIdentifier: 
+  m_CodeBreakPointsList: []
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bad8f2220607dac4db5082ff333fafb8, type: 3}
+  m_Name: KirbyBehavior
+  m_EditorClassIdentifier: 
+  Blackboard: {fileID: -4320468582789842125}
+  m_Description: 
+  m_Nodes:
+  - rid: 4451810023565689251
+  - rid: 4451810023565689385
+  - rid: 4451810023565689465
+  - rid: 4451810023565689481
+  m_VersionTimestamp: 638842632840438328
+  m_DebugInfo: {fileID: -3012109898665066247}
+  m_RuntimeGraph: {fileID: -5368151231568928108}
+  AssetID:
+    m_Value0: 6124625836917077411
+    m_Value1: 15240227798263622073
+  Story:
+    Story: 
+    StoryVariableNames: []
+    Variables: []
+  m_NodeModelsInfo:
+  - Name: On Start
+    Story: 
+    RuntimeTypeID:
+      m_Value0: 3335272451348827663
+      m_Value1: 11549843281177505721
+    Variables: []
+    NamedChildren: []
+  - Name: Play
+    Story: '[SpriteAnimator] Play [Animation]'
+    RuntimeTypeID:
+      m_Value0: 12209191962942264046
+      m_Value1: 6402484562132276779
+    Variables:
+    - Name: SpriteAnimator
+      Type:
+        m_SerializableType: GabrielBigardi.SpriteAnimator.SpriteAnimator, GabrielBigardi.SpriteAnimator,
+          Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+      Tooltip: 
+    - Name: Animation
+      Type:
+        m_SerializableType: System.String, mscorlib, Version=4.0.0.0, Culture=neutral,
+          PublicKeyToken=b77a5c561934e089
+      Tooltip: 
+    NamedChildren: []
+  - Name: Set Variable Value
+    Story: 'Set [Variable] value to [Value]'
+    RuntimeTypeID:
+      m_Value0: 5494721648866555964
+      m_Value1: 18024545711220129068
+    Variables:
+    - Name: Variable
+      Type:
+        m_SerializableType: Unity.Behavior.BlackboardVariable, Unity.Behavior, Version=0.0.0.0,
+          Culture=neutral, PublicKeyToken=null
+      Tooltip: 
+    - Name: Value
+      Type:
+        m_SerializableType: Unity.Behavior.BlackboardVariable, Unity.Behavior, Version=0.0.0.0,
+          Culture=neutral, PublicKeyToken=null
+      Tooltip: 
+    NamedChildren: []
+  - Name: Send Event Message
+    Story: 
+    RuntimeTypeID:
+      m_Value0: 9965463903622711961
+      m_Value1: 5344335246459382461
+    Variables:
+    - Name: ChannelVariable
+      Type:
+        m_SerializableType: Unity.Behavior.BlackboardVariable, Unity.Behavior, Version=0.0.0.0,
+          Culture=neutral, PublicKeyToken=null
+      Tooltip: 
+    NamedChildren: []
+  - Name: test
+    Story: Change anim
+    RuntimeTypeID:
+      m_Value0: 13469035734885668533
+      m_Value1: 2690703781706805511
+    Variables: []
+    NamedChildren: []
+  m_Blackboards: []
+  m_MainBlackboardAuthoringAsset: {fileID: -4320468582789842125}
+  m_CommandBuffer:
+    m_Commands: []
+  m_SubgraphsInfo: []
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
+    - rid: 4451810023565689251
+      type: {class: StartNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: 0, y: 0}
+        ID:
+          m_Value0: 1336052783891062879
+          m_Value1: 3715531117380775558
+        Parents: []
+        PortModels:
+        - rid: 4451810023565689252
+        NodeType:
+          m_SerializableType: Unity.Behavior.Start, Unity.Behavior, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 3335272451348827663
+          m_Value1: 11549843281177505721
+        m_FieldValues: []
+        Repeat: 1
+        AllowMultipleRepeatsPerTick: 0
+    - rid: 4451810023565689252
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4451810023565689251
+        m_Connections:
+        - rid: 4451810023565689482
+    - rid: 4451810023565689385
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -246.5001, y: 82.10004}
+        ID:
+          m_Value0: 17583319461247528249
+          m_Value1: 15460438579394278622
+        Parents:
+        - rid: 4451810023565689481
+        PortModels:
+        - rid: 4451810023565689386
+        - rid: 4451810023565689387
+        NodeType:
+          m_SerializableType: PlayAction, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+            PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 12209191962942264046
+          m_Value1: 6402484562132276779
+        m_FieldValues:
+        - rid: 4451810023565689850
+        - rid: 4451810033403691699
+    - rid: 4451810023565689386
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4451810023565689385
+        m_Connections: []
+    - rid: 4451810023565689387
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4451810023565689385
+        m_Connections: []
+    - rid: 4451810023565689465
+      type: {class: ActionNodeModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        Position: {x: -246.75018, y: 84.44978}
+        ID:
+          m_Value0: 13073795768240438633
+          m_Value1: 16866497489251284861
+        Parents:
+        - rid: 4451810023565689481
+        PortModels:
+        - rid: 4451810023565689466
+        - rid: 4451810023565689467
+        NodeType:
+          m_SerializableType: PlayAction, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+            PublicKeyToken=null
+        NodeTypeID:
+          m_Value0: 12209191962942264046
+          m_Value1: 6402484562132276779
+        m_FieldValues:
+        - rid: 4451810023565689851
+        - rid: 4451810033403691700
+    - rid: 4451810023565689466
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4451810023565689465
+        m_Connections: []
+    - rid: 4451810023565689467
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4451810023565689465
+        m_Connections: []
+    - rid: 4451810023565689481
+      type: {class: SequenceNodeModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        Position: {x: -249.70012, y: 83.70004}
+        ID:
+          m_Value0: 9381099327209680610
+          m_Value1: 15702459338466557543
+        Parents: []
+        PortModels:
+        - rid: 4451810023565689482
+        - rid: 4451810023565689483
+        Nodes:
+        - rid: 4451810023565689385
+        - rid: 4451810023565689465
+    - rid: 4451810023565689482
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: InputPort
+        m_PortDataFlowType: 0
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4451810023565689481
+        m_Connections:
+        - rid: 4451810023565689252
+    - rid: 4451810023565689483
+      type: {class: PortModel, ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        m_Name: OutputPort
+        m_PortDataFlowType: 1
+        m_IsFloating: 0
+        m_NodeModel:
+          rid: 4451810023565689481
+        m_Connections: []
+    - rid: 4451810023565689850
+      type: {class: BehaviorGraphNodeModel/FieldModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        FieldName: SpriteAnimator
+        Type:
+          m_SerializableType: GabrielBigardi.SpriteAnimator.SpriteAnimator, GabrielBigardi.SpriteAnimator,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        LocalValue:
+          rid: 4451810023565689852
+        LinkedVariable:
+          rid: 4451810033403691518
+    - rid: 4451810023565689851
+      type: {class: BehaviorGraphNodeModel/FieldModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        FieldName: SpriteAnimator
+        Type:
+          m_SerializableType: GabrielBigardi.SpriteAnimator.SpriteAnimator, GabrielBigardi.SpriteAnimator,
+            Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+        LocalValue:
+          rid: 4451810023565689853
+        LinkedVariable:
+          rid: 4451810033403691261
+    - rid: 4451810023565689852
+      type: {class: 'BlackboardVariable`1[[GabrielBigardi.SpriteAnimator.SpriteAnimator, GabrielBigardi.SpriteAnimator]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 0
+          m_Value1: 0
+        Name: 
+        m_Value: {fileID: 0}
+    - rid: 4451810023565689853
+      type: {class: 'BlackboardVariable`1[[GabrielBigardi.SpriteAnimator.SpriteAnimator, GabrielBigardi.SpriteAnimator]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 0
+          m_Value1: 0
+        Name: 
+        m_Value: {fileID: 0}
+    - rid: 4451810033403691261
+      type: {class: 'TypedVariableModel`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        ID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        IsExposed: 1
+        m_IsShared: 0
+        m_Value: {fileID: 0}
+    - rid: 4451810033403691518
+      type: {class: 'TypedVariableModel`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior.GraphFramework, asm: Unity.Behavior.GraphFramework}
+      data:
+        ID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        IsExposed: 1
+        m_IsShared: 0
+        m_Value: {fileID: 0}
+    - rid: 4451810033403691699
+      type: {class: BehaviorGraphNodeModel/FieldModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        FieldName: Animation
+        Type:
+          m_SerializableType: System.String, mscorlib, Version=4.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        LocalValue:
+          rid: 4451810033403691701
+        LinkedVariable:
+          rid: -2
+    - rid: 4451810033403691700
+      type: {class: BehaviorGraphNodeModel/FieldModel, ns: Unity.Behavior, asm: Unity.Behavior.Authoring}
+      data:
+        FieldName: Animation
+        Type:
+          m_SerializableType: System.String, mscorlib, Version=4.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        LocalValue:
+          rid: 4451810033403691702
+        LinkedVariable:
+          rid: -2
+    - rid: 4451810033403691701
+      type: {class: 'BlackboardVariable`1[[System.String, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 0
+          m_Value1: 0
+        Name: 
+        m_Value: Walk
+    - rid: 4451810033403691702
+      type: {class: 'BlackboardVariable`1[[System.String, mscorlib]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 0
+          m_Value1: 0
+        Name: 
+        m_Value: Idle
+--- !u!114 &3001091093958333479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c02bb70996b49eba31d0c206e28da24, type: 3}
+  m_Name: KirbyBehavior Blackboard
+  m_EditorClassIdentifier: 
+  VersionTimestamp: 638842619979576113
+  AssetID:
+    m_Value0: 6124625836917077411
+    m_Value1: 15240227798263622073
+  m_Blackboard:
+    m_Variables:
+    - rid: 4451810023565689261
+  m_SharedBlackboardVariableGuids: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 4451810023565689261
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        m_Value: {fileID: 0}

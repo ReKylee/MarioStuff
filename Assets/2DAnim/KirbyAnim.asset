@@ -1,0 +1,167 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a77fafcc6bd2ee94ebe9ac341b986e7a, type: 3}
+  m_Name: KirbyAnim
+  m_EditorClassIdentifier: 
+  SpriteAnimations:
+  - Name: Idle
+    FPS: 3
+    Frames:
+    - {fileID: 1255327397, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -748764616, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 492151147, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 0
+  - Name: Idle_Full
+    FPS: 3
+    Frames:
+    - {fileID: -1951356607, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1172156972, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 2025045019, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 0
+  - Name: Idle_Crouched
+    FPS: 3
+    Frames:
+    - {fileID: -1956990629, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1676790512, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1965804035, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 0
+  - Name: Walk
+    FPS: 15
+    Frames:
+    - {fileID: 1533979614, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1442855446, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1341304818, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -894108373, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 255070192, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1553607549, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 233768999, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -671140646, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1914794177, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -549112361, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 0
+  - Name: Run
+    FPS: 15
+    Frames:
+    - {fileID: 1525008681, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -205042696, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 92585517, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 939252311, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 761916039, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1761325557, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -287561109, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 2069196371, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 0
+  - Name: Run_Full
+    FPS: 15
+    Frames:
+    - {fileID: 928078697, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1425877163, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 2051082540, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1961763213, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -2087616194, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -191323572, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1814420137, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 2050908340, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 473260695, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 377334885, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 0
+  - Name: Skid
+    FPS: 3
+    Frames:
+    - {fileID: 1025999236, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 1
+  - Name: JumpToFly
+    FPS: 15
+    Frames:
+    - {fileID: 970899283, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1000545162, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1583265811, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1691689940, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 1
+  - Name: Jump
+    FPS: 15
+    Frames:
+    - {fileID: -1042654070, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1947901389, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 74453076, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1258531970, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 758199005, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1249469712, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 1
+  - Name: Jump_Full
+    FPS: 15
+    Frames:
+    - {fileID: -1626008464, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 427326199, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1670495116, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1091192197, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 1
+  - Name: Fly
+    FPS: 15
+    Frames:
+    - {fileID: -1821868657, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 2083466730, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -723435894, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1048156538, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1162242309, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1732532390, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 0
+  - Name: Slide
+    FPS: 3
+    Frames:
+    - {fileID: 453903552, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -413182842, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 1
+  - Name: Fall
+    FPS: 15
+    Frames:
+    - {fileID: 1581613033, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1113136369, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1325542747, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 624087993, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -871644345, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 611338844, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 1
+  - Name: Fall_Full
+    FPS: 15
+    Frames:
+    - {fileID: 822114671, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1332110849, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1200722389, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 677613714, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 1
+  - Name: Inhale
+    FPS: 15
+    Frames:
+    - {fileID: -848510542, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -614536675, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -168624225, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1786299665, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 748491857, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 1
+  - Name: Spit
+    FPS: 15
+    Frames:
+    - {fileID: 909442434, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 276895587, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1474633906, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 87469552, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1389823206, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 1
+  - Name: Swallow
+    FPS: 15
+    Frames:
+    - {fileID: -195861898, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -2019010560, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -671095658, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1993696983, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 1

@@ -19,7 +19,6 @@ GameObject:
   - component: {fileID: 6806085336056450057}
   - component: {fileID: 8779933863594023466}
   - component: {fileID: 2191520941720311735}
-  - component: {fileID: 4266577581806705282}
   m_Layer: 6
   m_Name: Kirby
   m_TagString: Player
@@ -264,24 +263,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &4266577581806705282
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3926891512402252426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c01c60e09eafff048a0693bc697a1aed, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  animator: {fileID: 2191520941720311735}
-  rb: {fileID: 2744869299825136038}
-  spriteRenderer: {fileID: 6599342503957296432}
-  defaultMovementParameters: {fileID: 11400000, guid: 9918bae440e711a4690ba305e35d1615, type: 2}
-  defaultAnimationSet: {fileID: 11400000, guid: 4f717ddc12f967747a17b30433ab15ff, type: 2}
-  defaultTransformation: {fileID: 11400000, guid: 2f70726cadc223c4e89b094742821589, type: 2}
 --- !u!1 &5139845219191842715
 GameObject:
   m_ObjectHideFlags: 0
