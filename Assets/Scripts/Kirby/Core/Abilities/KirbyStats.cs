@@ -119,8 +119,7 @@ namespace Kirby.Abilities
                     statCategories[attribute.Type] = attribute.Category;
                 }
             }
-        }
-
+        } // ReSharper disable Unity.PerformanceAnalysis
         /// <summary>
         ///     Get a stat value by its enum type
         /// </summary>
@@ -196,35 +195,24 @@ namespace Kirby.Abilities
 
         public float value = 1.0f;
         public ModType modificationType = ModType.Multiplicative;
-
-        // For editor organization and display
-        [HideInInspector] public string category;
-
+        [HideInInspector] public string category; // Category is auto-set in constructor
         public StatType statType;
-
-        // Constructor without category
         public StatModifier(StatType statType, float value, ModType modificationType = ModType.Multiplicative)
         {
             this.statType = statType;
             this.value = value;
             this.modificationType = modificationType;
-            category = KirbyStats.GetStatCategory(statType);
+            category = KirbyStats.GetStatCategory(statType); // Ensure category is set
         }
-
-        // Apply this modifier to a stat value
         public float ApplyModifier(float baseValue)
         {
-            switch (modificationType)
+            return modificationType switch
             {
-                case ModType.Additive:
-                    return baseValue + value;
-                case ModType.Multiplicative:
-                    return baseValue * value;
-                case ModType.Override:
-                    return value;
-                default:
-                    return baseValue;
-            }
+                ModType.Additive => baseValue + value,
+                ModType.Multiplicative => baseValue * value,
+                ModType.Override => value,
+                _ => baseValue
+            };
         }
     }
 }

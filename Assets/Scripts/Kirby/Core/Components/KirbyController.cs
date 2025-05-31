@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using GabrielBigardi.SpriteAnimator;
 using Kirby.Abilities;
 using UnityEngine;
@@ -16,79 +15,64 @@ namespace Kirby
 
         private readonly List<IAbilityModule> _activeAbilities = new();
         private readonly List<IMovementAbilityModule> _movementAbilities = new();
-        private bool _jumpInputPressed;
+        private KirbyGroundCheck _groundCheck;
 
-        private bool _jumpInputReleased;
-
-        // Input fields (can be expanded or moved to an InputHandler class)
-        private Vector2 _moveInput;
+        private InputHandler _inputHandler; // Reference to the InputHandler
         internal SpriteAnimator Animator;
-
-        internal KirbyGroundCheck GroundCheck;
         internal Rigidbody2D Rigidbody;
         public KirbyStats Stats { get; private set; }
+        public InputContext CurrentInput { get; private set; }
 
-
-        public bool IsGrounded => GroundCheck?.IsGrounded ?? false;
-        public float GroundSlopeAngle => GroundCheck?.GroundSlopeAngle ?? 0;
-        public Vector2 GroundNormal => GroundCheck?.GroundNormal ?? Vector2.zero;
+        public bool IsGrounded => _groundCheck?.IsGrounded ?? false;
+        public float GroundSlopeAngle => _groundCheck?.GroundSlopeAngle ?? 0;
+        public Vector2 GroundNormal => _groundCheck?.GroundNormal ?? Vector2.zero;
 
         private void Awake()
         {
-            GroundCheck = GetComponent<KirbyGroundCheck>();
+            _groundCheck = GetComponent<KirbyGroundCheck>();
             Rigidbody = GetComponent<Rigidbody2D>();
             Animator = GetComponent<SpriteAnimator>();
             Stats = baseStats.CreateCopy();
+
+
             EquipAbility(currentCopyAbility);
+
+            if (!_inputHandler)
+            {
+                Debug.LogError("InputHandler not assigned in KirbyController. Please assign it in the Inspector.");
+                enabled = false; // Disable KirbyController if InputHandler is missing
+            }
         }
 
         private void Update()
         {
-            // Gather Input (example)
-            // _moveInput.x = Input.GetAxis("Horizontal"); 
-            // if (Input.GetButtonDown("Jump")) _jumpInputPressed = true;
-            // if (Input.GetButtonUp("Jump")) _jumpInputReleased = true;
 
-            // Process all active abilities
+            // Get the current input state from the InputHandler
+            CurrentInput = _inputHandler.PollInput();
+
+
+            // Process all active abilities, passing the current input context
             foreach (IAbilityModule ability in _activeAbilities)
             {
-                ability.ProcessAbility();
+                ability.ProcessAbility(CurrentInput);
             }
 
-            // Handle jump input specifically for abilities that might consume it (like JumpAbility)
-            if (_jumpInputPressed)
-            {
-                foreach (JumpAbilityModule ability in _activeAbilities.OfType<JumpAbilityModule>())
-                {
-                    ability.OnJumpPressed();
-                }
 
-                _jumpInputPressed = false; // Consume press
-            }
-
-            if (_jumpInputReleased)
-            {
-                foreach (JumpAbilityModule ability in _activeAbilities.OfType<JumpAbilityModule>())
-                {
-                    ability.OnJumpReleased();
-                }
-
-                _jumpInputReleased = false; // Consume release
-            }
         }
 
         private void FixedUpdate()
         {
             // Movement processing
-
             Vector2 currentVelocity = Rigidbody.linearVelocity;
-            Vector2 targetVelocity = _moveInput * Stats.walkSpeed; // Base target, abilities can modify
+            // Base target, abilities can modify. Uses MoveInput from CurrentInput.
 
             // Let movement abilities process/modify velocity
             // They are processed in the order they appear in the CopyAbilityData's Abilities list.
             foreach (IMovementAbilityModule movementAbility in _movementAbilities)
             {
-                currentVelocity = movementAbility.ProcessMovement(currentVelocity, targetVelocity, IsGrounded);
+                // Pass InputContext to ProcessMovement
+                currentVelocity =
+                    movementAbility.ProcessMovement(currentVelocity, IsGrounded, CurrentInput);
             }
 
             Rigidbody.linearVelocity = currentVelocity;
@@ -105,26 +89,30 @@ namespace Kirby
             _activeAbilities.Clear();
             _movementAbilities.Clear();
 
-            currentCopyAbility = newAbilityData;
+            currentCopyAbility = newAbilityData; // Assign the new ability data
             Stats = baseStats.CreateCopy(); // Reset to base stats before applying new modifiers
 
-            if (currentCopyAbility)
+            if (currentCopyAbility) // Check the newly assigned currentCopyAbility (which is newAbilityData)
             {
                 // Apply modifiers from CopyAbilityData
-                Stats = currentCopyAbility.ApplyModifiers(Stats);
+                Stats = currentCopyAbility.ApplyModifiers(Stats); // Uses currentCopyAbility (newAbilityData)
 
                 // Initialize and categorize abilities from CopyAbilityData
-                foreach (AbilityModuleBase abilitySo in currentCopyAbility.Abilities)
+                foreach (AbilityModuleBase abilitySo in
+                         currentCopyAbility.Abilities) // Uses currentCopyAbility (newAbilityData)
                 {
                     if (abilitySo is IAbilityModule abilityInstance)
                     {
                         abilityInstance.Initialize(this);
+
+                        // Apply modifiers defined directly on the AbilityModuleBase ScriptableObject
+                        // This applies to the Stats object that has already been modified by CopyAbilityData
+                        abilitySo.ApplyAbilityDefinedModifiers(Stats);
+
                         _activeAbilities.Add(abilityInstance);
                         if (abilityInstance is IMovementAbilityModule movementAbility)
                         {
                             _movementAbilities.Add(movementAbility);
-                            // Allow movement abilities to make final adjustments to stats
-                            movementAbility.FinalizeStats(Stats);
                         }
 
                         abilityInstance.OnActivate();
@@ -133,22 +121,6 @@ namespace Kirby
             }
             // If no CopyAbilityData, Kirby operates with base stats and no special abilities.
             // You might want a "Default" or "Normal" CopyAbilityData for this case.
-        }
-
-        // Example Input Methods (to be called by an Input Handler)
-        public void SetMoveInput(Vector2 input)
-        {
-            _moveInput = input;
-        }
-
-        public void TriggerJumpPressed()
-        {
-            _jumpInputPressed = true;
-        }
-
-        public void TriggerJumpReleased()
-        {
-            _jumpInputReleased = true;
         }
     }
 }

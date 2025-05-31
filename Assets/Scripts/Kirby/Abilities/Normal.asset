@@ -18,7 +18,7 @@ MonoBehaviour:
   abilityIcon: {fileID: 0}
   statModifiers:
   - value: 12
-    modificationType: 0
+    modificationType: 2
     category: Movement
     statType: 0
   abilityType: 3

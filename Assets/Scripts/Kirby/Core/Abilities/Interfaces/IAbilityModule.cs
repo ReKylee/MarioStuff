@@ -8,7 +8,7 @@ namespace Kirby.Abilities
         /// <summary>
         ///     Unique identifier for this ability component
         /// </summary>
-        string AbilityID { get; } // Property name can remain for now, or be ModuleID
+        string AbilityID { get; }
 
         /// <summary>
         ///     Human-readable name for this ability component
@@ -33,6 +33,6 @@ namespace Kirby.Abilities
         /// <summary>
         ///     Update logic for the ability module
         /// </summary>
-        void ProcessAbility(); // Method name can remain, or be ProcessModuleLogic etc.
+        void ProcessAbility(InputContext inputContext);
     }
 }

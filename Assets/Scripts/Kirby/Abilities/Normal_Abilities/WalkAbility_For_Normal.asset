@@ -12,8 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4244fa020b96faf4094bf07ec47f02f2, type: 3}
   m_Name: WalkAbility_For_Normal
   m_EditorClassIdentifier: 
-  walkSpecificModifiers:
-  - value: 0
-    modificationType: 0
-    category: 
-    statType: 0
+  abilityDefinedModifiers: []

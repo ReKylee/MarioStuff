@@ -5,100 +5,40 @@ namespace Kirby.Abilities
     /// <summary>
     ///     Jump ability for Kirby - handles jumping mechanics including variable height jumps
     /// </summary>
-    public class JumpAbilityModule : AbilityModuleBase, IMovementAbilityModule // Implement IMovementAbility
+    public class JumpAbilityModule : AbilityModuleBase, IMovementAbilityModule
     {
         [Header("Jump Ability Settings")] [SerializeField]
-        private bool allowDoubleJump = true;
-
-        [SerializeField]
-        private float doubleJumpForce = 80f; // This could be a StatType if desired for global modification
-
-        [SerializeField] private float maxJumpHoldTime = 0.3f;
-
-        // Default values for stats that this ability will set if not overridden by CopyAbilityData
-        [Header("Default Stat Values (used if not modified by CopyAbilityData)")] [SerializeField]
-        private float defaultCoyoteTime = 0.1f;
-
-        [SerializeField] private float defaultJumpBufferTime = 0.15f;
-        [SerializeField] private float defaultJumpReleaseGravityMultiplier = 2.5f;
-        private bool _hasDoubleJumped;
+        private float maxJumpHoldTime = 0.3f;
 
         // Runtime state
-        private bool _hasJumped;
-        private bool _isJumpHeld;
-        private float _jumpStartTime;
-        private float _lastGroundedTime;
-        private float _lastJumpPressedTime;
+        private bool _hasJumped; // True if Kirby has performed a jump since last being grounded
+        private float _jumpStartTime; // Time when the current jump started
+        private float _lastGroundedTime; // Last time Kirby was grounded, for coyote time
+        private float _lastJumpPressedTime; // Last time jump input was pressed, for buffering
 
-        public bool IsJumping { get; private set; }
+        public bool
+            IsJumping { get; private set; } // True if Kirby is currently in the upward/controlled phase of a jump
 
-
-        public void FinalizeStats(KirbyStats stats)
+        public Vector2 ProcessMovement(Vector2 currentVelocity, bool isGrounded,
+            InputContext inputContext)
         {
-            // This ability defines specific values for these jump-related stats.
-            // It sets them directly. CopyAbilityData can also modify these if they are StatTypes.
-            // If a StatModifier for these exists in CopyAbilityData, it would have already been applied.
-            // This step can be seen as JumpAbility ensuring its core parameters are set,
-            // potentially overriding what CopyAbilityData set if these weren't StatTypes,
-            // or simply using the values from stats if they were already modified by CopyAbilityData.
-
-            // For simplicity, let's assume these are base operational parameters for this jump ability.
-            // If CopyAbilityData modified CoyoteTime, that value will be used.
-            // If not, this ability doesn't force its defaultCoyoteTime onto the stats.
-            // The stats object (which has been processed by CopyAbilityData) is what we use.
-            // If we wanted this ability to *always* override, we would do:
-            // stats.SetStat(StatType.CoyoteTime, defaultCoyoteTime); 
-            // But for now, we assume CopyAbilityData has precedence for StatTypes.
-            // The serialized fields defaultCoyoteTime etc. are more for reference or if this ability
-            // was used without a CopyAbilityData that modifies these specific stats.
-        }
-
-        public Vector2 ProcessMovement(Vector2 currentVelocity, Vector2 targetVelocity, bool isGrounded)
-        {
-            // This method is now part of IMovementAbility.
-            // It's responsible for modifying velocity during an ongoing jump (e.g., variable jump height).
-            // The actual jump impulse is handled by PerformJump/PerformDoubleJump.
-
-            if (isGrounded) // Handled by OnActivate or a ProcessAbility check for landing
-            {
-                // Reset some jump states on grounding, though much of this is in OnActivate or ProcessAbility
-                _hasJumped = false;
-                _hasDoubleJumped = false;
-                // IsJumping is set to false in ProcessAbility when landing or y velocity < 0
-            }
-
-            // Update timing info for coyote time
-            if (isGrounded)
-            {
-                _lastGroundedTime = Time.time;
-            }
-
             Vector2 modifiedVelocity = currentVelocity;
 
-            if (!IsJumping) // Only apply these physics if a jump is in progress
-                return modifiedVelocity;
-
-            // If jump button released early while still ascending
-            if (!_isJumpHeld && modifiedVelocity.y > 0)
+            // Only apply jump-specific physics if a jump is in progress and controller/stats are valid
+            if (!IsJumping || !Controller || Controller.Stats == null)
             {
-                // Apply increased gravity to cut the jump short
-                // Ensure Controller and Stats are not null
-                if (Controller && Controller.Stats != null)
-                {
-                    // Use the stat from KirbyStats, which might have been modified by CopyAbilityData
-                    float releaseMultiplier = Controller.Stats.GetStat(StatType.JumpReleaseGravityMultiplier);
-                    float extraGravity =
-                        Physics2D.gravity.y * (releaseMultiplier - 1) *
-                        Time.fixedDeltaTime; // Subtract 1 because base gravity is already applied
-
-                    modifiedVelocity.y += extraGravity;
-                }
+                return modifiedVelocity;
             }
 
-            // If exceeded max jump hold time, stop allowing upward influence by holding
-            if (Time.time - _jumpStartTime > maxJumpHoldTime)
+            // Variable jump height: If jump button released OR max jump hold time exceeded, while still ascending
+            if ((!inputContext.JumpHeld || Time.time - _jumpStartTime > maxJumpHoldTime) && modifiedVelocity.y > 0)
             {
-                _isJumpHeld = false; // This primarily affects the variable jump height logic
+                // Apply increased gravity to cut the jump short.
+                // Physics2D.gravity.y is typically negative.
+                // (releaseMultiplier - 1) should be > 0 for a multiplier > 1.
+                // Adding a negative value reduces upward velocity or increases downward velocity.
+                float releaseMultiplier = Controller.Stats.GetStat(StatType.JumpReleaseGravityMultiplier);
+                modifiedVelocity.y += Physics2D.gravity.y * (releaseMultiplier - 1) * Time.fixedDeltaTime;
             }
 
             return modifiedVelocity;
@@ -108,10 +48,11 @@ namespace Kirby.Abilities
         {
             base.OnActivate();
             _hasJumped = false;
-            _hasDoubleJumped = false;
             IsJumping = false;
-            _isJumpHeld = false;
-            _lastGroundedTime = Controller.IsGrounded ? Time.time : -100f; // Initialize lastGroundedTime
+            _lastGroundedTime =
+                Controller != null && Controller.IsGrounded ? Time.time : -100f; // Initialize based on current state
+
+            _lastJumpPressedTime = 0f; // Reset jump pressed time
         }
 
         public override void OnDeactivate()
@@ -120,120 +61,92 @@ namespace Kirby.Abilities
             EndJump(); // Ensure jump state is fully reset
         }
 
-        public override void ProcessAbility()
+        public override void ProcessAbility(InputContext inputContext)
         {
-            base.ProcessAbility();
-            if (!Controller) return;
+            base.ProcessAbility(inputContext);
+            if (!Controller || Controller.Stats == null) return;
 
-            // Check for buffered jumps
-            if (ShouldPerformBufferedJump())
+            // Handle jump pressed logic from inputContext
+            if (inputContext.JumpPressed)
+            {
+                _lastJumpPressedTime = Time.time; // Record time for buffering
+
+                bool isWithinCoyoteTime =
+                    Time.time - _lastGroundedTime <= Controller.Stats.GetStat(StatType.CoyoteTime);
+
+                // Perform jump if:
+                // 1. Grounded OR within coyote time window
+                // 2. Hasn't already performed a jump in the current airtime (_hasJumped is false)
+                if ((Controller.IsGrounded || isWithinCoyoteTime) && !_hasJumped)
+                {
+                    PerformJump();
+                }
+            }
+
+            // Check for buffered jumps (if a jump wasn't initiated by the above block)
+            if (!_hasJumped && ShouldPerformBufferedJump(inputContext))
             {
                 PerformJump();
             }
 
-            // Update IsJumping state based on Y velocity and grounded status
+            // Update IsJumping state (controls variable jump height logic in ProcessMovement)
             if (IsJumping)
             {
-
-                // If we were jumping and now we are falling, or if we landed
+                // Conditions to end the "IsJumping" state (controlled ascent phase):
+                // 1. Kirby starts falling (velocity.y < ~0).
+                // 2. Kirby lands (isGrounded is true, with a small delay to prevent instant state flip on jump start).
                 if (Controller.Rigidbody.linearVelocity.y < -0.01f ||
-                    Controller.IsGrounded &&
-                    Time.time - _jumpStartTime > 0.05f) // Small delay to prevent instant grounding
+                    Controller.IsGrounded && Time.time - _jumpStartTime > 0.05f)
                 {
-                    if (Controller.IsGrounded)
-                    {
-                        _hasJumped = false; // Can jump again from ground
-                        _hasDoubleJumped = false;
-                        IsJumping = false; // No longer in the upward/controlled phase of a jump
-                    }
-                    else if (Controller.Rigidbody.linearVelocity.y < -0.01f) // If just falling, but not yet grounded
-                    {
-                        IsJumping = false; // No longer in the controlled ascent of a jump
-                    }
+                    IsJumping = false;
                 }
             }
 
-            // Update last grounded time if we become grounded
+            // Update grounded state and reset _hasJumped if landed
             if (Controller.IsGrounded)
             {
                 _lastGroundedTime = Time.time;
-                // If we land, reset _hasJumped to allow for a new jump.
-                // This is important if IsJumping was set to false due to falling, but before actually landing.
-                if (!_hasJumped && !IsJumping)
+                if (!IsJumping) // If not in the controlled ascent phase (e.g. landed or just walking)
                 {
-                    // Check !IsJumping to ensure we are not in the middle of a jump action
-                    _hasDoubleJumped = false;
+                    _hasJumped = false; // Reset to allow a new jump
                 }
             }
         }
 
-        public void OnJumpPressed()
+        private bool ShouldPerformBufferedJump(InputContext inputContext)
         {
-            if (Controller == null || Controller.Stats == null) return;
+            if (Controller == null || Controller.Stats == null) return false;
 
-            _lastJumpPressedTime = Time.time;
-            _isJumpHeld = true;
-
-            bool isWithinCoyoteTime = Time.time - _lastGroundedTime <= Controller.Stats.GetStat(StatType.CoyoteTime);
-
-            if ((Controller.IsGrounded || isWithinCoyoteTime) && !_hasJumped)
-            {
-                PerformJump();
-            }
-            else if (allowDoubleJump && _hasJumped && !_hasDoubleJumped)
-            {
-                PerformDoubleJump();
-            }
-        }
-
-        public void OnJumpReleased()
-        {
-            _isJumpHeld = false;
-        }
-
-        private bool ShouldPerformBufferedJump()
-        {
-            if (!Controller || Controller.Stats == null) return false;
+            // Check if jump was pressed recently
             bool isWithinJumpBuffer =
                 Time.time - _lastJumpPressedTime <= Controller.Stats.GetStat(StatType.JumpBufferTime);
 
-            return isWithinJumpBuffer && Controller.IsGrounded && !_hasJumped && !IsJumping;
+            // Conditions for a buffered jump:
+            // 1. Jump input was registered within the buffer time window (_lastJumpPressedTime > 0 ensures it was pressed).
+            // 2. Kirby is now grounded.
+            // 3. Kirby hasn't already jumped in this air/ground cycle (_hasJumped is false).
+            // 4. Kirby is not currently in the controlled ascent phase of a jump (IsJumping is false).
+            return _lastJumpPressedTime > 0f && isWithinJumpBuffer && Controller.IsGrounded && !_hasJumped &&
+                   !IsJumping;
         }
 
         public void PerformJump()
         {
             if (!Controller || Controller.Stats == null) return;
 
-
             float jumpVelocity = Controller.Stats.GetStat(StatType.JumpVelocity);
             Controller.Rigidbody.linearVelocity = new Vector2(Controller.Rigidbody.linearVelocity.x, jumpVelocity);
 
-            _hasJumped = true;
-            IsJumping = true;
-            _isJumpHeld = true; // Start holding jump
-            _jumpStartTime = Time.time;
-            _lastJumpPressedTime = 0f; // Consume buffer
+            _hasJumped = true; // Mark that a jump has been performed in this airtime
+            IsJumping = true; // Enter the controlled ascent phase of the jump
+            _jumpStartTime = Time.time; // Record start time for variable jump height
+            _lastJumpPressedTime = 0f; // Consume the jump press / buffer
         }
 
-        private void PerformDoubleJump()
-        {
-            if (!Controller || Controller.Stats == null) return;
-
-
-            Controller.Rigidbody.linearVelocity =
-                new Vector2(Controller.Rigidbody.linearVelocity.x,
-                    doubleJumpForce); // Uses JumpAbility's own doubleJumpForce
-
-            _hasDoubleJumped = true;
-            IsJumping = true; // Still considered jumping
-            _isJumpHeld = true; // Can also hold double jump for variable height if desired, or set to false
-            _jumpStartTime = Time.time; // Reset jump start time for variable height on double jump
-        }
-
-        public void EndJump()
+        public void EndJump() // Called on deactivate or when jump naturally ends
         {
             IsJumping = false;
-            _isJumpHeld = false;
+            // _hasJumped remains true until Kirby is grounded again.
         }
     }
 }

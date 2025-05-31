@@ -21,6 +21,7 @@ GameObject:
   - component: {fileID: 644453172252926475}
   - component: {fileID: 6721081069958752657}
   - component: {fileID: 8999338311238094815}
+  - component: {fileID: 8366726474898352353}
   m_Layer: 6
   m_Name: Kirby
   m_TagString: Player
@@ -316,6 +317,19 @@ MonoBehaviour:
     inhaleRange: 2
     inhalePower: 1
   currentCopyAbility: {fileID: 11400000, guid: 93d3dd7efcee3664b82913cdc905ad48, type: 2}
+  inputHandler: {fileID: 8366726474898352353}
+--- !u!114 &8366726474898352353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3926891512402252426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 882c547d7da387d4db4fe81ebb334bef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5139845219191842715
 GameObject:
   m_ObjectHideFlags: 0

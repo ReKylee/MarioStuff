@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Kirby.Abilities
@@ -10,18 +9,16 @@ namespace Kirby.Abilities
     public abstract class AbilityModuleBase : ScriptableObject, IAbilityModule
     {
 
-        [Header("Ability-Specific Modifiers")] [SerializeField]
-        private List<StatModifier> abilityDefinedModifiers = new(); // Renamed from inherentModifiers
+        [SerializeField] private List<StatModifier> abilityDefinedModifiers = new();
 
         // Reference to the controller using this ability
         protected KirbyController Controller { get; private set; }
-        protected KirbyGroundCheck GroundCheck { get; private set; }
         protected Rigidbody2D Rigidbody { get; private set; }
 
         // Properties
-        [field: Header("Basic Information")] public string AbilityID { get; } = "ability_id";
+        [field: Header("Basic Information")] public string AbilityID { get; } = "ability_id"; // Initialized
 
-        public string DisplayName { get; } = "Ability Name";
+        public string DisplayName { get; } = "Ability Name"; // Initialized
 
         /// <summary>
         ///     Initialize the ability with controller reference
@@ -29,7 +26,6 @@ namespace Kirby.Abilities
         public virtual void Initialize(KirbyController controller)
         {
             Controller = controller;
-            GroundCheck = controller.GroundCheck;
             Rigidbody = controller.Rigidbody;
         }
 
@@ -38,7 +34,6 @@ namespace Kirby.Abilities
         /// </summary>
         public virtual void OnActivate()
         {
-            // Base implementation does nothing
         }
 
         /// <summary>
@@ -46,22 +41,20 @@ namespace Kirby.Abilities
         /// </summary>
         public virtual void OnDeactivate()
         {
-            // Base implementation does nothing
         }
 
         /// <summary>
         ///     Update logic for the ability
         /// </summary>
-        public virtual void ProcessAbility()
+        public virtual void ProcessAbility(InputContext inputContext)
         {
-            // Base implementation does nothing
         }
 
         /// <summary>
         ///     Applies the stat modifiers defined directly on this ability's ScriptableObject.
         /// </summary>
         /// <param name="stats">The KirbyStats object to modify.</param>
-        public virtual void ApplyAbilityDefinedModifiers(KirbyStats stats)
+        public void ApplyAbilityDefinedModifiers(KirbyStats stats)
         {
             foreach (StatModifier modifier in abilityDefinedModifiers) // Use renamed list
             {
@@ -70,17 +63,5 @@ namespace Kirby.Abilities
                 stats.SetStat(modifier.statType, newValue);
             }
         }
-
-        /// <summary>
-        ///     Returns true if the ability modifies a specific stat (now checks abilityDefinedModifiers)
-        /// </summary>
-        public virtual bool ModifiesStat(StatType statType) =>
-            abilityDefinedModifiers.Any(m => m.statType == statType); // Use renamed list
-
-        /// <summary>
-        ///     Get the modifier value for a specific stat
-        /// </summary>
-        public virtual float GetStatModifier(StatType statType) =>
-            1.0f; // Default is no modification (multiplicative identity)
     }
 }
