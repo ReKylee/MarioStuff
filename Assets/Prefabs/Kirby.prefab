@@ -18,7 +18,8 @@ GameObject:
   - component: {fileID: 3213497405300871309}
   - component: {fileID: 6806085336056450057}
   - component: {fileID: 8779933863594023466}
-  - component: {fileID: 2191520941720311735}
+  - component: {fileID: 644453172252926475}
+  - component: {fileID: 6813473837812024176}
   m_Layer: 6
   m_Name: Kirby
   m_TagString: Player
@@ -241,28 +242,49 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21f52027736242a4b4026739a57e132c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!95 &2191520941720311735
-Animator:
-  serializedVersion: 7
+--- !u!114 &644453172252926475
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3926891512402252426}
   m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: c9a78dc689d94f04a8c060364a492f08, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d4337bea670e194ca021e2a54e31bf8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _playAutomatically: 1
+  _spriteAnimationObject: {fileID: 11400000, guid: b71bad9cf2ac21e478a2aa875304ab44, type: 2}
+  _spriteRenderer: {fileID: 6599342503957296432}
+--- !u!114 &6813473837812024176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3926891512402252426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0038c16c34866b4f9e25c9c0dc0f7e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Graph: {fileID: -5368151231568928108, guid: a3359fbfbf0aff54b96989b36f2a80d3, type: 2}
+  m_BlackboardVariableOverridesList:
+  - rid: 4451810023565689453
+  m_IsInitialised: 0
+  m_IsStarted: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 4451810023565689453
+      type: {class: 'BlackboardVariable`1[[UnityEngine.GameObject, UnityEngine.CoreModule]]', ns: Unity.Behavior, asm: Unity.Behavior}
+      data:
+        GUID:
+          m_Value0: 1
+          m_Value1: 0
+        Name: Self
+        m_Value: {fileID: 0}
 --- !u!1 &5139845219191842715
 GameObject:
   m_ObjectHideFlags: 0
