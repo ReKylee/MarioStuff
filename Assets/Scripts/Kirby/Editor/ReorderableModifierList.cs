@@ -14,12 +14,13 @@ namespace Kirby.Editor
     /// </summary>
     public class ReorderableModifierList
     {
-        private readonly float _elementHeight = EditorGUIUtility.singleLineHeight + 2;
+        private readonly float _elementHeight = EditorGUIUtility.singleLineHeight + 4;
         private readonly ReorderableList _list;
         private readonly SerializedProperty _listProperty;
         private readonly SerializedObject _serializedObject;
         private readonly bool _showAddButton;
         private readonly bool _showHeader;
+        private GUIStyle _headerStyle; // Removed readonly to allow lazy initialization
 
         public ReorderableModifierList(SerializedObject serializedObject, SerializedProperty property,
             bool showHeader = true, bool showAddButton = true)
@@ -29,157 +30,193 @@ namespace Kirby.Editor
             _showHeader = showHeader;
             _showAddButton = showAddButton;
 
-            _list = new ReorderableList(serializedObject, property,
-                true, // draggable
-                showHeader,
-                showAddButton,
-                true); // show remove button
-
-            // Custom drawing for the header
-            _list.drawHeaderCallback = rect =>
+            // Initialize list without the header style
+            _list = new ReorderableList(serializedObject, property, true, showHeader, showAddButton, true)
             {
-                if (!_showHeader) return;
-
-                // Draw column headers
-                float statWidth = rect.width * 0.4f;
-                float typeWidth = rect.width * 0.3f;
-                float valueWidth = rect.width * 0.3f - 24; // Account for remove button
-
-                EditorGUI.LabelField(new Rect(rect.x, rect.y, statWidth, rect.height), "Stat");
-                EditorGUI.LabelField(new Rect(rect.x + statWidth, rect.y, typeWidth, rect.height), "Type");
-                EditorGUI.LabelField(new Rect(rect.x + statWidth + typeWidth, rect.y, valueWidth, rect.height),
-                    "Value");
-            };
-
-            // Custom drawing for each element
-            _list.drawElementCallback = (rect, index, isActive, isFocused) =>
-            {
-                SerializedProperty element = property.GetArrayElementAtIndex(index);
-
-                // Adjust rect for element drawing
-                rect.y += 1;
-                rect.height = EditorGUIUtility.singleLineHeight;
-
-                // Get properties
-                SerializedProperty statTypeProp = element.FindPropertyRelative("statType");
-                SerializedProperty modTypeProp = element.FindPropertyRelative("modificationType");
-                SerializedProperty valueProp = element.FindPropertyRelative("value");
-
-                // Calculate column widths
-                float statWidth = rect.width * 0.4f;
-                float typeWidth = rect.width * 0.3f;
-                float valueWidth = rect.width * 0.3f - 24; // Account for remove button
-
-                // Create rects for each field
-                Rect statRect = new(rect.x, rect.y, statWidth, rect.height);
-                Rect typeRect = new(rect.x + statWidth, rect.y, typeWidth, rect.height);
-                Rect valueRect = new(rect.x + statWidth + typeWidth, rect.y, valueWidth, rect.height);
-
-                // Draw stat type field with popup button
-                string currentStatName = "Select Stat";
-                if (statTypeProp.enumValueIndex >= 0 &&
-                    statTypeProp.enumValueIndex < statTypeProp.enumDisplayNames.Length)
+                drawHeaderCallback = DrawHeaderCallback,
+                drawElementCallback = DrawElementCallback,
+                elementHeightCallback = ElementHeightCallback,
+                onAddCallback = OnAddCallback,
+                drawNoneElementCallback = DrawEmptyListCallback,
+                footerHeight = 20f,
+                headerHeight = 20f,
+                elementHeight = _elementHeight,
+                drawElementBackgroundCallback = (rect, index, isActive, isFocused) =>
                 {
-                    currentStatName =
-                        ObjectNames.NicifyVariableName(statTypeProp.enumDisplayNames[statTypeProp.enumValueIndex]);
-                }
-
-                if (GUI.Button(statRect, currentStatName, EditorStyles.popup))
-                {
-                    // Get list of StatTypes already used in this list, excluding the current element
-                    var usedStatTypesInList = new List<StatType>();
-                    for (int i = 0; i < _listProperty.arraySize; i++)
+                    // Draw a subtle separator line between elements
+                    if (Event.current.type == EventType.Repaint)
                     {
-                        if (i == index) continue; // Skip the current element itself
-                        usedStatTypesInList.Add((StatType)_listProperty.GetArrayElementAtIndex(i)
-                            .FindPropertyRelative("statType").enumValueIndex);
+                        Color lineColor = new(0.5f, 0.5f, 0.5f, 0.2f);
+                        EditorGUI.DrawRect(new Rect(rect.x, rect.y + rect.height - 1, rect.width, 1), lineColor);
+
+                        // Selected element background
+                        if (isActive || isFocused)
+                        {
+                            Color selectedColor = new(0.3f, 0.5f, 0.7f, 0.2f);
+                            EditorGUI.DrawRect(rect, selectedColor);
+                        }
                     }
-
-                    // Use the centralized utility method, passing the statTypeProp of the current element
-                    // and the list of other used stats to filter them out from the selection menu.
-                    StatModifierEditorUtility.ShowStatTypeSelectionMenu(statTypeProp, usedStatTypesInList);
                 }
+            };
+        }
 
-                // Draw modification type dropdown
-                EditorGUI.PropertyField(typeRect, modTypeProp, GUIContent.none);
+        private void DrawHeaderCallback(Rect rect)
+        {
+            if (!_showHeader) return;
 
-                // Draw value field
-                EditorGUI.PropertyField(valueRect, valueProp, GUIContent.none);
+            // Create header style lazily when needed (ensuring EditorStyles is initialized)
+            if (_headerStyle == null)
+            {
+                _headerStyle = new GUIStyle(EditorStyles.boldLabel)
+                {
+                    alignment = TextAnchor.MiddleLeft,
+                    fontStyle = FontStyle.Bold,
+                    fontSize = 11
+                };
+            }
+
+            // Calculate column widths
+            float statWidth = rect.width * 0.4f;
+            float typeWidth = rect.width * 0.3f;
+            float valueWidth = rect.width * 0.3f - 24; // Account for remove button
+
+            // Draw column headers
+            EditorGUI.LabelField(new Rect(rect.x + 8, rect.y, statWidth, rect.height), "Stat", _headerStyle);
+            EditorGUI.LabelField(new Rect(rect.x + statWidth + 4, rect.y, typeWidth, rect.height), "Type",
+                _headerStyle);
+
+            EditorGUI.LabelField(new Rect(rect.x + statWidth + typeWidth + 4, rect.y, valueWidth, rect.height), "Value",
+                _headerStyle);
+
+        }
+
+        private void DrawElementCallback(Rect rect, int index, bool isActive, bool isFocused)
+        {
+            SerializedProperty element = _listProperty.GetArrayElementAtIndex(index);
+
+            // Adjust rect for element drawing with proper vertical alignment
+            rect.y += 2;
+            rect.height = EditorGUIUtility.singleLineHeight;
+
+            // Get properties
+            SerializedProperty statTypeProp = element.FindPropertyRelative("statType");
+            SerializedProperty modTypeProp = element.FindPropertyRelative("modificationType");
+            SerializedProperty valueProp = element.FindPropertyRelative("value");
+
+            // Calculate column widths
+            float statWidth = rect.width * 0.4f;
+            float typeWidth = rect.width * 0.3f;
+            float valueWidth = rect.width * 0.3f - 32; // Account for remove button and spacing
+
+            // Create rects for each field with proper spacing
+            Rect statRect = new(rect.x + 4, rect.y, statWidth - 8, rect.height);
+            Rect typeRect = new(rect.x + statWidth, rect.y, typeWidth - 4, rect.height);
+            Rect valueRect = new(rect.x + statWidth + typeWidth, rect.y, valueWidth, rect.height);
+
+            // Draw stat type field with popup button
+            string currentStatName = "Select Stat";
+            if (statTypeProp.enumValueIndex >= 0 && statTypeProp.enumValueIndex < statTypeProp.enumDisplayNames.Length)
+            {
+                currentStatName =
+                    ObjectNames.NicifyVariableName(statTypeProp.enumDisplayNames[statTypeProp.enumValueIndex]);
+            }
+
+            // Custom button style to match dropdown appearance
+            GUIStyle popupStyle = new(EditorStyles.popup)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                fixedHeight = EditorGUIUtility.singleLineHeight
             };
 
-            // Set element height
-            _list.elementHeight = _elementHeight;
-
-            // Handle adding new elements
-            _list.onAddCallback = list =>
+            if (GUI.Button(statRect, currentStatName, popupStyle))
             {
-                // Get list of all StatTypes currently used in the list to filter them out
-                var existingStatTypesInList = new List<StatType>();
+                // Get list of StatTypes already used in this list, excluding the current element
+                var usedStatTypesInList = new List<StatType>();
                 for (int i = 0; i < _listProperty.arraySize; i++)
                 {
-                    existingStatTypesInList.Add((StatType)_listProperty.GetArrayElementAtIndex(i)
+                    if (i == index) continue; // Skip the current element itself
+                    usedStatTypesInList.Add((StatType)_listProperty.GetArrayElementAtIndex(i)
                         .FindPropertyRelative("statType").enumValueIndex);
                 }
 
-                // Show the stat selection menu, filtering out already used stats.
-                // The menu's callback will handle adding the new element.
-                // We need a dummy SerializedProperty to satisfy ShowStatTypeSelectionMenu, 
-                // but its selection will be used to add a new item.
-                // A more direct approach for adding might be better, but this reuses the menu.
+                // Use the centralized utility method
+                StatModifierEditorUtility.ShowStatTypeSelectionMenu(statTypeProp, usedStatTypesInList);
+            }
 
-                // Create a temporary StatType variable to hold the selection from the menu
-                StatType selectedStatForNewModifier = default;
+            // Draw modification type dropdown
+            EditorGUI.PropertyField(typeRect, modTypeProp, GUIContent.none);
 
-                GenericMenu menu = new();
-                var availableStats = StatModifierEditorUtility.GetAllStatTypes().Except(existingStatTypesInList)
-                    .ToList();
+            // Draw value field
+            EditorGUI.PropertyField(valueRect, valueProp, GUIContent.none);
+        }
 
-                if (availableStats.Count == 0)
+        private float ElementHeightCallback(int index) => _elementHeight;
+
+        private void DrawEmptyListCallback(Rect rect)
+        {
+            EditorGUI.LabelField(rect, "No stat modifiers. Click + to add one.", EditorStyles.centeredGreyMiniLabel);
+        }
+
+        private void OnAddCallback(ReorderableList list)
+        {
+            // Get list of all StatTypes currently used in the list to filter them out
+            var existingStatTypesInList = new List<StatType>();
+            for (int i = 0; i < _listProperty.arraySize; i++)
+            {
+                existingStatTypesInList.Add((StatType)_listProperty.GetArrayElementAtIndex(i)
+                    .FindPropertyRelative("statType").enumValueIndex);
+            }
+
+            // Show the stat selection menu, filtering out already used stats.
+            var availableStats = StatModifierEditorUtility.GetAllStatTypes().Except(existingStatTypesInList).ToList();
+
+            if (availableStats.Count == 0)
+            {
+                EditorUtility.DisplayDialog("No Stats Available",
+                    "All available stat types are already in use in this list.", "OK");
+
+                return;
+            }
+
+            GenericMenu menu = new();
+
+            var statsByCategory = availableStats
+                .GroupBy(KirbyStats.GetStatCategory)
+                .OrderBy(g => g.Key);
+
+            foreach (var group in statsByCategory)
+            {
+                foreach (StatType stat in group.OrderBy(s => s.ToString()))
                 {
-                    EditorUtility.DisplayDialog("No Stats Available",
-                        "All available stat types are already in use in this list.", "OK");
-
-                    return;
-                }
-
-                var statsByCategory = availableStats
-                    .GroupBy(KirbyStats.GetStatCategory)
-                    .OrderBy(g => g.Key);
-
-                foreach (var group in statsByCategory)
-                {
-                    foreach (StatType stat in group.OrderBy(s => s.ToString()))
+                    string statName = ObjectNames.NicifyVariableName(stat.ToString());
+                    menu.AddItem(new GUIContent($"{group.Key}/{statName}"), false, () =>
                     {
-                        string statName = ObjectNames.NicifyVariableName(stat.ToString());
-                        menu.AddItem(new GUIContent($"{group.Key}/{statName}"), false, () =>
-                        {
-                            selectedStatForNewModifier = stat; // Store selected stat
+                        // Add the new element to the list with the selected stat
+                        int newIndex = _listProperty.arraySize;
+                        _listProperty.InsertArrayElementAtIndex(newIndex);
+                        SerializedProperty newElement = _listProperty.GetArrayElementAtIndex(newIndex);
 
-                            // Add the new element to the list with the selected stat
-                            int newIndex = _listProperty.arraySize;
-                            _listProperty.InsertArrayElementAtIndex(newIndex);
-                            SerializedProperty newElement = _listProperty.GetArrayElementAtIndex(newIndex);
+                        newElement.FindPropertyRelative("statType").enumValueIndex = (int)stat;
+                        newElement.FindPropertyRelative("modificationType").enumValueIndex =
+                            (int)StatModifier.ModType.Multiplicative;
 
-                            newElement.FindPropertyRelative("statType").enumValueIndex =
-                                (int)selectedStatForNewModifier;
+                        newElement.FindPropertyRelative("value").floatValue = 1f;
 
-                            newElement.FindPropertyRelative("modificationType").enumValueIndex =
-                                (int)StatModifier.ModType.Multiplicative;
-
-                            newElement.FindPropertyRelative("value").floatValue = 1f;
-                            _serializedObject.ApplyModifiedProperties();
-                        });
-                    }
+                        _serializedObject.ApplyModifiedProperties();
+                    });
                 }
+            }
 
-                menu.ShowAsContext();
-            };
+            menu.ShowAsContext();
         }
 
         public void DoLayoutList()
         {
             _serializedObject.Update();
+
+            // Draw the list directly
             _list.DoLayoutList();
+
             _serializedObject.ApplyModifiedProperties();
         }
     }

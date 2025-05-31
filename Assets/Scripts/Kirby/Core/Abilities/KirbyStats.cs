@@ -11,7 +11,6 @@ namespace Kirby.Abilities
     [AttributeUsage(AttributeTargets.Field)]
     public class KirbyStatAttribute : Attribute
     {
-
         public KirbyStatAttribute(StatType type, string category)
         {
             Type = type;
@@ -27,86 +26,78 @@ namespace Kirby.Abilities
     [Serializable]
     public class KirbyStats
     {
-        // Dictionary mapping stat types to field info - filled via reflection
-        private static Dictionary<StatType, FieldInfo> statFields;
-
-        // Dictionary mapping stat types to their categories
-        private static Dictionary<StatType, string> statCategories;
+        private static Dictionary<StatType, (FieldInfo field, string category)> _statInfoCache;
 
         [Header("Movement Settings")] [KirbyStat(StatType.WalkSpeed, "Movement")]
-        public float walkSpeed = 120f;
+        public float walkSpeed = 3.5f;
 
         [KirbyStat(StatType.RunSpeed, "Movement")]
-        public float runSpeed = 200f;
+        public float runSpeed = 6.0f;
 
         [KirbyStat(StatType.GroundAcceleration, "Movement")]
-        public float groundAcceleration = 500f;
+        public float groundAcceleration = 25f;
 
         [KirbyStat(StatType.GroundDeceleration, "Movement")]
-        public float groundDeceleration = 800f;
+        public float groundDeceleration = 30f;
 
         [KirbyStat(StatType.AirAcceleration, "Movement")]
-        public float airAcceleration = 200f;
+        public float airAcceleration = 15f;
 
         [KirbyStat(StatType.AirDeceleration, "Movement")]
-        public float airDeceleration; // No auto-deceleration in air
+        public float airDeceleration = 2f;
 
         [Header("Jump Settings")] [KirbyStat(StatType.JumpVelocity, "Jump")]
-        public float jumpVelocity = 300f;
+        public float jumpVelocity = 15f;
 
         [KirbyStat(StatType.JumpReleaseGravityMultiplier, "Jump")]
-        public float jumpReleaseGravityMultiplier = 2f;
+        public float jumpReleaseGravityMultiplier = 2.5f;
 
         [KirbyStat(StatType.MaxFallSpeed, "Jump")]
-        public float maxFallSpeed = 500f;
+        public float maxFallSpeed = 12f;
 
         [KirbyStat(StatType.CoyoteTime, "Jump")]
         public float coyoteTime = 0.1f;
 
         [KirbyStat(StatType.JumpBufferTime, "Jump")]
-        public float jumpBufferTime = 0.15f;
+        public float jumpBufferTime = 0.1f;
 
         [Header("Float Settings")] [KirbyStat(StatType.FloatAscendSpeed, "Float")]
-        public float floatAscendSpeed = 70f;
+        public float floatAscendSpeed = 1.5f;
 
         [KirbyStat(StatType.FloatDescentSpeed, "Float")]
-        public float floatDescentSpeed = 40f;
+        public float floatDescentSpeed = 1.0f;
 
         [KirbyStat(StatType.FlapImpulse, "Float")]
-        public float flapImpulse = 85f;
+        public float flapImpulse = 4f;
 
         [KirbyStat(StatType.FlyMaxHeight, "Float")]
-        public float flyMaxHeight = 1000f;
+        public float flyMaxHeight = 10f;
 
         [Header("Physics")] [KirbyStat(StatType.GravityScale, "Physics")]
-        public float gravityScale = 2f;
+        public float gravityScale = 3.0f;
 
         [KirbyStat(StatType.GravityScaleDescending, "Physics")]
-        public float gravityScaleDescending = 1.5f;
-
-        [KirbyStat(StatType.GroundCheckRadius, "Physics")]
-        public float groundCheckRadius = 0.1f;
+        public float gravityScaleDescending = 3.5f;
 
         [Header("Combat")] [KirbyStat(StatType.AttackDamage, "Combat")]
         public float attackDamage = 10f;
 
         [KirbyStat(StatType.AttackRange, "Combat")]
-        public float attackRange = 1f;
+        public float attackRange = 0.5f;
 
         [KirbyStat(StatType.AttackSpeed, "Combat")]
-        public float attackSpeed = 1f;
+        public float attackSpeed = 1.0f;
 
         [Header("Other")] [KirbyStat(StatType.InhaleRange, "Other")]
-        public float inhaleRange = 2f;
+        public float inhaleRange = 2.5f;
 
         [KirbyStat(StatType.InhalePower, "Other")]
-        public float inhalePower = 1f;
+        public float inhalePower = 5f;
 
         // Initialize the reflection cache
         static KirbyStats()
         {
-            statFields = new Dictionary<StatType, FieldInfo>();
-            statCategories = new Dictionary<StatType, string>();
+            _statInfoCache = new Dictionary<StatType, (FieldInfo field, string category)>();
 
             // Get all fields with KirbyStatAttribute
             var fields = typeof(KirbyStats).GetFields(BindingFlags.Public | BindingFlags.Instance);
@@ -115,33 +106,27 @@ namespace Kirby.Abilities
                 KirbyStatAttribute attribute = field.GetCustomAttribute<KirbyStatAttribute>();
                 if (attribute != null)
                 {
-                    statFields[attribute.Type] = field;
-                    statCategories[attribute.Type] = attribute.Category;
+                    _statInfoCache[attribute.Type] = (field, attribute.Category);
                 }
             }
-        } // ReSharper disable Unity.PerformanceAnalysis
+        }
+
         /// <summary>
         ///     Get a stat value by its enum type
         /// </summary>
-        public float GetStat(StatType statType)
-        {
-            if (statFields.TryGetValue(statType, out FieldInfo field))
-            {
-                return (float)field.GetValue(this);
-            }
-
-            Debug.LogWarning($"Stat {statType} not found!");
-            return 1.0f; // Default multiplier
-        }
+        public float GetStat(StatType statType) =>
+            _statInfoCache.TryGetValue(statType, out (FieldInfo field, string category) statData)
+                ? (float)statData.field.GetValue(this)
+                : 1.0f;
 
         /// <summary>
         ///     Set a stat value by its enum type
         /// </summary>
         public void SetStat(StatType statType, float value)
         {
-            if (statFields.TryGetValue(statType, out FieldInfo field))
+            if (_statInfoCache.TryGetValue(statType, out (FieldInfo field, string category) statData))
             {
-                field.SetValue(this, value);
+                statData.field.SetValue(this, value);
             }
             else
             {
@@ -149,18 +134,10 @@ namespace Kirby.Abilities
             }
         }
 
-        /// <summary>
-        ///     Get the category for a stat type
-        /// </summary>
-        public static string GetStatCategory(StatType statType)
-        {
-            if (statCategories.TryGetValue(statType, out string category))
-            {
-                return category;
-            }
+        public static (FieldInfo field, string category) GetStatInfo(StatType statType) =>
+            _statInfoCache.GetValueOrDefault(statType, (null, "Other"));
 
-            return "Other";
-        }
+        public static string GetStatCategory(StatType statType) => GetStatInfo(statType).category;
 
         /// <summary>
         ///     Create a deep copy of these stats
@@ -169,14 +146,41 @@ namespace Kirby.Abilities
         {
             KirbyStats copy = new();
 
-            // Copy all stat fields using reflection
-            foreach (var pair in statFields)
+            foreach (var pair in _statInfoCache)
             {
-                FieldInfo field = pair.Value;
+                FieldInfo field = pair.Value.field;
                 field.SetValue(copy, field.GetValue(this));
             }
 
             return copy;
+        }
+
+        /// <summary>
+        ///     Applies a single StatModifier directly to this KirbyStats instance.
+        ///     This is more efficient as it looks up FieldInfo only once.
+        /// </summary>
+        /// <param name="modifier">The StatModifier to apply.</param>
+        public void ApplySingleModifier(StatModifier modifier)
+        {
+            if (_statInfoCache.TryGetValue(modifier.statType, out (FieldInfo field, string category) statData))
+            {
+                if (statData.field is not null)
+                {
+                    float currentValue = (float)statData.field.GetValue(this);
+                    float newValue = modifier.ApplyModifier(currentValue);
+                    statData.field.SetValue(this, newValue);
+                }
+                else
+                {
+                    Debug.LogWarning(
+                        $"FieldInfo is null for StatType: {modifier.statType} in _statInfoCache during ApplySingleModifier.");
+                }
+            }
+            else
+            {
+                Debug.LogWarning(
+                    $"Trying to apply modifier for unknown stat: {modifier.statType} in ApplySingleModifier.");
+            }
         }
     }
 
@@ -193,16 +197,16 @@ namespace Kirby.Abilities
             Override // Completely override the value
         }
 
-        public float value = 1.0f;
-        public ModType modificationType = ModType.Multiplicative;
-        [HideInInspector] public string category; // Category is auto-set in constructor
+        public float value;
+        public ModType modificationType;
+        [HideInInspector] public string category;
         public StatType statType;
         public StatModifier(StatType statType, float value, ModType modificationType = ModType.Multiplicative)
         {
             this.statType = statType;
             this.value = value;
             this.modificationType = modificationType;
-            category = KirbyStats.GetStatCategory(statType); // Ensure category is set
+            category = KirbyStats.GetStatCategory(statType);
         }
         public float ApplyModifier(float baseValue)
         {

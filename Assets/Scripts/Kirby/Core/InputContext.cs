@@ -14,6 +14,12 @@ namespace Kirby
         public bool AttackReleased; // True for the frame attack was released
         public bool AttackHeld; // True if attack button is currently held down
 
-
+        public void ResetTransientInputs()
+        {
+            JumpPressed = false;
+            JumpReleased = false;
+            AttackPressed = false;
+            AttackReleased = false;
+        }
     }
 }

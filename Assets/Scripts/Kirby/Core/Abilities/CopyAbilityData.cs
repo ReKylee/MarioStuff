@@ -19,7 +19,7 @@ namespace Kirby.Abilities
             Special
         }
 
-        [Header("Contained Abilities")] public List<AbilityModuleBase> Abilities = new();
+        [Header("Contained Abilities")] public List<AbilityModuleBase> abilities = new();
 
         [Header("Basic Info")] public string abilityName = "New Ability";
 
@@ -41,9 +41,7 @@ namespace Kirby.Abilities
             // Apply all stat modifiers from this CopyAbilityData
             foreach (StatModifier modifier in statModifiers)
             {
-                float currentValue = modifiedStats.GetStat(modifier.statType);
-                float newValue = modifier.ApplyModifier(currentValue);
-                modifiedStats.SetStat(modifier.statType, newValue);
+                modifiedStats.ApplySingleModifier(modifier);
             }
 
             return modifiedStats;

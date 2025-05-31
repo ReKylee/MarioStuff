@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9395e2988ac408479ebde04cd2ce0e6, type: 3}
   m_Name: Normal
   m_EditorClassIdentifier: 
-  Abilities:
-  - {fileID: 11400000, guid: 0973018b63964f34aa1766e7cbde72df, type: 2}
+  abilities:
+  - {fileID: 11400000, guid: 7856b6354cfe4734f92b2c89f0651226, type: 2}
+  - {fileID: 11400000, guid: 8f76a58be3544e54ca4fa50319c1f09c, type: 2}
   abilityName: Normal
   abilityIcon: {fileID: 0}
   statModifiers:

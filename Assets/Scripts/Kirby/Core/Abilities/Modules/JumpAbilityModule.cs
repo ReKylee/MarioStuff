@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Kirby.Abilities
+namespace Kirby.Abilities.Modules
 {
     /// <summary>
     ///     Jump ability for Kirby - handles jumping mechanics including variable height jumps
@@ -37,7 +37,7 @@ namespace Kirby.Abilities
                 // Physics2D.gravity.y is typically negative.
                 // (releaseMultiplier - 1) should be > 0 for a multiplier > 1.
                 // Adding a negative value reduces upward velocity or increases downward velocity.
-                float releaseMultiplier = Controller.Stats.GetStat(StatType.JumpReleaseGravityMultiplier);
+                float releaseMultiplier = Controller.Stats.jumpReleaseGravityMultiplier;
                 modifiedVelocity.y += Physics2D.gravity.y * (releaseMultiplier - 1) * Time.fixedDeltaTime;
             }
 
@@ -72,7 +72,7 @@ namespace Kirby.Abilities
                 _lastJumpPressedTime = Time.time; // Record time for buffering
 
                 bool isWithinCoyoteTime =
-                    Time.time - _lastGroundedTime <= Controller.Stats.GetStat(StatType.CoyoteTime);
+                    Time.time - _lastGroundedTime <= Controller.Stats.coyoteTime;
 
                 // Perform jump if:
                 // 1. Grounded OR within coyote time window
@@ -115,14 +115,14 @@ namespace Kirby.Abilities
 
         private bool ShouldPerformBufferedJump(InputContext inputContext)
         {
-            if (Controller == null || Controller.Stats == null) return false;
+            if (!Controller || Controller.Stats == null) return false;
 
             // Check if jump was pressed recently
             bool isWithinJumpBuffer =
-                Time.time - _lastJumpPressedTime <= Controller.Stats.GetStat(StatType.JumpBufferTime);
+                Time.time - _lastJumpPressedTime <= Controller.Stats.jumpBufferTime;
 
             // Conditions for a buffered jump:
-            // 1. Jump input was registered within the buffer time window (_lastJumpPressedTime > 0 ensures it was pressed).
+            // 1. Jump to input was registered within the buffer time window (_lastJumpPressedTime > 0 ensures it was pressed).
             // 2. Kirby is now grounded.
             // 3. Kirby hasn't already jumped in this air/ground cycle (_hasJumped is false).
             // 4. Kirby is not currently in the controlled ascent phase of a jump (IsJumping is false).
@@ -134,8 +134,8 @@ namespace Kirby.Abilities
         {
             if (!Controller || Controller.Stats == null) return;
 
-            float jumpVelocity = Controller.Stats.GetStat(StatType.JumpVelocity);
-            Controller.Rigidbody.linearVelocity = new Vector2(Controller.Rigidbody.linearVelocity.x, jumpVelocity);
+            Controller.Rigidbody.linearVelocity =
+                new Vector2(Controller.Rigidbody.linearVelocity.x, Controller.Stats.jumpVelocity);
 
             _hasJumped = true; // Mark that a jump has been performed in this airtime
             IsJumping = true; // Enter the controlled ascent phase of the jump

@@ -56,11 +56,9 @@ namespace Kirby.Abilities
         /// <param name="stats">The KirbyStats object to modify.</param>
         public void ApplyAbilityDefinedModifiers(KirbyStats stats)
         {
-            foreach (StatModifier modifier in abilityDefinedModifiers) // Use renamed list
+            foreach (StatModifier modifier in abilityDefinedModifiers)
             {
-                float currentValue = stats.GetStat(modifier.statType);
-                float newValue = modifier.ApplyModifier(currentValue);
-                stats.SetStat(modifier.statType, newValue);
+                stats.ApplySingleModifier(modifier);
             }
         }
     }

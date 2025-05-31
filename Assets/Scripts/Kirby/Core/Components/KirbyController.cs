@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GabrielBigardi.SpriteAnimator;
 using Kirby.Abilities;
 using UnityEngine;
@@ -13,11 +14,14 @@ namespace Kirby
 
         [SerializeField] private CopyAbilityData currentCopyAbility;
 
+        [Tooltip(
+            "Assign the InputHandler component here. It will be automatically fetched if on the same GameObject and not assigned.")]
+        [SerializeField]
+        private InputHandler _inputHandler;
+
         private readonly List<IAbilityModule> _activeAbilities = new();
         private readonly List<IMovementAbilityModule> _movementAbilities = new();
         private KirbyGroundCheck _groundCheck;
-
-        private InputHandler _inputHandler; // Reference to the InputHandler
         internal SpriteAnimator Animator;
         internal Rigidbody2D Rigidbody;
         public KirbyStats Stats { get; private set; }
@@ -34,22 +38,28 @@ namespace Kirby
             Animator = GetComponent<SpriteAnimator>();
             Stats = baseStats.CreateCopy();
 
+            if (_inputHandler == null)
+            {
+                _inputHandler = GetComponent<InputHandler>();
+            }
+
+            if (_inputHandler == null)
+            {
+                Debug.LogError(
+                    "InputHandler not assigned and not found on the same GameObject. Please assign it in the KirbyController Inspector.");
+
+                enabled = false; // Disable KirbyController if InputHandler is missing
+                return; // Return to prevent further execution in Awake if handler is missing
+            }
 
             EquipAbility(currentCopyAbility);
-
-            if (!_inputHandler)
-            {
-                Debug.LogError("InputHandler not assigned in KirbyController. Please assign it in the Inspector.");
-                enabled = false; // Disable KirbyController if InputHandler is missing
-            }
         }
 
         private void Update()
         {
+            if (_inputHandler == null) return;
 
-            // Get the current input state from the InputHandler
             CurrentInput = _inputHandler.PollInput();
-
 
             // Process all active abilities, passing the current input context
             foreach (IAbilityModule ability in _activeAbilities)
@@ -57,25 +67,21 @@ namespace Kirby
                 ability.ProcessAbility(CurrentInput);
             }
 
-
+            // Reset transient inputs at the end of the frame
+            InputContext tempInput = CurrentInput; // Structs are value types, this creates a copy
+            tempInput.ResetTransientInputs();
+            CurrentInput = tempInput; // Assign the modified copy back
         }
 
         private void FixedUpdate()
         {
             // Movement processing
-            Vector2 currentVelocity = Rigidbody.linearVelocity;
-            // Base target, abilities can modify. Uses MoveInput from CurrentInput.
-
             // Let movement abilities process/modify velocity
             // They are processed in the order they appear in the CopyAbilityData's Abilities list.
-            foreach (IMovementAbilityModule movementAbility in _movementAbilities)
-            {
-                // Pass InputContext to ProcessMovement
-                currentVelocity =
-                    movementAbility.ProcessMovement(currentVelocity, IsGrounded, CurrentInput);
-            }
-
-            Rigidbody.linearVelocity = currentVelocity;
+            Rigidbody.linearVelocity = _movementAbilities.Aggregate(
+                Rigidbody.linearVelocity,
+                (current, movementAbility) =>
+                    movementAbility.ProcessMovement(current, IsGrounded, CurrentInput));
         }
 
         public void EquipAbility(CopyAbilityData newAbilityData)
@@ -99,7 +105,7 @@ namespace Kirby
 
                 // Initialize and categorize abilities from CopyAbilityData
                 foreach (AbilityModuleBase abilitySo in
-                         currentCopyAbility.Abilities) // Uses currentCopyAbility (newAbilityData)
+                         currentCopyAbility.abilities) // Uses currentCopyAbility (newAbilityData)
                 {
                     if (abilitySo is IAbilityModule abilityInstance)
                     {

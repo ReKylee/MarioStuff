@@ -5,7 +5,7 @@ namespace Kirby.Abilities
     /// <summary>
     ///     Basic walk ability - the default movement ability for Kirby
     /// </summary>
-    public class WalkAbilityModule : AbilityModuleBase, IMovementAbilityModule
+    public class CrouchAbilityModule : AbilityModuleBase, IMovementAbilityModule
     {
         [SerializeField] private bool test;
         public Vector2 ProcessMovement(
