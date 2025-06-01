@@ -13,4 +13,7 @@ MonoBehaviour:
   m_Name: WalkAbilityModule_For_Normal
   m_EditorClassIdentifier: 
   abilityDefinedModifiers: []
+  allowMultipleInstances: 0
+  abilityID: ability_idss
+  displayName: Ability Name
   test: 0

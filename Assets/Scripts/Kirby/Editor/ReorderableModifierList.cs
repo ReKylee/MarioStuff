@@ -210,14 +210,15 @@ namespace Kirby.Editor
             menu.ShowAsContext();
         }
 
-        public void DoLayoutList()
+        public bool DoLayoutList()
         {
             _serializedObject.Update();
 
-            // Draw the list directly
+            // Draw the list directly - using the cached properties where possible
             _list.DoLayoutList();
 
-            _serializedObject.ApplyModifiedProperties();
+            // Apply changes only once at the end
+            return _serializedObject.ApplyModifiedProperties();
         }
     }
 }
