@@ -8,7 +8,6 @@ namespace Kirby.Core.Abilities.Modules
     /// </summary>
     public class CrouchAbilityModule : AbilityModuleBase, IMovementAbilityModule
     {
-        public StatModifier.ModType VelocityApplicationType => StatModifier.ModType.Override;
         public Vector2 ProcessMovement(
             Vector2 currentVelocity, bool isGrounded,
             InputContext inputContext)

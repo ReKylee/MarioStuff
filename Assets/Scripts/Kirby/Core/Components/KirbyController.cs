@@ -16,14 +16,15 @@ namespace Kirby.Core.Components
 
         private readonly List<IAbilityModule> _activeAbilities = new();
         private readonly List<IMovementAbilityModule> _movementAbilities = new();
+        private SpriteAnimator _animator;
 
         private InputContext _currentInput;
-        private InputContext _fixedInput; // New separate input context for FixedUpdate
+        private InputContext _fixedInput;
 
         private KirbyGroundCheck _groundCheck;
 
         private InputHandler _inputHandler;
-        internal SpriteAnimator Animator;
+        internal AnimationPriorityController AnimationController;
         internal Collider2D Collider;
         internal Rigidbody2D Rigidbody;
         public KirbyStats Stats { get; private set; } // Changed from Stats to Stats
@@ -37,7 +38,9 @@ namespace Kirby.Core.Components
             _groundCheck = GetComponent<KirbyGroundCheck>();
             Rigidbody = GetComponent<Rigidbody2D>();
 
-            Animator = GetComponent<SpriteAnimator>();
+            _animator = GetComponent<SpriteAnimator>();
+            AnimationController = new AnimationPriorityController(_animator);
+
             Collider = GetComponent<Collider2D>();
 
             _inputHandler = GetComponent<InputHandler>();
@@ -90,22 +93,22 @@ namespace Kirby.Core.Components
 
             _fixedInput = _inputHandler.FixedInput;
 
-            Vector2 finalVelocity = Rigidbody.linearVelocity;
+            // Play idle animation with lowest priority (0) as a fallback
+            // This ensures something is always playing
+            AnimationController.PlayAnimation("Idle", 0f);
 
-            // Combine velocity adjustments from all movement abilities
-            var horizontalModifiers = _movementAbilities.Select(m => StatModifier.Create(StatType.WalkSpeed,
-                m.ProcessMovement(finalVelocity, IsGrounded, _fixedInput).x, m.VelocityApplicationType)).ToArray();
+            // Use Aggregate to apply movement abilities sequentially
+            // Each ability gets the current velocity and returns the modified velocity
+            Rigidbody.linearVelocity = _movementAbilities.Aggregate(
+                Rigidbody.linearVelocity,
+                (current, movementAbility) =>
+                    movementAbility.ProcessMovement(current, IsGrounded, _fixedInput));
 
-            var verticalModifiers = _movementAbilities.Select(m => StatModifier.Create(StatType.JumpVelocity,
-                m.ProcessMovement(finalVelocity, IsGrounded, _fixedInput).y, m.VelocityApplicationType)).ToArray();
-
-            finalVelocity.x = StatModifier.CombineModifiers(finalVelocity.x, horizontalModifiers);
-            finalVelocity.y = StatModifier.CombineModifiers(finalVelocity.y, verticalModifiers);
-
-            Rigidbody.linearVelocity = finalVelocity;
+            AnimationController.ApplyAnimationForThisFrame();
         }
 
-        public void EquipAbility(CopyAbilityData newAbilityData)
+
+        private void EquipAbility(CopyAbilityData newAbilityData)
         {
             // Deactivate and clear previous abilities
             foreach (IAbilityModule ability in _activeAbilities)
@@ -119,7 +122,7 @@ namespace Kirby.Core.Components
             currentCopyAbility = newAbilityData; // Assign the new ability data
             // Stats are refreshed by RefreshRuntimeStats below
 
-            if (currentCopyAbility != null)
+            if (currentCopyAbility)
             {
                 // Initialize and categorize abilities from CopyAbilityData
                 foreach (AbilityModuleBase abilitySo in currentCopyAbility.abilities)

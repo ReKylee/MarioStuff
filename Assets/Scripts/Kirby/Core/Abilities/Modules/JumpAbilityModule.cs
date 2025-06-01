@@ -11,7 +11,6 @@ namespace Kirby.Abilities.Modules
         private float _jumpStartTime;
         private float _lastGroundedTime;
 
-        public StatModifier.ModType VelocityApplicationType => StatModifier.ModType.Additive;
         public Vector2 ProcessMovement(Vector2 currentVelocity, bool isGrounded, InputContext inputContext)
         {
             if (!Controller || !Controller.Stats) return currentVelocity;

@@ -1,4 +1,3 @@
-using Kirby.Core.Abilities;
 using UnityEngine;
 
 namespace Kirby.Abilities
@@ -23,7 +22,7 @@ namespace Kirby.Abilities
         private int _facingDirection = 1;
         private bool _isRunning;
         private static int GroundLayerMask => _groundLayerMask ??= LayerMask.GetMask("Ground");
-        public StatModifier.ModType VelocityApplicationType => StatModifier.ModType.Additive;
+
 
         public Vector2 ProcessMovement(
             Vector2 currentVelocity, bool isGrounded,
@@ -64,6 +63,8 @@ namespace Kirby.Abilities
             // Calculate new horizontal velocity
             if (hasMovementInput && !IsWallBlocking(_facingDirection))
             {
+                Controller.AnimationController.PlayAnimation(_isRunning ? "Run" : "Walk", 1f);
+
                 // Accelerate towards target velocity
                 float targetVelocity = targetSpeed * _facingDirection;
                 currentVelocity.x = Mathf.MoveTowards(
@@ -85,6 +86,7 @@ namespace Kirby.Abilities
             // Enforce speed limits with cached max speed
             float maxHorizontalSpeed = targetSpeed * SPEED_MULTIPLIER;
             currentVelocity.x = Mathf.Clamp(currentVelocity.x, -maxHorizontalSpeed, maxHorizontalSpeed);
+
 
             return currentVelocity;
         }

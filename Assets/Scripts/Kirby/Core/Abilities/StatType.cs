@@ -20,11 +20,9 @@
         CoyoteTime,
         JumpBufferTime,
 
-        // Float
-        FloatAscendSpeed,
+        // Fly
         FloatDescentSpeed,
         FlapImpulse,
-        FlyMaxHeight,
 
         // Physics
         GravityScale,

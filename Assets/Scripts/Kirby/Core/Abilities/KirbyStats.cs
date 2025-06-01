@@ -61,17 +61,12 @@ namespace Kirby.Abilities
         [KirbyStat(StatType.JumpBufferTime, "Jump")]
         public float jumpBufferTime = 0.1f;
 
-        [Header("Float Settings")] [KirbyStat(StatType.FloatAscendSpeed, "Float")]
-        public float floatAscendSpeed = 2.0f;
+        [Header("Fly Settings")] [KirbyStat(StatType.FlapImpulse, "Float")]
+        public float flapImpulse = 5.5f;
 
         [KirbyStat(StatType.FloatDescentSpeed, "Float")]
         public float floatDescentSpeed = 1.0f;
 
-        [KirbyStat(StatType.FlapImpulse, "Float")]
-        public float flapImpulse = 5.5f;
-
-        [KirbyStat(StatType.FlyMaxHeight, "Float")]
-        public float flyMaxHeight = 10f;
 
         [Header("Physics")] [KirbyStat(StatType.GravityScale, "Physics")]
         public float gravityScale = 2.8f;
@@ -111,19 +106,20 @@ namespace Kirby.Abilities
         /// <summary>
         ///     Get a stat value by its enum type
         /// </summary>
-        public float GetStat(StatType statType) =>
-            _statInfoCache.TryGetValue(statType, out (FieldInfo field, string category) statData)
-                ? (float)statData.field.GetValue(this)
-                : 1.0f; // ReSharper disable Unity.PerformanceAnalysis
-        // ReSharper disable Unity.PerformanceAnalysis
+        public float GetStat(StatType statType)
+        {
+            (FieldInfo field, _) = GetStatInfo(statType);
+            return field != null ? (float)field.GetValue(this) : 1.0f;
+        } // ReSharper disable Unity.PerformanceAnalysis
         /// <summary>
         ///     Set a stat value by its enum type
         /// </summary>
         public void SetStat(StatType statType, float value)
         {
-            if (_statInfoCache.TryGetValue(statType, out (FieldInfo field, string category) statData))
+            (FieldInfo field, _) = GetStatInfo(statType);
+            if (field != null)
             {
-                statData.field.SetValue(this, value);
+                field.SetValue(this, value);
             }
             else
             {
@@ -135,20 +131,5 @@ namespace Kirby.Abilities
             _statInfoCache.GetValueOrDefault(statType, (null, "Other"));
 
         public static string GetStatCategory(StatType statType) => GetStatInfo(statType).category;
-
-        /// <summary>
-        ///     Applies a single StatModifier directly to this KirbyStats instance.
-        ///     This is more efficient as it looks up FieldInfo only once.
-        /// </summary>
-        /// <param name="modifier">The StatModifier to apply.</param>
-        public void ApplySingleModifier(StatModifier modifier)
-        {
-            if (_statInfoCache.TryGetValue(modifier.StatType, out (FieldInfo field, string category) statData))
-            {
-                float currentValue = (float)statData.field.GetValue(this);
-                statData.field.SetValue(this,
-                    StatModifier.ApplyModifier(currentValue, modifier.Value, modifier.ModificationType));
-            }
-        }
     }
 }
