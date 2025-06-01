@@ -23,10 +23,9 @@ namespace Kirby.Core.Components
         [SerializeField] private Vector2 groundCheckSize = new(0.8f, 0.1f);
         [SerializeField] private bool drawGizmos = true;
 
-        [Header("Slope Settings")] [SerializeField] [Range(0, 89)]
-        private float maxSlopeAngle = 45f;
+        [Header("Slope Settings")] [SerializeField] [Range(1, 35)]
+        private float slopeThreshold = 10f;
 
-        [SerializeField] [Range(1, 35)] private float slopeThreshold = 10f;
         [SerializeField] [Range(35, 89)] private float deepSlopeThreshold = 35f;
 
 
@@ -122,7 +121,6 @@ namespace Kirby.Core.Components
 
             Vector2 boxPosition = (Vector2)transform.position + groundCheckOffset;
 
-            // Use BoxCast to get both collision and normal information in one call
             RaycastHit2D hit = Physics2D.BoxCast(
                 boxPosition,
                 groundCheckSize,

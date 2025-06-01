@@ -15,7 +15,7 @@
 
         // Jump
         JumpVelocity,
-        JumpReleaseGravityMultiplier,
+        JumpReleaseVelocityMultiplier,
         MaxFallSpeed,
         CoyoteTime,
         JumpBufferTime,
@@ -28,7 +28,6 @@
 
         // Physics
         GravityScale,
-        GravityScaleDescending,
 
         // Combat
         AttackDamage,

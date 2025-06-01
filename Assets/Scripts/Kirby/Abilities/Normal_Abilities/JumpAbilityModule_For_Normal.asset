@@ -16,4 +16,6 @@ MonoBehaviour:
   allowMultipleInstances: 0
   abilityID: ability_id
   displayName: Ability Name
-  maxJumpHoldTime: 0.3
+  minJumpVelocity: 3
+  maxJumpVelocity: 6
+  jumpReleaseGravityMultiplier: 2.5

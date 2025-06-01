@@ -107,7 +107,7 @@ namespace Kirby.Abilities
         public KirbyStats ApplyModifiers(KirbyStats baseStats)
         {
             // Create a copy of the base stats
-            KirbyStats modifiedStats = baseStats.CreateCopy();
+            KirbyStats modifiedStats = Instantiate(baseStats);
 
             // Apply all stat modifiers from this CopyAbilityData
             foreach (StatModifier modifier in statModifiers)

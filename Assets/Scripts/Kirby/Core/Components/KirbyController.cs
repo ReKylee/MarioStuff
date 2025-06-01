@@ -10,21 +10,22 @@ namespace Kirby.Core.Components
     {
 
         [Header("Core Stats & Abilities")] [SerializeField]
-        private KirbyStats baseStats = new(); // Default stats
+        private KirbyStats baseStats; // Changed: No longer new(), assign in Inspector
 
         [SerializeField] private CopyAbilityData currentCopyAbility;
 
         private readonly List<IAbilityModule> _activeAbilities = new();
         private readonly List<IMovementAbilityModule> _movementAbilities = new();
+
+        private InputContext _currentInput;
+
         private KirbyGroundCheck _groundCheck;
+
+        private InputHandler _inputHandler;
         internal SpriteAnimator Animator;
         internal Collider2D Collider;
-
-
-        internal InputHandler InputHandler;
         internal Rigidbody2D Rigidbody;
-        public KirbyStats Stats { get; private set; }
-        public InputContext CurrentInput { get; private set; }
+        public KirbyStats Stats { get; private set; } // Changed from Stats to Stats
 
         public bool IsGrounded => _groundCheck?.IsGrounded ?? false;
         public float GroundSlopeAngle => _groundCheck?.GroundSlopeAngle ?? 0;
@@ -34,13 +35,14 @@ namespace Kirby.Core.Components
         {
             _groundCheck = GetComponent<KirbyGroundCheck>();
             Rigidbody = GetComponent<Rigidbody2D>();
+
             Animator = GetComponent<SpriteAnimator>();
             Collider = GetComponent<Collider2D>();
-            Stats = baseStats.CreateCopy();
+            // Stats will be initialized by RefreshRuntimeStats, called from EquipAbility or Awake/Update.
 
-            InputHandler = GetComponent<InputHandler>();
+            _inputHandler = GetComponent<InputHandler>();
 
-            if (!InputHandler)
+            if (!_inputHandler)
             {
                 Debug.LogError(
                     "InputHandler not assigned and not found on the same GameObject. Please assign it in the KirbyController Inspector.");
@@ -49,25 +51,39 @@ namespace Kirby.Core.Components
                 return;
             }
 
+            // Initial stat setup. EquipAbility will call RefreshRuntimeStats.
+            // Ensure Stats is initialized before EquipAbility if baseStats is available.
+            if (baseStats != null)
+            {
+                Stats = Instantiate(baseStats); // Initial copy
+            }
+            else
+            {
+                Debug.LogError(
+                    "KirbyController: baseStats is not assigned in the Inspector. Creating a default KirbyStats instance.");
+
+                Stats = ScriptableObject.CreateInstance<KirbyStats>(); // Fallback
+            }
+
             EquipAbility(currentCopyAbility);
         }
 
         private void Update()
         {
-            if (InputHandler == null) return;
+            if (!_inputHandler) return;
 
-            CurrentInput = InputHandler.PollInput();
+            // Refresh runtime stats to reflect any changes to baseStats asset in inspector
+            // and ensure ability modifiers are correctly applied.
+            RefreshRuntimeStats();
+
+            _currentInput = _inputHandler.CurrentInput();
 
             // Process all active abilities, passing the current input context
             foreach (IAbilityModule ability in _activeAbilities)
             {
-                ability.ProcessAbility(CurrentInput);
+                ability.ProcessAbility(_currentInput);
             }
 
-            // Reset transient inputs at the end of the frame
-            InputContext tempInput = CurrentInput; // Structs are value types, this creates a copy
-            tempInput.ResetTransientInputs();
-            CurrentInput = tempInput; // Assign the modified copy back
         }
 
         private void FixedUpdate()
@@ -78,7 +94,7 @@ namespace Kirby.Core.Components
             Rigidbody.linearVelocity = _movementAbilities.Aggregate(
                 Rigidbody.linearVelocity,
                 (current, movementAbility) =>
-                    movementAbility.ProcessMovement(current, IsGrounded, CurrentInput));
+                    movementAbility.ProcessMovement(current, IsGrounded, _currentInput));
         }
 
         public void EquipAbility(CopyAbilityData newAbilityData)
@@ -93,25 +109,16 @@ namespace Kirby.Core.Components
             _movementAbilities.Clear();
 
             currentCopyAbility = newAbilityData; // Assign the new ability data
-            Stats = baseStats.CreateCopy(); // Reset to base stats before applying new modifiers
+            // Stats are refreshed by RefreshRuntimeStats below
 
-            if (currentCopyAbility) // Check the newly assigned currentCopyAbility (which is newAbilityData)
+            if (currentCopyAbility != null)
             {
-                // Apply modifiers from CopyAbilityData
-                Stats = currentCopyAbility.ApplyModifiers(Stats); // Uses currentCopyAbility (newAbilityData)
-
                 // Initialize and categorize abilities from CopyAbilityData
-                foreach (AbilityModuleBase abilitySo in
-                         currentCopyAbility.abilities) // Uses currentCopyAbility (newAbilityData)
+                foreach (AbilityModuleBase abilitySo in currentCopyAbility.abilities)
                 {
                     if (abilitySo is IAbilityModule abilityInstance)
                     {
                         abilityInstance.Initialize(this);
-
-                        // Apply modifiers defined directly on the AbilityModuleBase ScriptableObject
-                        // This applies to the Stats object that has already been modified by CopyAbilityData
-                        abilitySo.ApplyAbilityDefinedModifiers(Stats);
-
                         _activeAbilities.Add(abilityInstance);
                         if (abilityInstance is IMovementAbilityModule movementAbility)
                         {
@@ -120,10 +127,69 @@ namespace Kirby.Core.Components
 
                         abilityInstance.OnActivate();
                     }
+                    else
+                    {
+                        Debug.LogWarning(
+                            $"AbilityModule '{abilitySo.name}' does not implement IAbilityModule and won't be activated.",
+                            this);
+                    }
                 }
             }
-            // If no CopyAbilityData, Kirby operates with base stats and no special abilities.
-            // You might want a "Default" or "Normal" CopyAbilityData for this case.
+
+            RefreshRuntimeStats(); // This will calculate and apply all stats
+        }
+
+        /// <summary>
+        ///     Refreshes Stats based on baseStats and any active copy ability.
+        ///     This allows live updates if baseStats asset is changed in the inspector.
+        /// </summary>
+        private void RefreshRuntimeStats()
+        {
+            if (!baseStats)
+            {
+                if (!Stats) // Ensure Stats is not null
+                {
+                    Stats = ScriptableObject.CreateInstance<KirbyStats>();
+                }
+
+                // ApplyStatsToComponents might be needed here if there's a default state for components
+                ApplyStatsToComponents();
+                return;
+            }
+
+            if (currentCopyAbility)
+            {
+                // ApplyModifiers from CopyAbilityData should return a NEW INSTANCE based on baseStats
+                Stats = currentCopyAbility.ApplyModifiers(baseStats);
+
+                // Apply modifiers defined directly on the AbilityModuleBase ScriptableObjects
+                // These are applied to the Stats instance that already has CopyAbilityData modifiers
+                foreach (AbilityModuleBase abilitySo in currentCopyAbility.abilities)
+                {
+                    abilitySo.ApplyAbilityDefinedModifiers(Stats);
+                }
+            }
+            else
+            {
+                // No ability, Stats is a direct instance/clone of baseStats
+                Stats = Instantiate(baseStats);
+            }
+
+            // Apply stats that directly affect components
+            ApplyStatsToComponents();
+        }
+
+
+        /// <summary>
+        ///     Applies stats that directly affect components like Rigidbody
+        /// </summary>
+        private void ApplyStatsToComponents()
+        {
+            if (Stats is null) return; // Changed from Stats to Stats
+            if (Rigidbody)
+            {
+                Rigidbody.gravityScale = Stats.gravityScale; // Changed from Stats to Stats
+            }
         }
     }
 }

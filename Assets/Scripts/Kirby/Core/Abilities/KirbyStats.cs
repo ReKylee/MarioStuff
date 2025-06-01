@@ -23,10 +23,10 @@ namespace Kirby.Abilities
     /// <summary>
     ///     Simple stat value container - used for original values and modified values
     /// </summary>
-    [Serializable]
-    public class KirbyStats
+    [CreateAssetMenu(fileName = "NewKirbyStats", menuName = "Kirby/Kirby Stats")]
+    public class KirbyStats : ScriptableObject
     {
-        private static Dictionary<StatType, (FieldInfo field, string category)> _statInfoCache;
+        private static readonly Dictionary<StatType, (FieldInfo field, string category)> _statInfoCache;
 
         [Header("Movement Settings")] [KirbyStat(StatType.WalkSpeed, "Movement")]
         public float walkSpeed = 4.5f;
@@ -47,10 +47,10 @@ namespace Kirby.Abilities
         public float airDeceleration = 5f;
 
         [Header("Jump Settings")] [KirbyStat(StatType.JumpVelocity, "Jump")]
-        public float jumpVelocity = 18f;
+        public float jumpVelocity = 4f;
 
-        [KirbyStat(StatType.JumpReleaseGravityMultiplier, "Jump")]
-        public float jumpReleaseGravityMultiplier = 2.0f;
+        [KirbyStat(StatType.JumpReleaseVelocityMultiplier, "Jump")]
+        public float jumpReleaseVelocityMultiplier = 0.5f;
 
         [KirbyStat(StatType.MaxFallSpeed, "Jump")]
         public float maxFallSpeed = 15f;
@@ -75,9 +75,6 @@ namespace Kirby.Abilities
 
         [Header("Physics")] [KirbyStat(StatType.GravityScale, "Physics")]
         public float gravityScale = 3.0f;
-
-        [KirbyStat(StatType.GravityScaleDescending, "Physics")]
-        public float gravityScaleDescending = 3.5f;
 
         [Header("Combat")] [KirbyStat(StatType.AttackDamage, "Combat")]
         public float attackDamage = 10f;
@@ -140,22 +137,6 @@ namespace Kirby.Abilities
         public static string GetStatCategory(StatType statType) => GetStatInfo(statType).category;
 
         /// <summary>
-        ///     Create a deep copy of these stats
-        /// </summary>
-        public KirbyStats CreateCopy()
-        {
-            KirbyStats copy = new();
-
-            foreach (var pair in _statInfoCache)
-            {
-                FieldInfo field = pair.Value.field;
-                field.SetValue(copy, field.GetValue(this));
-            }
-
-            return copy;
-        }
-
-        /// <summary>
         ///     Applies a single StatModifier directly to this KirbyStats instance.
         ///     This is more efficient as it looks up FieldInfo only once.
         /// </summary>
@@ -170,17 +151,9 @@ namespace Kirby.Abilities
                     float newValue = modifier.ApplyModifier(currentValue);
                     statData.field.SetValue(this, newValue);
                 }
-                else
-                {
-                    Debug.LogWarning(
-                        $"FieldInfo is null for StatType: {modifier.statType} in _statInfoCache during ApplySingleModifier.");
-                }
+
             }
-            else
-            {
-                Debug.LogWarning(
-                    $"Trying to apply modifier for unknown stat: {modifier.statType} in ApplySingleModifier.");
-            }
+
         }
     }
 

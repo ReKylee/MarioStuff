@@ -116,14 +116,14 @@ Rigidbody2D:
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_GravityScale: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: cbd7274e5b294044f943331351fd5e48, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
@@ -289,7 +289,6 @@ MonoBehaviour:
   groundCheckOffset: {x: 0, y: -0.4}
   groundCheckSize: {x: 0.65, y: 0.3}
   drawGizmos: 1
-  maxSlopeAngle: 45
   slopeThreshold: 10
   deepSlopeThreshold: 35
 --- !u!114 &8999338311238094815
@@ -304,29 +303,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ba1a343a8fc1d94d87824e9c3ae83dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseStats:
-    walkSpeed: 4.5
-    runSpeed: 7.5
-    groundAcceleration: 40
-    groundDeceleration: 60
-    airAcceleration: 20
-    airDeceleration: 5
-    jumpVelocity: 18
-    jumpReleaseGravityMultiplier: 2
-    maxFallSpeed: 15
-    coyoteTime: 0.08
-    jumpBufferTime: 0.15
-    floatAscendSpeed: 1.5
-    floatDescentSpeed: 1
-    flapImpulse: 4
-    flyMaxHeight: 10
-    gravityScale: 3
-    gravityScaleDescending: 3.5
-    attackDamage: 10
-    attackRange: 0.5
-    attackSpeed: 1
-    inhaleRange: 2.5
-    inhalePower: 5
+  baseStats: {fileID: 11400000, guid: 04a28ba00a6144d4c9c8eac58736b7ab, type: 2}
   currentCopyAbility: {fileID: 11400000, guid: 93d3dd7efcee3664b82913cdc905ad48, type: 2}
 --- !u!1 &5139845219191842715
 GameObject:
