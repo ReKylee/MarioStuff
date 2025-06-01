@@ -29,37 +29,37 @@ namespace Kirby.Abilities
         private static Dictionary<StatType, (FieldInfo field, string category)> _statInfoCache;
 
         [Header("Movement Settings")] [KirbyStat(StatType.WalkSpeed, "Movement")]
-        public float walkSpeed = 3.5f;
+        public float walkSpeed = 4.5f;
 
         [KirbyStat(StatType.RunSpeed, "Movement")]
-        public float runSpeed = 6.0f;
+        public float runSpeed = 7.5f;
 
         [KirbyStat(StatType.GroundAcceleration, "Movement")]
-        public float groundAcceleration = 25f;
+        public float groundAcceleration = 40f;
 
         [KirbyStat(StatType.GroundDeceleration, "Movement")]
-        public float groundDeceleration = 30f;
+        public float groundDeceleration = 60f;
 
         [KirbyStat(StatType.AirAcceleration, "Movement")]
-        public float airAcceleration = 15f;
+        public float airAcceleration = 20f;
 
         [KirbyStat(StatType.AirDeceleration, "Movement")]
-        public float airDeceleration = 2f;
+        public float airDeceleration = 5f;
 
         [Header("Jump Settings")] [KirbyStat(StatType.JumpVelocity, "Jump")]
-        public float jumpVelocity = 15f;
+        public float jumpVelocity = 18f;
 
         [KirbyStat(StatType.JumpReleaseGravityMultiplier, "Jump")]
-        public float jumpReleaseGravityMultiplier = 2.5f;
+        public float jumpReleaseGravityMultiplier = 2.0f;
 
         [KirbyStat(StatType.MaxFallSpeed, "Jump")]
-        public float maxFallSpeed = 12f;
+        public float maxFallSpeed = 15f;
 
         [KirbyStat(StatType.CoyoteTime, "Jump")]
-        public float coyoteTime = 0.1f;
+        public float coyoteTime = 0.08f;
 
         [KirbyStat(StatType.JumpBufferTime, "Jump")]
-        public float jumpBufferTime = 0.1f;
+        public float jumpBufferTime = 0.15f;
 
         [Header("Float Settings")] [KirbyStat(StatType.FloatAscendSpeed, "Float")]
         public float floatAscendSpeed = 1.5f;

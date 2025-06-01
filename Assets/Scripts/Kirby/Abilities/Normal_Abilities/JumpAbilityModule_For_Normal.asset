@@ -13,4 +13,7 @@ MonoBehaviour:
   m_Name: JumpAbilityModule_For_Normal
   m_EditorClassIdentifier: 
   abilityDefinedModifiers: []
+  allowMultipleInstances: 0
+  abilityID: ability_id
+  displayName: Ability Name
   maxJumpHoldTime: 0.3

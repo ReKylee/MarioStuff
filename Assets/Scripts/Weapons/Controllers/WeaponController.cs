@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using InputSystem;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Weapons.Interfaces;
@@ -72,7 +73,7 @@ namespace Weapons.Controllers
             // Initialize with the input actions instance
             public void Initialize(InputSystem_Actions inputActions)
             {
-                if (weaponComponent == null)
+                if (!weaponComponent)
                 {
                     Debug.LogError($"Weapon component is null for weapon '{weaponName}'.");
                     return;
@@ -85,12 +86,12 @@ namespace Weapons.Controllers
                 }
 
                 // Find the action using the full path from the asset.
-                _action = inputActions.asset.FindAction(actionName, throwIfNotFound: false);
+                _action = inputActions.asset.FindAction(actionName);
 
                 if (_action == null)
                 {
                     Debug.LogError($"Action '{actionName}' not found for weapon '{weaponName}'. " +
-                                   $"Ensure the action path (e.g., 'Player/Fire') is correct and exists in the Input Actions asset.");
+                                   "Ensure the action path (e.g., 'Player/Fire') is correct and exists in the Input Actions asset.");
                 }
             }
 

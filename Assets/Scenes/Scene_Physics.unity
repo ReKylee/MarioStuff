@@ -6642,7 +6642,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1171389828}
   - component: {fileID: 1171389827}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Slope
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -31840,13 +31840,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1887416126}
     m_Modifications:
-    - target: {fileID: 2744869299825136038, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
-      propertyPath: m_Mass
-      value: 0.38484508
-      objectReference: {fileID: 0}
-    - target: {fileID: 2744869299825136038, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
-      propertyPath: m_UseAutoMass
-      value: 0
+    - target: {fileID: 2668669965725753301, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2744869299825136038, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: m_UseFullKinematicContacts
@@ -31966,7 +31962,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3890553521520257432, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.23
+      value: 1.94
       objectReference: {fileID: 0}
     - target: {fileID: 3890553521520257432, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: m_LocalPosition.z
@@ -32011,6 +32007,10 @@ PrefabInstance:
     - target: {fileID: 6599342503957296432, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: m_DrawMode
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6721081069958752657, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+      propertyPath: groundCheckDistance
+      value: 0.34
       objectReference: {fileID: 0}
     - target: {fileID: 6813473837812024176, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: managedReferences[4451810023565689453].m_Value

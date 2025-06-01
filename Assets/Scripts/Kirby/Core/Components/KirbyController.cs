@@ -4,7 +4,7 @@ using GabrielBigardi.SpriteAnimator;
 using Kirby.Abilities;
 using UnityEngine;
 
-namespace Kirby
+namespace Kirby.Core.Components
 {
     public class KirbyController : MonoBehaviour
     {
@@ -14,15 +14,14 @@ namespace Kirby
 
         [SerializeField] private CopyAbilityData currentCopyAbility;
 
-        [Tooltip(
-            "Assign the InputHandler component here. It will be automatically fetched if on the same GameObject and not assigned.")]
-        [SerializeField]
-        private InputHandler _inputHandler;
-
         private readonly List<IAbilityModule> _activeAbilities = new();
         private readonly List<IMovementAbilityModule> _movementAbilities = new();
         private KirbyGroundCheck _groundCheck;
         internal SpriteAnimator Animator;
+        internal Collider2D Collider;
+
+
+        internal InputHandler InputHandler;
         internal Rigidbody2D Rigidbody;
         public KirbyStats Stats { get; private set; }
         public InputContext CurrentInput { get; private set; }
@@ -36,20 +35,18 @@ namespace Kirby
             _groundCheck = GetComponent<KirbyGroundCheck>();
             Rigidbody = GetComponent<Rigidbody2D>();
             Animator = GetComponent<SpriteAnimator>();
+            Collider = GetComponent<Collider2D>();
             Stats = baseStats.CreateCopy();
 
-            if (_inputHandler == null)
-            {
-                _inputHandler = GetComponent<InputHandler>();
-            }
+            InputHandler = GetComponent<InputHandler>();
 
-            if (_inputHandler == null)
+            if (!InputHandler)
             {
                 Debug.LogError(
                     "InputHandler not assigned and not found on the same GameObject. Please assign it in the KirbyController Inspector.");
 
-                enabled = false; // Disable KirbyController if InputHandler is missing
-                return; // Return to prevent further execution in Awake if handler is missing
+                enabled = false;
+                return;
             }
 
             EquipAbility(currentCopyAbility);
@@ -57,9 +54,9 @@ namespace Kirby
 
         private void Update()
         {
-            if (_inputHandler == null) return;
+            if (InputHandler == null) return;
 
-            CurrentInput = _inputHandler.PollInput();
+            CurrentInput = InputHandler.PollInput();
 
             // Process all active abilities, passing the current input context
             foreach (IAbilityModule ability in _activeAbilities)

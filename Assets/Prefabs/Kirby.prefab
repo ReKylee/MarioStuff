@@ -19,9 +19,9 @@ GameObject:
   - component: {fileID: 6806085336056450057}
   - component: {fileID: 8779933863594023466}
   - component: {fileID: 644453172252926475}
+  - component: {fileID: 8366726474898352353}
   - component: {fileID: 6721081069958752657}
   - component: {fileID: 8999338311238094815}
-  - component: {fileID: 8366726474898352353}
   m_Layer: 6
   m_Name: Kirby
   m_TagString: Player
@@ -259,6 +259,18 @@ MonoBehaviour:
   _playAutomatically: 1
   _spriteAnimationObject: {fileID: 11400000, guid: b71bad9cf2ac21e478a2aa875304ab44, type: 2}
   _spriteRenderer: {fileID: 6599342503957296432}
+--- !u!114 &8366726474898352353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3926891512402252426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 882c547d7da387d4db4fe81ebb334bef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &6721081069958752657
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -273,9 +285,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   groundLayers:
     serializedVersion: 2
-    m_Bits: 0
-  groundCheckSize: {x: 0.8, y: 0.1}
-  groundCheckDistance: 0.1
+    m_Bits: 8
+  groundCheckOffset: {x: 0, y: -0.4}
+  groundCheckSize: {x: 0.65, y: 0.3}
   drawGizmos: 1
   maxSlopeAngle: 45
   slopeThreshold: 10
@@ -293,43 +305,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseStats:
-    walkSpeed: 120
-    runSpeed: 200
-    groundAcceleration: 500
-    groundDeceleration: 800
-    airAcceleration: 200
-    airDeceleration: 0
-    jumpVelocity: 300
+    walkSpeed: 4.5
+    runSpeed: 7.5
+    groundAcceleration: 40
+    groundDeceleration: 60
+    airAcceleration: 20
+    airDeceleration: 5
+    jumpVelocity: 18
     jumpReleaseGravityMultiplier: 2
-    maxFallSpeed: 500
-    coyoteTime: 0.1
+    maxFallSpeed: 15
+    coyoteTime: 0.08
     jumpBufferTime: 0.15
-    floatAscendSpeed: 70
-    floatDescentSpeed: 40
-    flapImpulse: 85
-    flyMaxHeight: 1000
-    gravityScale: 2
-    gravityScaleDescending: 1.5
-    groundCheckRadius: 0.1
+    floatAscendSpeed: 1.5
+    floatDescentSpeed: 1
+    flapImpulse: 4
+    flyMaxHeight: 10
+    gravityScale: 3
+    gravityScaleDescending: 3.5
     attackDamage: 10
-    attackRange: 1
+    attackRange: 0.5
     attackSpeed: 1
-    inhaleRange: 2
-    inhalePower: 1
+    inhaleRange: 2.5
+    inhalePower: 5
   currentCopyAbility: {fileID: 11400000, guid: 93d3dd7efcee3664b82913cdc905ad48, type: 2}
-  inputHandler: {fileID: 8366726474898352353}
---- !u!114 &8366726474898352353
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3926891512402252426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 882c547d7da387d4db4fe81ebb334bef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &5139845219191842715
 GameObject:
   m_ObjectHideFlags: 0

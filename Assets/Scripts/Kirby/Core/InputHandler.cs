@@ -1,6 +1,7 @@
+using InputSystem;
 using UnityEngine;
 
-namespace Kirby
+namespace Kirby.Core
 {
     public class InputHandler : MonoBehaviour
     {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Kirby.Core.Components;
 using UnityEngine;
 
 namespace Kirby.Abilities

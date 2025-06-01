@@ -29,7 +29,6 @@
         // Physics
         GravityScale,
         GravityScaleDescending,
-        GroundCheckRadius,
 
         // Combat
         AttackDamage,

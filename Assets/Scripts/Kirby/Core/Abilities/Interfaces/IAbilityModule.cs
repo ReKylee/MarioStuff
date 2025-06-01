@@ -1,3 +1,5 @@
+using Kirby.Core.Components;
+
 namespace Kirby.Abilities
 {
     /// <summary>
