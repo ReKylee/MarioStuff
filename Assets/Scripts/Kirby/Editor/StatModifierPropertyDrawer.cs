@@ -23,8 +23,8 @@ namespace Kirby.Editor
             }
 
             float totalWidth = contentPosition.width;
-            float spacing = 5f;
-            int fieldCount = 3; // statType button, modificationType, value
+            const float spacing = 5f;
+            const int fieldCount = 3;
             float fieldWidth = (totalWidth - spacing * (fieldCount - 1)) / fieldCount;
 
             SerializedProperty statTypeProp = property.FindPropertyRelative("statType");

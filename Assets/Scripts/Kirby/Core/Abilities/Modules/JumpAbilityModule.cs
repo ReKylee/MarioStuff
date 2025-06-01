@@ -11,17 +11,17 @@ namespace Kirby.Abilities.Modules
         private float _jumpStartTime;
         private float _lastGroundedTime;
 
+        public StatModifier.ModType VelocityApplicationType => StatModifier.ModType.Additive;
         public Vector2 ProcessMovement(Vector2 currentVelocity, bool isGrounded, InputContext inputContext)
         {
-            if (!Controller || Controller.Stats == null) return currentVelocity;
+            if (!Controller || !Controller.Stats) return currentVelocity;
 
-            // Update last grounded time
             if (isGrounded)
             {
                 _lastGroundedTime = Time.time;
             }
 
-            if (inputContext.JumpHeld)
+            if (inputContext.JumpPressed)
             {
                 _jumpStartTime = Time.time;
             }
@@ -33,15 +33,15 @@ namespace Kirby.Abilities.Modules
             if (coyoteTimeActive && jumpBufferActive)
             {
                 currentVelocity.y = Controller.Stats.jumpVelocity;
-                _lastGroundedTime = -100f; // Mark as used by setting to a far past time
-                _jumpStartTime = -100f; // Mark as used by setting to a far past time
+                _lastGroundedTime = -100f;
+                _jumpStartTime = -100f;
             }
 
             // Variable jump height on jump release
-            if (inputContext.JumpReleased && currentVelocity.y > 0)
+            else if (inputContext.JumpReleased && currentVelocity.y > 0)
             {
                 currentVelocity.y *= Controller.Stats.jumpReleaseVelocityMultiplier;
-                _lastGroundedTime = -100f; // Consume coyote time as well
+                _lastGroundedTime = -100f;
             }
 
             return currentVelocity;

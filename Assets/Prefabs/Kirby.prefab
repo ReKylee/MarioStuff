@@ -125,7 +125,7 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!58 &2668669965725753301
 CircleCollider2D:
@@ -287,7 +287,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   groundCheckOffset: {x: 0, y: -0.4}
-  groundCheckSize: {x: 0.65, y: 0.3}
+  groundCheckSize: {x: 0.5, y: 0.2}
   drawGizmos: 1
   slopeThreshold: 10
   deepSlopeThreshold: 35

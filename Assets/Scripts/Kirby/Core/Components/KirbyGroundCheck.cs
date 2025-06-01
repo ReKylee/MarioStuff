@@ -20,7 +20,7 @@ namespace Kirby.Core.Components
         private LayerMask groundLayers;
 
         [SerializeField] private Vector2 groundCheckOffset = Vector2.zero;
-        [SerializeField] private Vector2 groundCheckSize = new(0.8f, 0.1f);
+        [SerializeField] private Vector2 groundCheckSize = new(0.5f, 0.2f);
         [SerializeField] private bool drawGizmos = true;
 
         [Header("Slope Settings")] [SerializeField] [Range(1, 35)]

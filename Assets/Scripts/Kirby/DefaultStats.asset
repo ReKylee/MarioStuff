@@ -12,22 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6c4a758ce4ffad242ac2d6cce395af37, type: 3}
   m_Name: DefaultStats
   m_EditorClassIdentifier: 
-  walkSpeed: 4.5
-  runSpeed: 7.5
-  groundAcceleration: 40
-  groundDeceleration: 60
-  airAcceleration: 20
-  airDeceleration: 5
+  walkSpeed: 4
+  runSpeed: 6
+  groundAcceleration: 50
+  groundDeceleration: 70
+  airAcceleration: 25
+  airDeceleration: 10
   jumpVelocity: 10
   jumpReleaseVelocityMultiplier: 0.5
   maxFallSpeed: 15
   coyoteTime: 0.08
-  jumpBufferTime: 0.08
-  floatAscendSpeed: 1.5
+  jumpBufferTime: 0.1
+  floatAscendSpeed: 2
   floatDescentSpeed: 1
-  flapImpulse: 4
+  flapImpulse: 5.5
   flyMaxHeight: 10
-  gravityScale: 3
+  gravityScale: 2.8
   attackDamage: 10
   attackRange: 0.5
   attackSpeed: 1

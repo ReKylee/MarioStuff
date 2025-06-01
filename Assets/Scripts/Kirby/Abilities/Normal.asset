@@ -15,11 +15,8 @@ MonoBehaviour:
   abilities:
   - {fileID: 11400000, guid: 7856b6354cfe4734f92b2c89f0651226, type: 2}
   - {fileID: 11400000, guid: 8f76a58be3544e54ca4fa50319c1f09c, type: 2}
-  abilityName: Normals
+  - {fileID: 11400000, guid: b80f9b708320e304c9e8a991f4c1e2bb, type: 2}
+  abilityName: Normal
   abilityIcon: {fileID: 1025999236, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
-  statModifiers:
-  - value: 12
-    modificationType: 2
-    category: Movement
-    statType: 0
+  statModifiers: []
   abilityType: 2

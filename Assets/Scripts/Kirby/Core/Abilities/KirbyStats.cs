@@ -29,25 +29,25 @@ namespace Kirby.Abilities
         private static readonly Dictionary<StatType, (FieldInfo field, string category)> _statInfoCache;
 
         [Header("Movement Settings")] [KirbyStat(StatType.WalkSpeed, "Movement")]
-        public float walkSpeed = 4.5f;
+        public float walkSpeed = 4.0f;
 
         [KirbyStat(StatType.RunSpeed, "Movement")]
-        public float runSpeed = 7.5f;
+        public float runSpeed = 6f;
 
         [KirbyStat(StatType.GroundAcceleration, "Movement")]
-        public float groundAcceleration = 40f;
+        public float groundAcceleration = 50f;
 
         [KirbyStat(StatType.GroundDeceleration, "Movement")]
-        public float groundDeceleration = 60f;
+        public float groundDeceleration = 70f;
 
         [KirbyStat(StatType.AirAcceleration, "Movement")]
-        public float airAcceleration = 20f;
+        public float airAcceleration = 25f;
 
         [KirbyStat(StatType.AirDeceleration, "Movement")]
-        public float airDeceleration = 5f;
+        public float airDeceleration = 10f;
 
         [Header("Jump Settings")] [KirbyStat(StatType.JumpVelocity, "Jump")]
-        public float jumpVelocity = 4f;
+        public float jumpVelocity = 14f;
 
         [KirbyStat(StatType.JumpReleaseVelocityMultiplier, "Jump")]
         public float jumpReleaseVelocityMultiplier = 0.5f;
@@ -59,22 +59,22 @@ namespace Kirby.Abilities
         public float coyoteTime = 0.08f;
 
         [KirbyStat(StatType.JumpBufferTime, "Jump")]
-        public float jumpBufferTime = 0.15f;
+        public float jumpBufferTime = 0.1f;
 
         [Header("Float Settings")] [KirbyStat(StatType.FloatAscendSpeed, "Float")]
-        public float floatAscendSpeed = 1.5f;
+        public float floatAscendSpeed = 2.0f;
 
         [KirbyStat(StatType.FloatDescentSpeed, "Float")]
         public float floatDescentSpeed = 1.0f;
 
         [KirbyStat(StatType.FlapImpulse, "Float")]
-        public float flapImpulse = 4f;
+        public float flapImpulse = 5.5f;
 
         [KirbyStat(StatType.FlyMaxHeight, "Float")]
         public float flyMaxHeight = 10f;
 
         [Header("Physics")] [KirbyStat(StatType.GravityScale, "Physics")]
-        public float gravityScale = 3.0f;
+        public float gravityScale = 2.8f;
 
         [Header("Combat")] [KirbyStat(StatType.AttackDamage, "Combat")]
         public float attackDamage = 10f;
@@ -114,8 +114,8 @@ namespace Kirby.Abilities
         public float GetStat(StatType statType) =>
             _statInfoCache.TryGetValue(statType, out (FieldInfo field, string category) statData)
                 ? (float)statData.field.GetValue(this)
-                : 1.0f;
-
+                : 1.0f; // ReSharper disable Unity.PerformanceAnalysis
+        // ReSharper disable Unity.PerformanceAnalysis
         /// <summary>
         ///     Set a stat value by its enum type
         /// </summary>
@@ -143,53 +143,12 @@ namespace Kirby.Abilities
         /// <param name="modifier">The StatModifier to apply.</param>
         public void ApplySingleModifier(StatModifier modifier)
         {
-            if (_statInfoCache.TryGetValue(modifier.statType, out (FieldInfo field, string category) statData))
+            if (_statInfoCache.TryGetValue(modifier.StatType, out (FieldInfo field, string category) statData))
             {
-                if (statData.field is not null)
-                {
-                    float currentValue = (float)statData.field.GetValue(this);
-                    float newValue = modifier.ApplyModifier(currentValue);
-                    statData.field.SetValue(this, newValue);
-                }
-
+                float currentValue = (float)statData.field.GetValue(this);
+                statData.field.SetValue(this,
+                    StatModifier.ApplyModifier(currentValue, modifier.Value, modifier.ModificationType));
             }
-
-        }
-    }
-
-    /// <summary>
-    ///     Defines a modification to a stat - used in CopyAbilityData
-    /// </summary>
-    [Serializable]
-    public class StatModifier
-    {
-        public enum ModType
-        {
-            Additive, // Add to the base value
-            Multiplicative, // Multiply the base value
-            Override // Completely override the value
-        }
-
-        public float value;
-        public ModType modificationType;
-        [HideInInspector] public string category;
-        public StatType statType;
-        public StatModifier(StatType statType, float value, ModType modificationType = ModType.Multiplicative)
-        {
-            this.statType = statType;
-            this.value = value;
-            this.modificationType = modificationType;
-            category = KirbyStats.GetStatCategory(statType);
-        }
-        public float ApplyModifier(float baseValue)
-        {
-            return modificationType switch
-            {
-                ModType.Additive => baseValue + value,
-                ModType.Multiplicative => baseValue * value,
-                ModType.Override => value,
-                _ => baseValue
-            };
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Kirby.Core.Components;
 using UnityEngine;
 
@@ -18,9 +19,9 @@ namespace Kirby.Abilities
         private bool allowMultipleInstances;
 
         [Header("Basic Information")] [SerializeField]
-        private string abilityID = "ability_id";
+        private string abilityID = string.Empty;
 
-        [SerializeField] private string displayName = "Ability Name";
+        [SerializeField] private string displayName = string.Empty;
 
         // Reference to the controller using this ability
         protected KirbyController Controller { get; private set; }
@@ -34,6 +35,7 @@ namespace Kirby.Abilities
             get => allowMultipleInstances;
             set => allowMultipleInstances = value;
         }
+
 
         /// <summary>
         ///     Gets or sets the ability's unique identifier
@@ -89,9 +91,31 @@ namespace Kirby.Abilities
         /// <param name="stats">The KirbyStats object to modify.</param>
         public void ApplyAbilityDefinedModifiers(KirbyStats stats)
         {
-            foreach (StatModifier modifier in abilityDefinedModifiers)
+            // Group modifiers by StatType and only process stats that have modifiers
+            foreach (var group in abilityDefinedModifiers.GroupBy(m => m.StatType))
             {
-                stats.ApplySingleModifier(modifier);
+                StatType statType = group.Key;
+                var modifiersForStat = group.ToArray();
+
+                float baseValue = stats.GetStat(statType);
+                float combinedValue = StatModifier.CombineModifiers(baseValue, modifiersForStat);
+                stats.SetStat(statType, combinedValue);
+            }
+        }
+
+        /// <summary>
+        ///     Explicitly initializes any relevant fields with default values.
+        /// </summary>
+        public void InitializeNameAndIDWithDefaultValue()
+        {
+            if (string.IsNullOrEmpty(displayName))
+            {
+                displayName = name;
+            }
+
+            if (string.IsNullOrEmpty(abilityID))
+            {
+                abilityID = name.ToLowerInvariant().Replace(" ", "_");
             }
         }
     }

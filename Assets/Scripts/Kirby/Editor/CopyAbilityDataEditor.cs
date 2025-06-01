@@ -23,7 +23,7 @@ namespace Kirby.Editor
         // --- OPTIMIZATION: Cache GUI styles as fields but initialize them lazily ---
         private GUIStyle _abilitiesContainerStyle;
         private SerializedProperty _abilitiesListProperty;
-        private string _abilitySearchString = "";
+        private string _abilitySearchString = string.Empty;
         private GUIStyle _addAbilityContainerStyle;
         private string[] _availableAbilityTypeNames;
         private List<Type> _availableAbilityTypes;
@@ -38,6 +38,8 @@ namespace Kirby.Editor
         private Vector2 _scrollPosition;
         private bool _searchResultsNeedRefresh = true;
         private int _selectedAbilityTypeIndex;
+
+        private Type _selectedInterfaceFilter;
 
         private SerializedProperty _statModifiersProperty;
 
@@ -352,7 +354,7 @@ namespace Kirby.Editor
             string newSearch = EditorGUILayout.TextField(_abilitySearchString, EditorStyles.toolbarSearchField);
             if (newSearch != _abilitySearchString)
             {
-                _abilitySearchString = newSearch;
+                _abilitySearchString = newSearch.Trim();
                 _searchResultsNeedRefresh = true;
             }
 
@@ -366,28 +368,66 @@ namespace Kirby.Editor
 
             EditorGUILayout.EndHorizontal();
 
+            // Interface filter dropdown
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label("Interface:", GUILayout.Width(60));
+
+            int selectedIndex = _selectedInterfaceFilter != null
+                ? _availableAbilityTypes.SelectMany(t => t.GetInterfaces()).Distinct().ToList()
+                    .IndexOf(_selectedInterfaceFilter)
+                : -1;
+
+            string[] interfaceNames = _availableAbilityTypes
+                .SelectMany(t => t.GetInterfaces())
+                .Distinct()
+                .Select(i => i.Name)
+                .ToArray();
+
+            int newSelectedIndex = EditorGUILayout.Popup(selectedIndex, interfaceNames, GUILayout.Width(120));
+
+            if (newSelectedIndex >= 0 && newSelectedIndex < interfaceNames.Length)
+            {
+                _selectedInterfaceFilter = _availableAbilityTypes
+                    .SelectMany(t => t.GetInterfaces())
+                    .Distinct()
+                    .FirstOrDefault(i => i.Name == interfaceNames[newSelectedIndex]);
+
+                _searchResultsNeedRefresh = true;
+            }
+            else if (newSelectedIndex == -1)
+            {
+                _selectedInterfaceFilter = typeof(IAbilityModule);
+                _searchResultsNeedRefresh = true;
+            }
+
+            if (GUILayout.Button("Clear", EditorStyles.miniButton, GUILayout.Width(60)))
+            {
+                _selectedInterfaceFilter = typeof(IAbilityModule);
+                _searchResultsNeedRefresh = true;
+            }
+
+            EditorGUILayout.EndHorizontal();
+
             EditorGUILayout.Space(8);
 
             var displayedIndices = new List<int>(50);
 
             if (_searchResultsNeedRefresh)
             {
-                if (string.IsNullOrEmpty(_abilitySearchString))
+                for (int i = 0; i < _availableAbilityTypeNames.Length; i++)
                 {
-                    for (int i = 0; i < _availableAbilityTypeNames.Length; i++)
+                    string displayName = ObjectNames.NicifyVariableName(_availableAbilityTypeNames[i]);
+                    bool matchesSearch = string.IsNullOrEmpty(_abilitySearchString) ||
+                                         displayName.IndexOf(_abilitySearchString,
+                                             StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    bool matchesInterface = _selectedInterfaceFilter == null ||
+                                            _availableAbilityTypes[i].GetInterfaces()
+                                                .Any(iface => iface == _selectedInterfaceFilter);
+
+                    if (matchesSearch && matchesInterface)
                     {
                         displayedIndices.Add(i);
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < _availableAbilityTypeNames.Length; i++)
-                    {
-                        string displayName = ObjectNames.NicifyVariableName(_availableAbilityTypeNames[i]);
-                        if (displayName.IndexOf(_abilitySearchString, StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            displayedIndices.Add(i);
-                        }
                     }
                 }
 
@@ -405,32 +445,22 @@ namespace Kirby.Editor
             int maxButtonsPerRow = Mathf.Max(1, Mathf.FloorToInt(windowWidth / 180f));
             float minScrollHeight = Mathf.Min(displayedIndices.Count * 32f, 180f);
 
-            // Check for empty results BEFORE starting any layout groups
             if (displayedIndices.Count == 0)
             {
                 EditorGUILayout.HelpBox($"No abilities found matching '{_abilitySearchString}'", MessageType.Info);
                 GUI.backgroundColor = prevBgColor;
-                EditorGUILayout.EndVertical(); // Close the main vertical group
+                EditorGUILayout.EndVertical();
                 return;
             }
 
-            // Only start the scroll view if we have items to display
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition, GUILayout.MinHeight(minScrollHeight));
 
             GUI.backgroundColor = prevBgColor;
 
-            if (string.IsNullOrEmpty(_abilitySearchString) && displayedIndices.Count > 6)
-            {
-                DrawAbilitiesByCategory(displayedIndices, maxButtonsPerRow, copyAbilityData);
-            }
-            else
-            {
-                DrawAbilitiesFlat(displayedIndices, maxButtonsPerRow, copyAbilityData);
-            }
+            DrawAbilitiesFlat(displayedIndices, maxButtonsPerRow, copyAbilityData);
 
             EditorGUILayout.EndScrollView();
 
-            // Reset background color before ending the vertical group
             GUI.backgroundColor = prevBgColor;
             EditorGUILayout.EndVertical();
         }
@@ -612,6 +642,7 @@ namespace Kirby.Editor
 
             AbilityModuleBase newAbilityModuleInstance = (AbilityModuleBase)CreateInstance(abilityType);
             newAbilityModuleInstance.name = string.Format("{0}_For_{1}", abilityType.Name, owner.name.Replace(" ", ""));
+            newAbilityModuleInstance.InitializeNameAndIDWithDefaultValue();
 
             string ownerPath = AssetDatabase.GetAssetPath(owner);
             string directory;

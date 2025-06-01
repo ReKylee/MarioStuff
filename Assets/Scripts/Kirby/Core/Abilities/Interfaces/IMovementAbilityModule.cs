@@ -7,7 +7,10 @@ namespace Kirby.Abilities
     /// </summary>
     public interface IMovementAbilityModule : IAbilityModule
     {
-
+        /// <summary>
+        ///     Indicates how the returned velocity should be applied to the linear velocity.
+        /// </summary>
+        StatModifier.ModType VelocityApplicationType { get; }
 
         /// <summary>
         ///     Process movement modifications.

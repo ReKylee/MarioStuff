@@ -18,6 +18,7 @@ namespace Kirby.Core.Components
         private readonly List<IMovementAbilityModule> _movementAbilities = new();
 
         private InputContext _currentInput;
+        private InputContext _fixedInput; // New separate input context for FixedUpdate
 
         private KirbyGroundCheck _groundCheck;
 
@@ -38,7 +39,6 @@ namespace Kirby.Core.Components
 
             Animator = GetComponent<SpriteAnimator>();
             Collider = GetComponent<Collider2D>();
-            // Stats will be initialized by RefreshRuntimeStats, called from EquipAbility or Awake/Update.
 
             _inputHandler = GetComponent<InputHandler>();
 
@@ -53,7 +53,7 @@ namespace Kirby.Core.Components
 
             // Initial stat setup. EquipAbility will call RefreshRuntimeStats.
             // Ensure Stats is initialized before EquipAbility if baseStats is available.
-            if (baseStats != null)
+            if (baseStats)
             {
                 Stats = Instantiate(baseStats); // Initial copy
             }
@@ -72,14 +72,12 @@ namespace Kirby.Core.Components
         {
             if (!_inputHandler) return;
 
-            // Refresh runtime stats to reflect any changes to baseStats asset in inspector
-            // and ensure ability modifiers are correctly applied.
             RefreshRuntimeStats();
 
-            _currentInput = _inputHandler.CurrentInput();
+            _currentInput = _inputHandler.CurrentInput;
 
-            // Process all active abilities, passing the current input context
-            foreach (IAbilityModule ability in _activeAbilities)
+            // Process all non-movement abilities in Update
+            foreach (IAbilityModule ability in _activeAbilities.Where(a => a is not IMovementAbilityModule))
             {
                 ability.ProcessAbility(_currentInput);
             }
@@ -88,13 +86,23 @@ namespace Kirby.Core.Components
 
         private void FixedUpdate()
         {
-            // Movement processing
-            // Let movement abilities process/modify velocity
-            // They are processed in the order they appear in the CopyAbilityData's Abilities list.
-            Rigidbody.linearVelocity = _movementAbilities.Aggregate(
-                Rigidbody.linearVelocity,
-                (current, movementAbility) =>
-                    movementAbility.ProcessMovement(current, IsGrounded, _currentInput));
+            if (!_inputHandler) return;
+
+            _fixedInput = _inputHandler.FixedInput;
+
+            Vector2 finalVelocity = Rigidbody.linearVelocity;
+
+            // Combine velocity adjustments from all movement abilities
+            var horizontalModifiers = _movementAbilities.Select(m => StatModifier.Create(StatType.WalkSpeed,
+                m.ProcessMovement(finalVelocity, IsGrounded, _fixedInput).x, m.VelocityApplicationType)).ToArray();
+
+            var verticalModifiers = _movementAbilities.Select(m => StatModifier.Create(StatType.JumpVelocity,
+                m.ProcessMovement(finalVelocity, IsGrounded, _fixedInput).y, m.VelocityApplicationType)).ToArray();
+
+            finalVelocity.x = StatModifier.CombineModifiers(finalVelocity.x, horizontalModifiers);
+            finalVelocity.y = StatModifier.CombineModifiers(finalVelocity.y, verticalModifiers);
+
+            Rigidbody.linearVelocity = finalVelocity;
         }
 
         public void EquipAbility(CopyAbilityData newAbilityData)

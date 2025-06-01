@@ -1,3 +1,4 @@
+using Kirby.Core.Abilities;
 using UnityEngine;
 
 namespace Kirby.Abilities
@@ -8,162 +9,109 @@ namespace Kirby.Abilities
     /// </summary>
     public class WalkAbilityModule : AbilityModuleBase, IMovementAbilityModule
     {
-        private const float RUN_MOMENTUM_DURATION = 0.2f;
         private const float WALL_DETECTION_DISTANCE = 0.1f;
+        private const float MIN_INPUT_THRESHOLD = 0.01f;
+        private const float SPEED_MULTIPLIER = 1.1f;
+        private const float WALL_CAST_HEIGHT_MULTIPLIER = 0.7f;
+        private const float WALL_CAST_DISTANCE = 0.01f;
 
-        // Cache for collider bounds calculation
+        // Cached ground layer mask to avoid repeated GetMask calls
+        private static int? _groundLayerMask;
         private Bounds _colliderBounds;
 
         // Track direction facing for sprite flipping
         private int _facingDirection = 1;
-        private Vector2 _previousDirection = Vector2.zero;
-        private float _runningTimer;
-        private int _wallHitCount;
-
-        // Cache raycast hit results
-        private RaycastHit2D[] _wallHits = new RaycastHit2D[3];
-
-        // Track if player was recently running for maintaining momentum
-        private bool _wasRunning;
+        private bool _isRunning;
+        private static int GroundLayerMask => _groundLayerMask ??= LayerMask.GetMask("Ground");
+        public StatModifier.ModType VelocityApplicationType => StatModifier.ModType.Additive;
 
         public Vector2 ProcessMovement(
             Vector2 currentVelocity, bool isGrounded,
             InputContext inputContext)
         {
-            if (!Controller || Controller.Stats == null) return currentVelocity;
+            // Early return if essential components are missing
+            KirbyStats stats = Controller?.Stats;
+            if (!stats) return currentVelocity;
 
-            // Convert input into a normalized direction vector
-            Vector2 inputDirection = new Vector2(inputContext.MoveInput.x, 0).normalized;
-            float inputMagnitude = inputDirection.magnitude;
-            bool hasInput = inputMagnitude > 0.01f;
+            // Cache input values and calculate absolute values once
+            float runInput = inputContext.RunInput;
+            float walkInput = inputContext.WalkInput;
+            float absRunInput = Mathf.Abs(runInput);
+            float absWalkInput = Mathf.Abs(walkInput);
 
-            // Create velocity direction vector (normalized)
-            Vector2 velocityDirection = currentVelocity.magnitude > 0.01f
-                ? new Vector2(currentVelocity.x, 0).normalized
-                : Vector2.zero;
+            // Determine input type and movement input in one pass
+            bool isRunInput = absRunInput > MIN_INPUT_THRESHOLD;
+            float movementInput = isRunInput ? runInput : walkInput;
+            float absMovementInput = isRunInput ? absRunInput : absWalkInput;
+            bool hasMovementInput = absMovementInput > MIN_INPUT_THRESHOLD;
 
-            // Update facing direction when there's input
-            if (hasInput)
+            // Update facing direction and running state
+            if (hasMovementInput)
             {
-                _facingDirection = inputDirection.x > 0 ? 1 : -1;
+                int newFacingDirection = movementInput > 0 ? 1 : -1;
+
+                _facingDirection = newFacingDirection;
             }
 
-            // Determine acceleration/deceleration rates based on ground state
-            float acceleration = isGrounded ? Controller.Stats.groundAcceleration : Controller.Stats.airAcceleration;
-            float deceleration = isGrounded ? Controller.Stats.groundDeceleration : Controller.Stats.airDeceleration;
+            // Update running state
+            _isRunning = hasMovementInput && (isRunInput || _isRunning);
 
-            // Maintain running momentum
-            if (Mathf.Abs(currentVelocity.x) >= Controller.Stats.runSpeed * 0.9f)
+            // Cache speed and acceleration values based on current state
+            float targetSpeed = _isRunning ? stats.runSpeed : stats.walkSpeed;
+            float acceleration = isGrounded ? stats.groundAcceleration : stats.airAcceleration;
+            float deceleration = isGrounded ? stats.groundDeceleration : stats.airDeceleration;
+
+            // Calculate new horizontal velocity
+            if (hasMovementInput && !IsWallBlocking(_facingDirection))
             {
-                _wasRunning = true;
-                _runningTimer = RUN_MOMENTUM_DURATION;
-            }
-            else if (_runningTimer > 0)
-            {
-                _runningTimer -= Time.deltaTime;
-                if (_runningTimer <= 0)
-                {
-                    _wasRunning = false;
-                }
-            }
-
-            // Determine target speed
-            float targetSpeed = Controller.Stats.walkSpeed;
-
-            // Use run speed if:
-            // 1. Already moving fast and continuing to move, or
-            // 2. Recently was running and moving in same direction
-            bool shouldRun = false;
-
-            if (hasInput)
-            {
-                // Calculate dot product between input and velocity directions
-                // A value close to 1 means same direction, close to -1 means opposite directions
-                float directionDot = velocityDirection.magnitude > 0.01f
-                    ? Vector2.Dot(inputDirection, velocityDirection)
-                    : 0;
-
-                if (Mathf.Abs(currentVelocity.x) > Controller.Stats.walkSpeed ||
-                    _wasRunning && directionDot > 0) // Using dot product to check same direction
-                {
-                    targetSpeed = Controller.Stats.runSpeed;
-                    shouldRun = true;
-                }
-            }
-
-            // Check for wall collision in movement direction to prevent wall sticking
-            bool isAgainstWall = CheckForWall(inputDirection);
-
-            // Apply horizontal movement with acceleration/deceleration
-            if (hasInput && !isAgainstWall)
-            {
-                // Apply acceleration toward target speed
+                // Accelerate towards target velocity
                 float targetVelocity = targetSpeed * _facingDirection;
-
-                // Use dot product to detect direction changes more efficiently
-                float directionChange = velocityDirection.magnitude > 0.01f
-                    ? Vector2.Dot(inputDirection, velocityDirection)
-                    : 1;
-
-                // Higher acceleration when changing directions for responsiveness
-                float appliedAcceleration = acceleration;
-                if (directionChange < 0 && Mathf.Abs(currentVelocity.x) > 0.1f)
-                {
-                    appliedAcceleration *= 1.5f; // Turn around faster
-                }
-
                 currentVelocity.x = Mathf.MoveTowards(
                     currentVelocity.x,
                     targetVelocity,
-                    appliedAcceleration * Time.deltaTime
+                    acceleration * Time.deltaTime
                 );
             }
             else
             {
-                // Apply deceleration when no input or against wall
+                // Decelerate to stop
                 currentVelocity.x = Mathf.MoveTowards(
                     currentVelocity.x,
-                    0,
+                    0f,
                     deceleration * Time.deltaTime
                 );
             }
 
-            // Apply maximum horizontal speed constraint (in case of external forces)
-            float maxHorizontalSpeed = shouldRun ? Controller.Stats.runSpeed : Controller.Stats.walkSpeed;
-            maxHorizontalSpeed *= 1.1f; // Allow slight overspeed from external forces
+            // Enforce speed limits with cached max speed
+            float maxHorizontalSpeed = targetSpeed * SPEED_MULTIPLIER;
             currentVelocity.x = Mathf.Clamp(currentVelocity.x, -maxHorizontalSpeed, maxHorizontalSpeed);
-
-            // Store previous direction for next frame comparison
-            _previousDirection = inputDirection;
 
             return currentVelocity;
         }
 
-        private bool CheckForWall(Vector2 inputDirection)
+
+        private bool IsWallBlocking(int direction)
         {
-            // If no input or missing components, no wall check needed
-            if (inputDirection.magnitude < 0.01f || !Controller || !Controller.Collider)
-                return false;
+            Collider2D collider = Controller?.Collider;
+            if (!collider) return false;
 
-            // Get the collider bounds directly
-            _colliderBounds = Controller.Collider.bounds;
+            // Update bounds cache
+            _colliderBounds = collider.bounds;
 
-            // Simple and efficient wall check using a single BoxCast
-            Vector2 rayDirection = inputDirection.x > 0 ? Vector2.right : Vector2.left;
-            float xOffset = _colliderBounds.extents.x * Mathf.Sign(inputDirection.x);
+            // Calculate cast parameters
+            float xOffset = _colliderBounds.extents.x * direction;
+            Vector2 castOrigin = new(_colliderBounds.center.x + xOffset, _colliderBounds.center.y);
+            Vector2 castSize = new(WALL_DETECTION_DISTANCE, _colliderBounds.size.y * WALL_CAST_HEIGHT_MULTIPLIER);
+            Vector2 castDirection = direction > 0 ? Vector2.right : Vector2.left;
 
-            // Calculate positions
-            Vector2 startPos = new(_colliderBounds.center.x + xOffset, _colliderBounds.center.y);
-            Vector2 boxSize = new(WALL_DETECTION_DISTANCE, _colliderBounds.size.y * 0.7f);
-
-            // Single efficient BoxCast
+            // Perform wall detection
             return Physics2D.BoxCast(
-                startPos,
-                boxSize,
+                castOrigin,
+                castSize,
                 0f,
-                rayDirection,
-                0.01f, // Minimal distance needed for detection
-                LayerMask.GetMask("Ground", "Wall")
+                castDirection,
+                WALL_CAST_DISTANCE,
+                GroundLayerMask
             );
         }
     }

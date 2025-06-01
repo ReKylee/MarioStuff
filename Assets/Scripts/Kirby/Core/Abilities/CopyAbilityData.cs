@@ -30,7 +30,7 @@ namespace Kirby.Abilities
 
         [Header("Contained Abilities")] public List<AbilityModuleBase> abilities = new();
 
-        [Header("Basic Info")] public string abilityName = "New Ability";
+        [Header("Basic Info")] public string abilityName;
 
         public Sprite abilityIcon;
 
@@ -39,22 +39,30 @@ namespace Kirby.Abilities
 
         [Header("Ability Specifics")] public AbilityType abilityType = AbilityType.Melee;
 
+        private void OnEnable()
+        {
+            if (string.IsNullOrEmpty(abilityName))
+            {
+                abilityName = name;
+            }
+        }
+
         /// <summary>
         ///     Checks if an ability module of the given type can be added
         /// </summary>
-        /// <param name="abilityType">The type of ability module to check</param>
+        /// <param name="addedAbilityType">The type of ability module to check</param>
         /// <returns>Result indicating if addition is allowed and why if not</returns>
-        public AbilityAddResult CanAddAbilityModule(Type abilityType)
+        public AbilityAddResult CanAddAbilityModule(Type addedAbilityType)
         {
             // Quick validation check
-            if (abilityType == null || !typeof(AbilityModuleBase).IsAssignableFrom(abilityType))
+            if (addedAbilityType == null || !typeof(AbilityModuleBase).IsAssignableFrom(addedAbilityType))
             {
                 return AbilityAddResult.InvalidAbility;
             }
 
             // Use LINQ for a more concise check
             return abilities.Any(module =>
-                module?.GetType() == abilityType &&
+                module?.GetType() == addedAbilityType &&
                 !module.AllowMultipleInstances)
                 ? AbilityAddResult.DuplicateNotAllowed
                 : AbilityAddResult.Success;
@@ -109,53 +117,19 @@ namespace Kirby.Abilities
             // Create a copy of the base stats
             KirbyStats modifiedStats = Instantiate(baseStats);
 
-            // Apply all stat modifiers from this CopyAbilityData
-            foreach (StatModifier modifier in statModifiers)
+            // Combine all stat modifiers and apply them
+            foreach (object statType in Enum.GetValues(typeof(StatType)))
             {
-                modifiedStats.ApplySingleModifier(modifier);
+                var modifiersForStat = statModifiers.Where(m => m.StatType == (StatType)statType).ToArray();
+                if (modifiersForStat.Length > 0)
+                {
+                    float baseValue = modifiedStats.GetStat((StatType)statType);
+                    float combinedValue = StatModifier.CombineModifiers(baseValue, modifiersForStat);
+                    modifiedStats.SetStat((StatType)statType, combinedValue);
+                }
             }
 
             return modifiedStats;
-        }
-
-        /// <summary>
-        ///     Get all stat modifiers
-        /// </summary>
-        public List<StatModifier> GetAllModifiers() => new(statModifiers);
-
-        /// <summary>
-        ///     Add a new stat modifier
-        /// </summary>
-        public void AddModifier(StatModifier modifier)
-        {
-            // Check if we already have a modifier for this stat type
-            int existingIndex = statModifiers.FindIndex(m => m.statType == modifier.statType);
-            if (existingIndex >= 0)
-            {
-                // Replace the existing modifier
-                statModifiers[existingIndex] = modifier;
-            }
-            else
-            {
-                // Add new modifier
-                statModifiers.Add(modifier);
-            }
-        }
-
-        /// <summary>
-        ///     Remove a stat modifier by stat type
-        /// </summary>
-        public void RemoveModifier(StatType statType)
-        {
-            statModifiers.RemoveAll(m => m.statType == statType);
-        }
-
-        /// <summary>
-        ///     Get modifiers for a specific category
-        /// </summary>
-        public List<StatModifier> GetModifiersByCategory(string category)
-        {
-            return statModifiers.FindAll(m => m.category == category);
         }
     }
 
