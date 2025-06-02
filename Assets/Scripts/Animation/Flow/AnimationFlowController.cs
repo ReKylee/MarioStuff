@@ -193,19 +193,16 @@ namespace Animation.Flow
         private void InitializeController()
         {
             // Initialize animator adapter if not already set
+            _animatorAdapter ??= CreateAnimatorAdapter();
+
             if (_animatorAdapter == null)
             {
-                _animatorAdapter = CreateAnimatorAdapter();
+                Debug.LogError(
+                    "Animator adapter was not provided by CreateAnimatorAdapter(). Override this method in your derived class.",
+                    this);
 
-                if (_animatorAdapter == null)
-                {
-                    Debug.LogError(
-                        "Animator adapter was not provided by CreateAnimatorAdapter(). Override this method in your derived class.",
-                        this);
-
-                    enabled = false;
-                    return;
-                }
+                enabled = false;
+                return;
             }
 
             _animationContext = new AnimationContext(_animatorAdapter, gameObject);
