@@ -180,7 +180,18 @@ namespace Animation.Flow
         /// <summary>
         ///     Public method to expose the animator adapter to the editor and other components
         /// </summary>
-        public IAnimator GetAnimator() => _animatorAdapter;
+        public IAnimator GetAnimator()
+        {
+            _animatorAdapter ??= CreateAnimatorAdapter();
+
+            if (_animatorAdapter is null)
+            {
+                Debug.LogWarning(
+                    $"CreateAnimatorAdapter returned null in {GetType().Name}. Animation list may be empty.", this);
+            }
+
+            return _animatorAdapter;
+        }
 
         // Initialization for Enter Play Mode Options support
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -192,8 +203,7 @@ namespace Animation.Flow
 
         private void InitializeController()
         {
-            // Initialize animator adapter if not already set
-            _animatorAdapter ??= CreateAnimatorAdapter();
+            _animatorAdapter = GetAnimator();
 
             if (_animatorAdapter == null)
             {
