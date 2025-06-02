@@ -31675,6 +31675,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3926891512402252426, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
   m_PrefabInstance: {fileID: 2444926084790370511}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2081093738 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 644453172252926475, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+  m_PrefabInstance: {fileID: 2444926084790370511}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2081093734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d4337bea670e194ca021e2a54e31bf8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2088058355
 GameObject:
   m_ObjectHideFlags: 0
@@ -32134,6 +32145,14 @@ PrefabInstance:
       propertyPath: onDeath.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
+    - target: {fileID: 3453238072437092398, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+      propertyPath: spriteAnimator
+      value: 
+      objectReference: {fileID: 2081093738}
+    - target: {fileID: 3453238072437092398, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
+      propertyPath: defaultAnimationData
+      value: 
+      objectReference: {fileID: 11400000, guid: 1947725d94377fe4bb47837520828372, type: 2}
     - target: {fileID: 3890553521520257432, guid: 4bfc8263212253e44b046ec35f3930ef, type: 3}
       propertyPath: m_LocalPosition.x
       value: -9.52

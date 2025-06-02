@@ -23,7 +23,6 @@ namespace Kirby.Core.Components
         private KirbyGroundCheck _groundCheck;
 
         private InputHandler _inputHandler;
-        internal KirbyAnimationController AnimationController; // Reference to our new animation system
         internal Collider2D Collider;
         internal Rigidbody2D Rigidbody;
 
@@ -39,9 +38,6 @@ namespace Kirby.Core.Components
             Rigidbody = GetComponent<Rigidbody2D>();
 
             _animator = GetComponent<SpriteAnimator>();
-
-            // Initialize the animation controller
-            AnimationController = GetComponent<KirbyAnimationController>();
 
 
             Collider = GetComponent<Collider2D>();
@@ -121,10 +117,6 @@ namespace Kirby.Core.Components
             currentCopyAbility = newAbilityData; // Assign the new ability data
 
             // Update animation data when ability changes
-            if (AnimationController != null && currentCopyAbility != null && currentCopyAbility.AnimationData != null)
-            {
-                AnimationController.SetAnimationData(currentCopyAbility.AnimationData);
-            }
 
             // Stats are refreshed by RefreshRuntimeStats below
 

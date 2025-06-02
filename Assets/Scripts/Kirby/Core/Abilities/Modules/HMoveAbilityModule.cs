@@ -50,7 +50,6 @@ namespace Kirby.Abilities
                 int newFacingDirection = movementInput > 0 ? 1 : -1;
 
                 _facingDirection = newFacingDirection;
-                Controller.AnimationController.SetDirection(_facingDirection);
             }
 
             // Update running state

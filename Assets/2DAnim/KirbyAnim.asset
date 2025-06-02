@@ -126,7 +126,7 @@ MonoBehaviour:
     - {fileID: 453903552, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     - {fileID: -413182842, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     SpriteAnimationType: 1
-  - Name: Fall
+  - Name: BounceOffFloor
     FPS: 15
     Frames:
     - {fileID: 1581613033, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
@@ -135,7 +135,19 @@ MonoBehaviour:
     - {fileID: 624087993, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     - {fileID: -871644345, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     - {fileID: 611338844, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1258531970, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 758199005, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1249469712, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1581613033, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1113136369, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1325542747, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     SpriteAnimationType: 1
+  - Name: Fall
+    FPS: 15
+    Frames:
+    - {fileID: -1113136369, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: 1325542747, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 0
   - Name: Fall_Full
     FPS: 15
     Frames:
