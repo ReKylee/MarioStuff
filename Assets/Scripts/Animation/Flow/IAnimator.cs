@@ -9,7 +9,6 @@ namespace Animation.Flow
     /// </summary>
     public interface IAnimator
     {
-
         /// <summary>
         ///     Get whether the current animation has finished playing
         /// </summary>

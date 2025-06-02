@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using Animation.Flow.Adapters;
-using GabrielBigardi.SpriteAnimator;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
@@ -487,9 +485,9 @@ namespace Animation.Flow.Editor
             {
                 // Check if the selected object has an AnimationFlowController
                 AnimationFlowController flowController = selectedObject.GetComponent<AnimationFlowController>();
+                _targetGameObject = selectedObject;
                 if (flowController)
                 {
-                    _targetGameObject = selectedObject;
 
                     // Try to get the animator through reflection
                     MethodInfo methodInfo = flowController.GetType().GetMethod("GetAnimatorAdapter",
@@ -500,22 +498,16 @@ namespace Animation.Flow.Editor
                         _targetAnimator = methodInfo.Invoke(flowController, null) as IAnimator;
                     }
 
-                    // If we have a graph view, notify it about the target change
-                    _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
                 }
                 else
                 {
-                    // Try to get a SpriteAnimator component directly
-                    SpriteAnimator spriteAnimator = selectedObject.GetComponent<SpriteAnimator>();
-                    if (spriteAnimator)
-                    {
-                        _targetGameObject = selectedObject;
-                        _targetAnimator = new SpriteAnimatorAdapter(spriteAnimator);
+                    // Look for components implementing IAnimator
+                    _targetAnimator = selectedObject.GetComponent<IAnimator>();
 
-                        // If we have a graph view, notify it about the target change
-                        _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
-                    }
                 }
+
+                // If we have a graph view, notify it about the target change
+                _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
             }
         }
 

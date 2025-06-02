@@ -21,7 +21,6 @@ namespace Animation.Flow
         private IAnimator _animatorAdapter; // Renamed for clarity from _animator
         private IAnimationState _currentState;
         private float _timeInCurrentState;
-
         protected void Awake()
         {
             InitializeController();
@@ -90,6 +89,7 @@ namespace Animation.Flow
             GUILayout.EndVertical();
             GUILayout.EndArea();
         }
+        public IAnimator GetAnimator() => _animatorAdapter;
 
         // Initialization for Enter Play Mode Options support
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
