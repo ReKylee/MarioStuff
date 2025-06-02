@@ -35,10 +35,15 @@ namespace Animation.Flow.Editor
 
         private static void OpenInFlowEditor(AnimationFlowAsset flowAsset)
         {
+            // Open as a tab in the center area (typically where Scene view is)
             AnimationFlowEditorWindow window =
-                EditorWindow.GetWindow<AnimationFlowEditorWindow>("Animation Flow Editor");
+                EditorWindow.GetWindow<AnimationFlowEditorWindow>(
+                    "Animation Flow Editor",
+                    false,
+                    typeof(SceneView));
 
             window.LoadAsset(flowAsset);
+            window.Focus();
         }
     }
 }

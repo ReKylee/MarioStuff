@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Animation.Flow
 {
@@ -18,6 +19,11 @@ namespace Animation.Flow
         ///     Get the name of the current animation
         /// </summary>
         string CurrentAnimationName { get; }
+
+        /// <summary>
+        ///     Get all available animations
+        /// </summary>
+        List<string> GetAvailableAnimations();
 
         /// <summary>
         ///     Play the specified animation

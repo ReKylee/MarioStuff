@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using Animation.Flow.Adapters;
+using GabrielBigardi.SpriteAnimator;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
@@ -12,11 +15,21 @@ namespace Animation.Flow.Editor
     [InitializeOnLoad]
     public class AnimationFlowEditorWindow : EditorWindow
     {
-
         // Static field to remember the last opened asset between domain reloads
+        // Now marked with [SerializeField] to persist between editor sessions
         private static string _lastOpenedAssetPath;
         private AnimationFlowAsset _currentAsset;
+
         private AnimationFlowGraphView _graphView;
+
+        // Flag to track if the graph has unsaved changes
+        private bool _hasUnsavedChanges;
+
+        // Store the animator for accessing animation names
+        private IAnimator _targetAnimator;
+
+        // Target GameObject reference for getting animations
+        private GameObject _targetGameObject;
 
         // Static constructor for InitializeOnLoad
         static AnimationFlowEditorWindow()
@@ -27,23 +40,72 @@ namespace Animation.Flow.Editor
 
         private void OnEnable()
         {
-            ConstructGraphView();
+            // Create a root container with vertical layout
+            rootVisualElement.style.flexDirection = FlexDirection.Column;
+
+            // Create a container that will take up all available space
+            VisualElement contentContainer = new();
+            contentContainer.style.flexGrow = 1;
+            rootVisualElement.Add(contentContainer);
+
+            // Construct graph view (will be added to content container)
+            ConstructGraphView(contentContainer);
+
+            // Generate toolbar (will be added to root)
             GenerateToolbar();
 
             // Try to reopen the last asset if available
             if (!string.IsNullOrEmpty(_lastOpenedAssetPath))
             {
                 AnimationFlowAsset asset = AssetDatabase.LoadAssetAtPath<AnimationFlowAsset>(_lastOpenedAssetPath);
-                if (asset != null)
+                if (asset)
                 {
                     LoadAsset(asset);
                 }
             }
+
+            // Subscribe to editor closing to show save prompt if needed
+            EditorApplication.wantsToQuit += WantsToQuit;
+
+            // Listen for selection changes to update target GameObject
+            Selection.selectionChanged += OnSelectionChanged;
         }
 
         private void OnDisable()
         {
-            rootVisualElement.Remove(_graphView);
+            // Remove _graphView from its parent container instead of directly from rootVisualElement
+            if (_graphView is { parent: not null })
+            {
+                _graphView.parent.Remove(_graphView);
+            }
+
+            EditorApplication.wantsToQuit -= WantsToQuit;
+            Selection.selectionChanged -= OnSelectionChanged;
+        }
+
+        private bool WantsToQuit()
+        {
+            // If there are unsaved changes, prompt to save
+            if (_hasUnsavedChanges && _currentAsset != null)
+            {
+                int choice = EditorUtility.DisplayDialogComplex(
+                    "Unsaved Changes",
+                    $"The Animation Flow '{_currentAsset.name}' has unsaved changes. Do you want to save them?",
+                    "Save", "Don't Save", "Cancel");
+
+                switch (choice)
+                {
+                    case 0: // Save
+                        SaveCurrentAsset();
+                        return true;
+                    case 1: // Don't Save
+                        return true;
+                    case 2: // Cancel
+                        return false;
+                }
+            }
+
+            return true;
         }
 
         // Handle domain reloads cleanly
@@ -72,11 +134,17 @@ namespace Animation.Flow.Editor
         [MenuItem("Window/Animation Flow Editor")]
         public static void ShowWindow()
         {
-            AnimationFlowEditorWindow window = GetWindow<AnimationFlowEditorWindow>("Animation Flow Editor");
+            // Create the window as a tab, docked in the center area by default
+            AnimationFlowEditorWindow window = GetWindow<AnimationFlowEditorWindow>(
+                "Animation Flow Editor",
+                false,
+                typeof(SceneView));
+
             window.minSize = new Vector2(800, 600);
+            window.Focus();
         }
 
-        private void ConstructGraphView()
+        private void ConstructGraphView(VisualElement parent)
         {
             _graphView = new AnimationFlowGraphView
             {
@@ -84,31 +152,64 @@ namespace Animation.Flow.Editor
             };
 
             _graphView.StretchToParentSize();
-            rootVisualElement.Add(_graphView);
+            parent.Add(_graphView);
+
+            // Mark graph as modified when changes occur
+            _graphView.graphViewChanged += change =>
+            {
+                if (change.edgesToCreate != null && change.edgesToCreate.Count > 0 ||
+                    change.movedElements != null && change.movedElements.Count > 0 ||
+                    change.elementsToRemove != null && change.elementsToRemove.Count > 0)
+                {
+                    _hasUnsavedChanges = true;
+                }
+
+                return change;
+            };
         }
 
         private void GenerateToolbar()
         {
             Toolbar toolbar = new();
 
-            Button saveButton = new(() => SaveGraph())
+            Button saveButton = new(SaveCurrentAsset)
             {
                 text = "Save"
             };
 
             toolbar.Add(saveButton);
 
-            Button loadButton = new(() => LoadGraph())
+            Button saveAsButton = new(SaveGraphAs)
+            {
+                text = "Save As..."
+            };
+
+            toolbar.Add(saveAsButton);
+
+            Button loadButton = new(LoadGraph)
             {
                 text = "Load"
             };
 
             toolbar.Add(loadButton);
 
+            toolbar.style.height = 30;
+
             rootVisualElement.Add(toolbar);
         }
 
-        private void SaveGraph()
+        private void SaveCurrentAsset()
+        {
+            if (_currentAsset == null)
+            {
+                SaveGraphAs();
+                return;
+            }
+
+            SaveToAsset(_currentAsset);
+        }
+
+        private void SaveGraphAs()
         {
             if (_graphView == null)
             {
@@ -128,12 +229,37 @@ namespace Animation.Flow.Editor
             {
                 flowAsset = CreateInstance<AnimationFlowAsset>();
             }
-            else
+
+            SaveToAsset(flowAsset);
+
+            if (newAsset)
             {
-                // Clear existing data if overwriting
-                flowAsset.States.Clear();
-                flowAsset.Transitions.Clear();
+                AssetDatabase.CreateAsset(flowAsset, path);
             }
+
+            // Set current asset reference
+            _currentAsset = flowAsset;
+
+            // Remember this asset path for domain reload
+            _lastOpenedAssetPath = path;
+
+            // Update window title to show current asset name
+            UpdateWindowTitle();
+
+            // Show a brief status message in the status bar instead of dialog
+            ShowNotification(new GUIContent($"Saved to {Path.GetFileName(path)}"));
+        }
+
+        private void SaveToAsset(AnimationFlowAsset flowAsset)
+        {
+            if (flowAsset == null || _graphView == null) return;
+
+            // Record the asset for undo operations
+            Undo.RecordObject(flowAsset, "Save Animation Flow");
+
+            // Clear existing data if overwriting
+            flowAsset.States.Clear();
+            flowAsset.Transitions.Clear();
 
             // Populate States
             foreach (Node viewNode in _graphView.nodes.ToList())
@@ -184,29 +310,17 @@ namespace Animation.Flow.Editor
                 }
             }
 
-            if (newAsset)
-            {
-                AssetDatabase.CreateAsset(flowAsset, path);
-            }
-            else
-            {
-                EditorUtility.SetDirty(flowAsset);
-            }
+            // Mark the asset as dirty but don't force an immediate save
+            EditorUtility.SetDirty(flowAsset);
 
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            // Use a less aggressive save method that doesn't cause domain reloads
+            AssetDatabase.SaveAssetIfDirty(flowAsset);
 
-            // Set current asset reference
-            _currentAsset = flowAsset;
+            // Reset unsaved changes flag
+            _hasUnsavedChanges = false;
 
-            // Remember this asset path for domain reload
-            _lastOpenedAssetPath = path;
-
-            // Update window title to show current asset name
-            titleContent.text = $"Animation Flow: {Path.GetFileNameWithoutExtension(path)}";
-
-            // Show a brief status message in the status bar instead of dialog
-            ShowNotification(new GUIContent($"Saved to {Path.GetFileName(path)}"));
+            // Show a brief notification instead of dialog
+            ShowNotification(new GUIContent($"Saved {flowAsset.name}"));
         }
 
         private void LoadGraph()
@@ -217,16 +331,36 @@ namespace Animation.Flow.Editor
                 return;
             }
 
+            // Check for unsaved changes
+            if (_hasUnsavedChanges && _currentAsset != null)
+            {
+                int choice = EditorUtility.DisplayDialogComplex(
+                    "Unsaved Changes",
+                    $"The Animation Flow '{_currentAsset.name}' has unsaved changes. Do you want to save them?",
+                    "Save", "Don't Save", "Cancel");
+
+                switch (choice)
+                {
+                    case 0: // Save
+                        SaveCurrentAsset();
+                        break;
+                    case 1: // Don't Save
+                        break;
+                    case 2: // Cancel
+                        return;
+                }
+            }
+
             // Open the Object Picker window instead of the file browser
             EditorGUIUtility.ShowObjectPicker<AnimationFlowAsset>(null, false, "",
-                EditorGUIUtility.GetControlID(FocusType.Passive));
+                GUIUtility.GetControlID(FocusType.Passive));
 
             EditorApplication.update += WaitForObjectPicker;
         }
 
         private void WaitForObjectPicker()
         {
-            if (Event.current != null && Event.current.commandName == "ObjectSelectorClosed")
+            if (Event.current is { commandName: "ObjectSelectorClosed" })
             {
                 Object selectedObject = EditorGUIUtility.GetObjectPickerObject();
                 if (selectedObject is AnimationFlowAsset flowAsset)
@@ -240,13 +374,13 @@ namespace Animation.Flow.Editor
 
         public void LoadAsset(AnimationFlowAsset flowAsset)
         {
-            if (_graphView == null)
+            if (_graphView is null)
             {
                 Debug.LogError("GraphView is not available.");
                 return;
             }
 
-            if (flowAsset == null)
+            if (!flowAsset)
             {
                 Debug.LogError("Invalid Animation Flow Asset");
                 return;
@@ -322,13 +456,71 @@ namespace Animation.Flow.Editor
             }
 
             // Update window title to show current asset name
-            titleContent.text = $"Animation Flow: {flowAsset.name}";
+            UpdateWindowTitle();
 
             // Show a brief status message in the status bar instead of dialog
             ShowNotification(new GUIContent($"Loaded {flowAsset.name}"));
 
             // Frame the entire graph to show all nodes
             _graphView.FrameAll();
+
+            // Reset unsaved changes flag since we just loaded
+            _hasUnsavedChanges = false;
         }
+
+        private void UpdateWindowTitle()
+        {
+            titleContent.text =
+                _currentAsset ? $"Animation Flow: {_currentAsset.name}" : "Animation Flow Editor";
+        }
+
+        private void OnSelectionChanged()
+        {
+            // Update target GameObject when selection changes
+            UpdateTargetGameObject();
+        }
+
+        private void UpdateTargetGameObject()
+        {
+            GameObject selectedObject = Selection.activeGameObject;
+            if (selectedObject)
+            {
+                // Check if the selected object has an AnimationFlowController
+                AnimationFlowController flowController = selectedObject.GetComponent<AnimationFlowController>();
+                if (flowController)
+                {
+                    _targetGameObject = selectedObject;
+
+                    // Try to get the animator through reflection
+                    MethodInfo methodInfo = flowController.GetType().GetMethod("GetAnimatorAdapter",
+                        BindingFlags.NonPublic | BindingFlags.Instance);
+
+                    if (methodInfo != null)
+                    {
+                        _targetAnimator = methodInfo.Invoke(flowController, null) as IAnimator;
+                    }
+
+                    // If we have a graph view, notify it about the target change
+                    _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
+                }
+                else
+                {
+                    // Try to get a SpriteAnimator component directly
+                    SpriteAnimator spriteAnimator = selectedObject.GetComponent<SpriteAnimator>();
+                    if (spriteAnimator)
+                    {
+                        _targetGameObject = selectedObject;
+                        _targetAnimator = new SpriteAnimatorAdapter(spriteAnimator);
+
+                        // If we have a graph view, notify it about the target change
+                        _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
+                    }
+                }
+            }
+        }
+
+        // Getter methods for target info
+        public GameObject GetTargetGameObject() => _targetGameObject;
+        public IAnimator GetTargetAnimator() => _targetAnimator;
     }
 }

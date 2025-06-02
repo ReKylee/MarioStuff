@@ -11,9 +11,21 @@ namespace Animation.Flow.Editor
 {
     public class AnimationFlowGraphView : GraphView
     {
+
+        // Store the available animation names
+        private List<string> _availableAnimations = new();
+
+        // Clipboard data for copy/paste operations
+        private List<ISelectable> _copiedElements = new();
+
         // Track if we're currently handling a selection change to prevent recursion
         private bool _isHandlingSelection;
-        private List<ISelectable> _previousSelection = new();
+        private IAnimator _targetAnimator;
+
+        // Store references to the target GameObject and animator
+        private GameObject _targetGameObject;
+
+        // Transition editor panel (embedded in the graph view)
 
         public AnimationFlowGraphView()
         {
@@ -39,48 +51,15 @@ namespace Animation.Flow.Editor
 
             // Set up node creation
             SetupNodeCreation();
-            RegisterCallback<MouseUpEvent>(OnMouseUp);
+
+            // Register keyboard shortcuts
+            RegisterKeyboardShortcuts();
+
+
+            // Initialize with default animations
+            _availableAnimations = AnimationNameProvider.GetAnimationNamesFromSelection();
         }
 
-        private void OnMouseUp(MouseUpEvent evt)
-        {
-            // Check if selection has changed
-            if (!SelectionsAreEqual(_previousSelection, selection))
-            {
-                HandleSelectionChanged();
-
-                // Update previous selection
-                _previousSelection = selection.ToList();
-            }
-        }
-
-        private bool SelectionsAreEqual(List<ISelectable> selection1, List<ISelectable> selection2)
-        {
-            if (selection1.Count != selection2.Count)
-                return false;
-
-            for (int i = 0; i < selection1.Count; i++)
-            {
-                if (!selection2.Contains(selection1[i]))
-                    return false;
-            }
-
-            return true;
-        }
-
-        private void HandleSelectionChanged()
-        {
-            // Check if an edge is selected
-            if (selection.Count == 1 && selection[0] is AnimationFlowEdge edge)
-            {
-                // Check if this is a valid edge between animation states
-                if (edge.output?.node is AnimationStateNode && edge.input?.node is AnimationStateNode)
-                {
-                    // Show the transition editor window for this edge
-                    EdgeInspector.InspectEdge(edge);
-                }
-            }
-        }
         private GraphViewChange OnGraphViewChanged(GraphViewChange change)
         {
             // Handle edge creation
@@ -148,6 +127,185 @@ namespace Animation.Flow.Editor
             };
         }
 
+        private void RegisterKeyboardShortcuts()
+        {
+            // Delete - Remove selected elements
+            RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode is KeyCode.Delete or KeyCode.Backspace)
+                {
+                    if (selection.Count > 0)
+                    {
+                        // Convert ISelectable to GraphElement to match DeleteElements signature
+                        var elementsToDelete = selection.OfType<GraphElement>().ToList();
+                        DeleteElements(elementsToDelete);
+                        evt.StopPropagation();
+                    }
+                }
+            });
+
+            // Ctrl+C - Copy selected elements
+            RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.ctrlKey && evt.keyCode == KeyCode.C)
+                {
+                    _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
+                    evt.StopPropagation();
+                }
+            });
+
+            // Ctrl+V - Paste copied elements
+            RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.ctrlKey && evt.keyCode == KeyCode.V)
+                {
+                    PasteElements(evt.originalMousePosition);
+                    evt.StopPropagation();
+                }
+            });
+
+            // Ctrl+D - Duplicate selected elements
+            RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.ctrlKey && evt.keyCode == KeyCode.D)
+                {
+                    _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
+                    PasteElements(evt.originalMousePosition, 20);
+                    evt.StopPropagation();
+                }
+            });
+
+            // F - Frame selected elements
+            RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode == KeyCode.F)
+                {
+                    if (selection.Count > 0)
+                    {
+                        FrameSelection();
+                    }
+                    else
+                    {
+                        FrameAll();
+                    }
+
+                    evt.StopPropagation();
+                }
+            });
+
+            // Ctrl+A - Select all nodes
+            RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.ctrlKey && evt.keyCode == KeyCode.A)
+                {
+                    foreach (Node node in nodes)
+                    {
+                        AddToSelection(node);
+                    }
+
+                    evt.StopPropagation();
+                }
+            });
+        }
+
+        // Connect two ports with an edge
+        public Edge ConnectPorts(Port output, Port input)
+        {
+            // Create a new edge - Use our custom AnimationFlowEdge which has OnSelected override
+            AnimationFlowEdge edge = new()
+            {
+                output = output,
+                input = input
+            };
+
+            // Properly connect the edge to both ports
+            input.Connect(edge);
+            output.Connect(edge);
+
+            // Add edge to graph
+            AddElement(edge);
+
+            return edge;
+        }
+
+        private void PasteElements(Vector2 position, float offset = 0)
+        {
+            if (_copiedElements == null || _copiedElements.Count == 0)
+                return;
+
+            ClearSelection();
+
+            // Create a dictionary to track new nodes created from original nodes
+            var originalToNew = new Dictionary<string, AnimationStateNode>();
+
+            // First pass: create new nodes
+            foreach (ISelectable element in _copiedElements)
+            {
+                if (element is AnimationStateNode sourceNode)
+                {
+                    // Get the position of the original node and offset it
+                    Rect sourceRect = sourceNode.GetPosition();
+                    Vector2 newPos = new(
+                        sourceRect.x + offset,
+                        sourceRect.y + offset
+                    );
+
+                    // Create a new node with same properties but a new ID
+                    AnimationStateNode newNode = CreateStateNode(
+                        sourceNode.StateType,
+                        sourceNode.AnimationName + " (Copy)",
+                        new Rect(newPos, sourceRect.size),
+                        null, // Generate a new ID
+                        false, // Not initial state
+                        sourceNode.FrameToHold
+                    );
+
+                    // Add to selection
+                    AddToSelection(newNode);
+
+                    // Track the relationship between original and new
+                    originalToNew[sourceNode.ID] = newNode;
+                }
+            }
+
+            // Second pass: recreate connections between copied nodes
+            foreach (ISelectable element in _copiedElements)
+            {
+                if (element is AnimationStateNode sourceNode)
+                {
+                    // Find all edges connected to this source node
+                    var connectedEdges = edges.ToList()
+                        .Where(e => e.output.node == sourceNode || e.input.node == sourceNode);
+
+                    foreach (Edge edge in connectedEdges)
+                    {
+                        // Only create edges between copied nodes
+                        if (edge.output.node is AnimationStateNode outputNode &&
+                            edge.input.node is AnimationStateNode inputNode)
+                        {
+                            if (_copiedElements.Contains(outputNode) &&
+                                _copiedElements.Contains(inputNode))
+                            {
+                                // Get the corresponding new nodes
+                                AnimationStateNode newOutputNode = originalToNew[outputNode.ID];
+                                AnimationStateNode newInputNode = originalToNew[inputNode.ID];
+
+                                // Find the correct ports
+                                Port outputPort = newOutputNode.outputContainer.Q<Port>();
+                                Port inputPort = newInputNode.inputContainer.Q<Port>();
+
+                                // Connect them
+                                if (outputPort != null && inputPort != null)
+                                {
+                                    ConnectPorts(outputPort, inputPort);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         public AnimationStateNode CreateStateNode(string stateType, string animationName, Rect position,
             string id = null, bool isInitialState = false, int frameToHold = 0)
         {
@@ -199,25 +357,54 @@ namespace Animation.Flow.Editor
             return node;
         }
 
-        public Edge ConnectPorts(Port output, Port input)
+        /// <summary>
+        ///     Called when the target GameObject changes
+        /// </summary>
+        public void OnTargetGameObjectChanged(GameObject targetGameObject, IAnimator targetAnimator)
         {
-            // Create a new standard edge
-            Edge edge = new()
+            _targetGameObject = targetGameObject;
+            _targetAnimator = targetAnimator;
+
+            // Update available animations
+            if (_targetAnimator != null)
             {
-                output = output,
-                input = input
-            };
+                _availableAnimations = AnimationNameProvider.GetAnimationNames(_targetAnimator);
+            }
+            else if (_targetGameObject != null)
+            {
+                _availableAnimations = AnimationNameProvider.GetAnimationNamesFromGameObject(_targetGameObject);
+            }
+            else
+            {
+                _availableAnimations = AnimationNameProvider.GetAnimationNamesFromSelection();
+            }
 
-            // Properly connect the edge to both ports
-            input.Connect(edge);
-            output.Connect(edge);
-
-            // Add edge to graph
-            AddElement(edge);
-
-            return edge;
+            // Refresh animation dropdowns in existing nodes
+            RefreshNodeAnimationLists();
         }
 
+        /// <summary>
+        ///     Refresh animation lists in all existing nodes
+        /// </summary>
+        private void RefreshNodeAnimationLists()
+        {
+            foreach (Node node in nodes.ToList())
+            {
+                if (node is AnimationStateNode animNode)
+                {
+                    animNode.RefreshAnimationList(_availableAnimations);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Get the current list of available animations
+        /// </summary>
+        public List<string> GetAvailableAnimations() => new(_availableAnimations);
+
+        /// <summary>
+        ///     Clears all nodes and edges from the graph view
+        /// </summary>
         public void ClearGraph()
         {
             // Remove all edges
@@ -232,377 +419,5 @@ namespace Animation.Flow.Editor
                 RemoveElement(node);
             }
         }
-
-        public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter)
-        {
-            var compatiblePorts = new List<Port>();
-
-            ports.ForEach(port =>
-            {
-                // Don't connect to self
-                if (startPort.node == port.node)
-                    return;
-
-                // Only connect input to output
-                if (startPort.direction == port.direction)
-                    return;
-
-                compatiblePorts.Add(port);
-            });
-
-            return compatiblePorts;
-        }
-
-        // Fixed method to avoid infinite recursion
-        public new void FrameAll()
-        {
-            if (nodes.Any())
-            {
-                // Call the correct base method - don't call ourselves recursively
-                base.FrameAll();
-            }
-        }
     }
-
-    public class AnimationStateNode : Node
-    {
-        private TextField _animationNameField;
-        private VisualElement _contentContainer;
-        private IntegerField _frameToHoldField;
-        private Toggle _initialStateToggle;
-        private bool _isCollapsed;
-
-        public AnimationStateNode(string stateType, string animationName)
-        {
-            StateType = stateType;
-            AnimationName = animationName;
-            ID = Guid.NewGuid().ToString();
-
-            // Set title to animation name
-            title = animationName;
-
-            // Build node UI
-            BuildNodeUI();
-        }
-
-        public string StateType { get; }
-        public string AnimationName { get; set; }
-        public bool IsInitialState { get; set; }
-        public int FrameToHold { get; set; }
-        public string ID { get; set; }
-
-        public void RefreshInitialStateToggle()
-        {
-            if (_initialStateToggle != null)
-                _initialStateToggle.value = IsInitialState;
-
-            // Update visual appearance
-            titleContainer.style.backgroundColor = GetStateColor();
-        }
-
-        public void RefreshFrameToHoldField()
-        {
-            if (_frameToHoldField != null)
-                _frameToHoldField.value = FrameToHold;
-        }
-
-        private void BuildNodeUI()
-        {
-            // Apply custom styles for better appearance
-            AddToClassList("animation-state-node");
-
-            // Remove any extra foldout sections that might be created by default
-            extensionContainer.style.display = DisplayStyle.None;
-
-            // Configure main container for better layout
-            mainContainer.style.borderTopLeftRadius = 5;
-            mainContainer.style.borderTopRightRadius = 5;
-            mainContainer.style.borderBottomLeftRadius = 5;
-            mainContainer.style.borderBottomRightRadius = 5;
-            mainContainer.style.overflow = Overflow.Hidden;
-
-            // Style the title container - clean and prominent
-            titleContainer.style.backgroundColor = GetStateColor();
-            titleContainer.style.paddingLeft = 12;
-            titleContainer.style.paddingRight = 30; // Leave space for collapse indicator
-            titleContainer.style.paddingTop = 8;
-            titleContainer.style.paddingBottom = 8;
-            titleContainer.style.height = 30;
-
-            // Make title text more readable
-            Label titleLabel = titleContainer.Q<Label>();
-            if (titleLabel != null)
-            {
-                titleLabel.style.fontSize = 14;
-                titleLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-                titleLabel.style.color = Color.white;
-            }
-
-            // Make title container clickable for collapse/expand
-            titleContainer.RegisterCallback<ClickEvent>(evt =>
-            {
-                // Don't trigger if clicking on child elements
-                if (evt.target == titleContainer || evt.target == titleLabel)
-                    ToggleCollapsed();
-            });
-
-            // Add visual indicator for collapsible state
-            Button collapseIndicator = new(ToggleCollapsed) { text = "▼" };
-            collapseIndicator.style.width = 20;
-            collapseIndicator.style.height = 20;
-            collapseIndicator.style.position = Position.Absolute;
-            collapseIndicator.style.right = 5;
-            collapseIndicator.style.top = 5;
-            collapseIndicator.style.backgroundColor = new Color(0, 0, 0, 0);
-            collapseIndicator.style.borderBottomWidth = 0;
-            collapseIndicator.style.borderTopWidth = 0;
-            collapseIndicator.style.borderLeftWidth = 0;
-            collapseIndicator.style.borderRightWidth = 0;
-            titleContainer.Add(collapseIndicator);
-
-            // Container for all content below the title
-            _contentContainer = new VisualElement();
-            _contentContainer.style.display = DisplayStyle.Flex;
-            _contentContainer.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.3f);
-            _contentContainer.style.paddingTop = 6;
-            _contentContainer.style.paddingBottom = 6;
-            mainContainer.Add(_contentContainer);
-
-            // Disable any default elements that might create empty space
-            if (titleButtonContainer != null)
-                titleButtonContainer.style.display = DisplayStyle.None;
-
-            if (topContainer != null)
-                topContainer.style.minHeight = 0;
-
-            // Create animation name field
-            VisualElement nameContainer = new();
-            nameContainer.style.flexDirection = FlexDirection.Row;
-            nameContainer.style.marginLeft = 8;
-            nameContainer.style.marginRight = 8;
-            nameContainer.style.marginTop = 4;
-
-            Label nameLabel = new("Animation:");
-            nameLabel.style.minWidth = 70;
-            nameLabel.style.color = new Color(0.9f, 0.9f, 0.9f);
-            nameContainer.Add(nameLabel);
-
-            _animationNameField = new TextField();
-            _animationNameField.value = AnimationName;
-            _animationNameField.RegisterValueChangedCallback(evt =>
-            {
-                AnimationName = evt.newValue;
-                title = evt.newValue; // Update node title when animation name changes
-            });
-
-            _animationNameField.style.flexGrow = 1;
-            nameContainer.Add(_animationNameField);
-
-            _contentContainer.Add(nameContainer);
-
-            // Add a label for state type (not editable, just informational)
-            VisualElement typeContainer = new();
-            typeContainer.style.flexDirection = FlexDirection.Row;
-            typeContainer.style.marginLeft = 8;
-            typeContainer.style.marginRight = 8;
-            typeContainer.style.marginTop = 4;
-            typeContainer.style.marginBottom = 4;
-
-            Label typeLabel = new("Type:");
-            typeLabel.style.minWidth = 70;
-            typeLabel.style.color = new Color(0.9f, 0.9f, 0.9f);
-            typeContainer.Add(typeLabel);
-
-            Label typeValueLabel = new(StateType);
-            typeValueLabel.style.color = new Color(0.9f, 0.9f, 0.9f);
-            typeContainer.Add(typeValueLabel);
-
-            _contentContainer.Add(typeContainer);
-
-            // Create initial state toggle
-            VisualElement toggleContainer = new();
-            toggleContainer.style.marginLeft = 8;
-            toggleContainer.style.marginRight = 8;
-            toggleContainer.style.marginTop = 8;
-
-            _initialStateToggle = new Toggle("Initial State");
-            _initialStateToggle.value = IsInitialState;
-            _initialStateToggle.RegisterValueChangedCallback(evt =>
-            {
-                bool wasInitial = IsInitialState;
-                IsInitialState = evt.newValue;
-
-                // Update node visual style
-                titleContainer.style.backgroundColor = GetStateColor();
-
-                if (!wasInitial && IsInitialState)
-                {
-                    // Clear other initial states
-                    if (parent is GraphView graphView)
-                    {
-                        var nodes = graphView.nodes.ToList().Cast<AnimationStateNode>();
-                        foreach (AnimationStateNode node in nodes)
-                        {
-                            if (node != this && node._initialStateToggle != null)
-                            {
-                                node.IsInitialState = false;
-                                node._initialStateToggle.value = false;
-                                node.titleContainer.style.backgroundColor = node.GetStateColor();
-                            }
-                        }
-                    }
-                }
-            });
-
-            toggleContainer.Add(_initialStateToggle);
-            _contentContainer.Add(toggleContainer);
-
-            // Add type-specific UI
-            switch (StateType)
-            {
-                case "HoldFrame":
-                    VisualElement frameContainer = new();
-                    frameContainer.style.flexDirection = FlexDirection.Row;
-                    frameContainer.style.marginLeft = 8;
-                    frameContainer.style.marginRight = 8;
-                    frameContainer.style.marginTop = 8;
-                    frameContainer.style.marginBottom = 8;
-
-                    Label frameLabel = new("Hold Frame:");
-                    frameLabel.style.minWidth = 70;
-                    frameLabel.style.color = new Color(0.9f, 0.9f, 0.9f);
-                    frameContainer.Add(frameLabel);
-
-                    _frameToHoldField = new IntegerField();
-                    _frameToHoldField.value = FrameToHold;
-                    _frameToHoldField.RegisterValueChangedCallback(evt => FrameToHold = evt.newValue);
-                    _frameToHoldField.style.flexGrow = 1;
-                    frameContainer.Add(_frameToHoldField);
-
-                    _contentContainer.Add(frameContainer);
-                    break;
-                default:
-                    // Add some padding at the bottom for other node types
-                    VisualElement spacer = new();
-                    spacer.style.height = 8;
-                    _contentContainer.Add(spacer);
-                    break;
-            }
-
-            // Create and style ports differently, using arrow-like visuals
-            StylePortContainers();
-
-            // Initial refresh
-            RefreshExpandedState();
-        }
-
-        private void StylePortContainers()
-        {
-            // Use standard default port container styling without absolute positioning
-            // This will allow Unity's built-in layout system to place ports properly
-            inputContainer.style.backgroundColor = new Color(0, 0, 0, 0);
-            outputContainer.style.backgroundColor = new Color(0, 0, 0, 0);
-        }
-
-        private void ToggleCollapsed()
-        {
-            _isCollapsed = !_isCollapsed;
-
-            // Update visual indicator
-            Button collapseButton = titleContainer.Q<Button>();
-            if (collapseButton != null)
-                collapseButton.text = _isCollapsed ? "▶" : "▼";
-
-            // Show/hide content
-            _contentContainer.style.display = _isCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
-
-            // Force the node to update its size
-            RefreshExpandedState();
-        }
-
-        // Get a color based on the state type and whether it's initial
-        private Color GetStateColor()
-        {
-            if (IsInitialState)
-                return new Color(0.2f, 0.6f, 0.2f); // Green for initial state
-
-            switch (StateType)
-            {
-                case "HoldFrame":
-                    return new Color(0.2f, 0.2f, 0.6f); // Blue for hold frame
-                case "OneTime":
-                    return new Color(0.6f, 0.3f, 0.1f); // Orange for one-time
-                case "Looping":
-                    return new Color(0.4f, 0.1f, 0.5f); // Purple for looping
-                default:
-                    return new Color(0.3f, 0.3f, 0.3f); // Gray for unknown
-            }
-        }
-    }
-
-    public class AnimationFlowEdge : Edge
-    {
-        public AnimationFlowEdge()
-        {
-            // Style the edge for better visual appearance
-            AddToClassList("flow-edge");
-
-            // Make the edge capable of being selected/dragged
-            capabilities |= Capabilities.Selectable | Capabilities.Deletable;
-
-            // Add visual arrow to show direction
-            edgeControl.Add(new FlowArrow());
-
-            // Make sure the edge is visible
-            edgeControl.style.backgroundColor = new Color(0.7f, 0.7f, 0.7f, 1f);
-            edgeControl.style.minWidth = 2;
-        }
-        public List<ConditionData> Conditions { get; set; } = new();
-    }
-
-    // Custom arrow control for edges
-    public class FlowArrow : VisualElement
-    {
-        public FlowArrow()
-        {
-            // Set up the arrow visual element
-            style.position = Position.Absolute;
-            style.width = 10;
-            style.height = 10;
-            style.left = 0;
-            style.top = 0;
-
-            // Draw the arrow in GenerateVisualContent
-            generateVisualContent += OnGenerateVisualContent;
-        }
-
-        private void OnGenerateVisualContent(MeshGenerationContext mgc)
-        {
-            // Get the painter for drawing
-            Painter2D painter = mgc.painter2D;
-
-            // Define arrow shape
-            Vector2[] arrowPoints =
-            {
-                new(0, 0), // Tip
-                new(-10, -5), // Left wing
-                new(-7, 0), // Inset
-                new(-10, 5) // Right wing
-            };
-
-            // Draw filled arrow
-            painter.fillColor = new Color(0.8f, 0.8f, 0.8f);
-            painter.BeginPath();
-            painter.MoveTo(arrowPoints[0]);
-
-            for (int i = 1; i < arrowPoints.Length; i++)
-            {
-                painter.LineTo(arrowPoints[i]);
-            }
-
-            painter.ClosePath();
-            painter.Fill();
-        }
-    }
-
 }

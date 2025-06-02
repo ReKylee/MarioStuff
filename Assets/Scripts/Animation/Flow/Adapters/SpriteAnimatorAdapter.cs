@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using GabrielBigardi.SpriteAnimator;
 
 namespace Animation.Flow.Adapters
@@ -95,6 +96,20 @@ namespace Animation.Flow.Adapters
                 _frameEvents.Remove(animationName);
                 _animator.SetAnimationFrameEvents(animationName, null);
             }
+        }
+
+        public List<string> GetAvailableAnimations()
+        {
+            // Get all animations from the underlying SpriteAnimator
+            var availableAnimations = new List<string>();
+
+            if (_animator is { SpriteAnimationObject: { SpriteAnimations: not null } })
+            {
+                availableAnimations.AddRange(
+                    _animator.SpriteAnimationObject.SpriteAnimations.Select(anim => anim.Name));
+            }
+
+            return availableAnimations;
         }
 
         private void ApplyFrameEvents(string animationName)
