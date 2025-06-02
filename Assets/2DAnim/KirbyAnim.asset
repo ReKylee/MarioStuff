@@ -87,6 +87,11 @@ MonoBehaviour:
     - {fileID: -1583265811, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     - {fileID: -1691689940, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     SpriteAnimationType: 1
+  - Name: JumpStart
+    FPS: 1
+    Frames:
+    - {fileID: -1042654070, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 0
   - Name: Jump
     FPS: 15
     Frames:

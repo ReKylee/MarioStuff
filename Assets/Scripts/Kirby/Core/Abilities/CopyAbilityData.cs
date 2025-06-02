@@ -39,6 +39,14 @@ namespace Kirby.Abilities
 
         [Header("Ability Specifics")] public AbilityType abilityType = AbilityType.Melee;
 
+        [Header("Animation Data")] [SerializeField]
+        private CopyAbilityAnimationData animationData;
+
+        /// <summary>
+        ///     Gets the animation data for this copy ability
+        /// </summary>
+        public CopyAbilityAnimationData AnimationData => animationData;
+
         private void OnEnable()
         {
             if (string.IsNullOrEmpty(abilityName))

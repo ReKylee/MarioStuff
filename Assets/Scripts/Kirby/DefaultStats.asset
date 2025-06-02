@@ -23,10 +23,8 @@ MonoBehaviour:
   maxFallSpeed: 15
   coyoteTime: 0.08
   jumpBufferTime: 0.1
-  floatAscendSpeed: 2
-  floatDescentSpeed: 1
-  flapImpulse: 5.5
-  flyMaxHeight: 10
+  flapImpulse: 10
+  floatDescentSpeed: 0.54
   gravityScale: 2.8
   attackDamage: 10
   attackRange: 0.5

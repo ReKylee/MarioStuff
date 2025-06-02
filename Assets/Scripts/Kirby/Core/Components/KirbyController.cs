@@ -10,7 +10,7 @@ namespace Kirby.Core.Components
     {
 
         [Header("Core Stats & Abilities")] [SerializeField]
-        private KirbyStats baseStats; // Changed: No longer new(), assign in Inspector
+        private KirbyStats baseStats;
 
         [SerializeField] private CopyAbilityData currentCopyAbility;
 
@@ -18,17 +18,17 @@ namespace Kirby.Core.Components
         private readonly List<IMovementAbilityModule> _movementAbilities = new();
         private SpriteAnimator _animator;
 
-        private InputContext _currentInput;
         private InputContext _fixedInput;
 
         private KirbyGroundCheck _groundCheck;
 
         private InputHandler _inputHandler;
-        internal AnimationPriorityController AnimationController;
+        internal KirbyAnimationController AnimationController; // Reference to our new animation system
         internal Collider2D Collider;
         internal Rigidbody2D Rigidbody;
-        public KirbyStats Stats { get; private set; } // Changed from Stats to Stats
 
+        public InputContext CurrentInput { get; private set; }
+        public KirbyStats Stats { get; private set; }
         public bool IsGrounded => _groundCheck?.IsGrounded ?? false;
         public float GroundSlopeAngle => _groundCheck?.GroundSlopeAngle ?? 0;
         public Vector2 GroundNormal => _groundCheck?.GroundNormal ?? Vector2.zero;
@@ -39,7 +39,10 @@ namespace Kirby.Core.Components
             Rigidbody = GetComponent<Rigidbody2D>();
 
             _animator = GetComponent<SpriteAnimator>();
-            AnimationController = new AnimationPriorityController(_animator);
+
+            // Initialize the animation controller
+            AnimationController = GetComponent<KirbyAnimationController>();
+
 
             Collider = GetComponent<Collider2D>();
 
@@ -77,12 +80,12 @@ namespace Kirby.Core.Components
 
             RefreshRuntimeStats();
 
-            _currentInput = _inputHandler.CurrentInput;
+            CurrentInput = _inputHandler.CurrentInput;
 
             // Process all non-movement abilities in Update
             foreach (IAbilityModule ability in _activeAbilities.Where(a => a is not IMovementAbilityModule))
             {
-                ability.ProcessAbility(_currentInput);
+                ability.ProcessAbility(CurrentInput);
             }
 
         }
@@ -93,9 +96,6 @@ namespace Kirby.Core.Components
 
             _fixedInput = _inputHandler.FixedInput;
 
-            // Play idle animation with lowest priority (0) as a fallback
-            // This ensures something is always playing
-            AnimationController.PlayAnimation("Idle", 0f);
 
             // Use Aggregate to apply movement abilities sequentially
             // Each ability gets the current velocity and returns the modified velocity
@@ -104,7 +104,6 @@ namespace Kirby.Core.Components
                 (current, movementAbility) =>
                     movementAbility.ProcessMovement(current, IsGrounded, _fixedInput));
 
-            AnimationController.ApplyAnimationForThisFrame();
         }
 
 
@@ -120,6 +119,13 @@ namespace Kirby.Core.Components
             _movementAbilities.Clear();
 
             currentCopyAbility = newAbilityData; // Assign the new ability data
+
+            // Update animation data when ability changes
+            if (AnimationController != null && currentCopyAbility != null && currentCopyAbility.AnimationData != null)
+            {
+                AnimationController.SetAnimationData(currentCopyAbility.AnimationData);
+            }
+
             // Stats are refreshed by RefreshRuntimeStats below
 
             if (currentCopyAbility)

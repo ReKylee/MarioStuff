@@ -8,6 +8,7 @@ namespace Kirby.Abilities.Modules
     /// </summary>
     public class JumpAbilityModule : AbilityModuleBase, IMovementAbilityModule
     {
+        private bool _isJumping;
         private float _jumpStartTime;
         private float _lastGroundedTime;
 
@@ -18,6 +19,7 @@ namespace Kirby.Abilities.Modules
             if (isGrounded)
             {
                 _lastGroundedTime = Time.time;
+                _isJumping = false;
             }
 
             if (inputContext.JumpPressed)
@@ -34,10 +36,11 @@ namespace Kirby.Abilities.Modules
                 currentVelocity.y = Controller.Stats.jumpVelocity;
                 _lastGroundedTime = -100f;
                 _jumpStartTime = -100f;
+                _isJumping = true;
             }
 
             // Variable jump height on jump release
-            else if (inputContext.JumpReleased && currentVelocity.y > 0)
+            else if (inputContext.JumpReleased && currentVelocity.y > 0 && _isJumping)
             {
                 currentVelocity.y *= Controller.Stats.jumpReleaseVelocityMultiplier;
                 _lastGroundedTime = -100f;

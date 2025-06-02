@@ -6,7 +6,7 @@ namespace Kirby.Abilities
     ///     Basic walk ability - the default movement ability for Kirby
     ///     Handles horizontal movement with acceleration/deceleration for a responsive feel
     /// </summary>
-    public class WalkAbilityModule : AbilityModuleBase, IMovementAbilityModule
+    public class HMoveAbilityModule : AbilityModuleBase, IMovementAbilityModule
     {
         private const float WALL_DETECTION_DISTANCE = 0.1f;
         private const float MIN_INPUT_THRESHOLD = 0.01f;
@@ -50,6 +50,7 @@ namespace Kirby.Abilities
                 int newFacingDirection = movementInput > 0 ? 1 : -1;
 
                 _facingDirection = newFacingDirection;
+                Controller.AnimationController.SetDirection(_facingDirection);
             }
 
             // Update running state
@@ -63,7 +64,6 @@ namespace Kirby.Abilities
             // Calculate new horizontal velocity
             if (hasMovementInput && !IsWallBlocking(_facingDirection))
             {
-                Controller.AnimationController.PlayAnimation(_isRunning ? "Run" : "Walk", 1f);
 
                 // Accelerate towards target velocity
                 float targetVelocity = targetSpeed * _facingDirection;
