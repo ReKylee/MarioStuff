@@ -18,7 +18,7 @@ namespace Animation.Flow
         private readonly Dictionary<string, float> _stateTimers = new();
         private AnimationContext _animationContext; // Renamed for clarity from _context
 
-        private IAnimator _animatorAdapter; // Renamed for clarity from _animator
+        private IAnimator _animatorAdapter;
         private IAnimationState _currentState;
         private float _timeInCurrentState;
         protected void Awake()
@@ -101,7 +101,6 @@ namespace Animation.Flow
 
         private void InitializeController()
         {
-            _animatorAdapter = GetAnimatorAdapter();
             if (_animatorAdapter == null)
             {
                 Debug.LogError("Animator adapter is not provided by the child class.", this);
@@ -121,7 +120,6 @@ namespace Animation.Flow
             }
         }
 
-        protected abstract IAnimator GetAnimatorAdapter();
 
         /// <summary>
         ///     Transition to a new animation state

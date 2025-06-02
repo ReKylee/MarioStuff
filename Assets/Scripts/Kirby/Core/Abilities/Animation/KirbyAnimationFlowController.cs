@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using Animation.Flow;
-using Animation.Flow.Adapters;
-using GabrielBigardi.SpriteAnimator;
 using Kirby.Core.Components;
 using UnityEngine;
 
@@ -31,7 +29,7 @@ namespace Kirby.Core.Abilities.Animation
         protected new void Awake()
         {
             _kirbyController = GetComponent<KirbyController>();
-            if (_kirbyController == null)
+            if (!_kirbyController)
             {
                 Debug.LogError("KirbyAnimationFlowController requires a KirbyController component.", this);
                 enabled = false;
@@ -129,165 +127,154 @@ namespace Kirby.Core.Abilities.Animation
             SetParameter("JumpPhase", jumpPhase);
         }
 
-        // Implemented GetAnimatorAdapter() to provide the SpriteAnimatorAdapter.
-        protected override IAnimator GetAnimatorAdapter()
-        {
-            if (_kirbyController == null || !_kirbyController.Rigidbody)
-            {
-                Debug.LogError("KirbyController or Rigidbody is not properly initialized.", this);
-                return null;
-            }
 
-            return new SpriteAnimatorAdapter(_kirbyController.GetComponent<SpriteAnimator>());
-        }
-    }
-
-    /// <summary>
-    ///     Factory for creating Kirby's jump animation flow
-    /// </summary>
-    public class KirbyJumpAnimationFactory
-    {
         /// <summary>
-        ///     Create a default jump animation flow programmatically
+        ///     Factory for creating Kirby's jump animation flow
         /// </summary>
-        public static AnimationFlowAsset CreateJumpAnimationFlow()
+        public class KirbyJumpAnimationFactory
         {
-            AnimationFlowAsset asset = ScriptableObject.CreateInstance<AnimationFlowAsset>();
-
-            // Create state data
-            AnimationStateData jumpStartState = new()
+            /// <summary>
+            ///     Create a default jump animation flow programmatically
+            /// </summary>
+            public static AnimationFlowAsset CreateJumpAnimationFlow()
             {
-                Id = "JumpStart",
-                StateType = "HoldFrame",
-                AnimationName = "JumpStart",
-                IsInitialState = true,
-                Position = new Vector2(100, 100)
-            };
+                AnimationFlowAsset asset = ScriptableObject.CreateInstance<AnimationFlowAsset>();
 
-            AnimationStateData jumpState = new()
-            {
-                Id = "Jump",
-                StateType = "OneTime",
-                AnimationName = "Jump",
-                Position = new Vector2(300, 100)
-            };
-
-            AnimationStateData fallState = new()
-            {
-                Id = "Fall",
-                StateType = "Looping",
-                AnimationName = "Fall",
-                Position = new Vector2(500, 100)
-            };
-
-            AnimationStateData bounceState = new()
-            {
-                Id = "Bounce",
-                StateType = "OneTime",
-                AnimationName = "BounceOffFloor",
-                Position = new Vector2(500, 300)
-            };
-
-            AnimationStateData landState = new()
-            {
-                Id = "Land",
-                StateType = "OneTime",
-                AnimationName = "Land",
-                Position = new Vector2(300, 300)
-            };
-
-            // Add states to asset
-            asset.States.Add(jumpStartState);
-            asset.States.Add(jumpState);
-            asset.States.Add(fallState);
-            asset.States.Add(bounceState);
-            asset.States.Add(landState);
-
-            // Create transitions
-            // JumpStart -> Jump (when button released or near apex)
-            TransitionData jumpStartToJump = new()
-            {
-                FromStateId = jumpStartState.Id,
-                ToStateId = jumpState.Id,
-                Conditions = new List<ConditionData>
+                // Create state data
+                AnimationStateData jumpStartState = new()
                 {
-                    new()
-                    {
-                        Type = "AnyCondition",
-                        ParameterName = ""
-                    }
-                }
-            };
+                    Id = "JumpStart",
+                    StateType = "HoldFrame",
+                    AnimationName = "JumpStart",
+                    IsInitialState = true,
+                    Position = new Vector2(100, 100)
+                };
 
-            jumpStartToJump.Conditions.Add(new ConditionData
-            {
-                Type = "Bool",
-                ParameterName = "JumpReleased",
-                BoolValue = true
-            });
-
-            jumpStartToJump.Conditions.Add(new ConditionData
-            {
-                Type = "FloatLessThan",
-                ParameterName = "VerticalVelocity",
-                FloatValue = 3.0f
-            });
-
-            // Jump -> Fall (when falling)
-            TransitionData jumpToFall = new()
-            {
-                FromStateId = jumpState.Id,
-                ToStateId = fallState.Id,
-                Conditions = new List<ConditionData>
+                AnimationStateData jumpState = new()
                 {
-                    new()
-                    {
-                        Type = "FloatLessThan",
-                        ParameterName = "VerticalVelocity",
-                        FloatValue = -0.5f
-                    }
-                }
-            };
+                    Id = "Jump",
+                    StateType = "OneTime",
+                    AnimationName = "Jump",
+                    Position = new Vector2(300, 100)
+                };
 
-            // Fall -> Bounce (when long fall and near ground)
-            TransitionData fallToBounce = new()
-            {
-                FromStateId = fallState.Id,
-                ToStateId = bounceState.Id,
-                Conditions = new List<ConditionData>
+                AnimationStateData fallState = new()
                 {
-                    new()
-                    {
-                        Type = "Bool",
-                        ParameterName = "IsLongFall",
-                        BoolValue = true
-                    }
-                }
-            };
+                    Id = "Fall",
+                    StateType = "Looping",
+                    AnimationName = "Fall",
+                    Position = new Vector2(500, 100)
+                };
 
-            // Fall -> Land (when grounded and not long fall)
-            TransitionData fallToLand = new()
-            {
-                FromStateId = fallState.Id,
-                ToStateId = landState.Id,
-                Conditions = new List<ConditionData>
+                AnimationStateData bounceState = new()
                 {
-                    new()
+                    Id = "Bounce",
+                    StateType = "OneTime",
+                    AnimationName = "BounceOffFloor",
+                    Position = new Vector2(500, 300)
+                };
+
+                AnimationStateData landState = new()
+                {
+                    Id = "Land",
+                    StateType = "OneTime",
+                    AnimationName = "Land",
+                    Position = new Vector2(300, 300)
+                };
+
+                // Add states to asset
+                asset.States.Add(jumpStartState);
+                asset.States.Add(jumpState);
+                asset.States.Add(fallState);
+                asset.States.Add(bounceState);
+                asset.States.Add(landState);
+
+                // Create transitions
+                // JumpStart -> Jump (when button released or near apex)
+                TransitionData jumpStartToJump = new()
+                {
+                    FromStateId = jumpStartState.Id,
+                    ToStateId = jumpState.Id,
+                    Conditions = new List<ConditionData>
                     {
-                        Type = "Bool",
-                        ParameterName = "IsGrounded",
-                        BoolValue = true
+                        new()
+                        {
+                            Type = "AnyCondition",
+                            ParameterName = ""
+                        }
                     }
-                }
-            };
+                };
 
-            // Add transitions to asset
-            asset.Transitions.Add(jumpStartToJump);
-            asset.Transitions.Add(jumpToFall);
-            asset.Transitions.Add(fallToBounce);
-            asset.Transitions.Add(fallToLand);
+                jumpStartToJump.Conditions.Add(new ConditionData
+                {
+                    Type = "Bool",
+                    ParameterName = "JumpReleased",
+                    BoolValue = true
+                });
 
-            return asset;
+                jumpStartToJump.Conditions.Add(new ConditionData
+                {
+                    Type = "FloatLessThan",
+                    ParameterName = "VerticalVelocity",
+                    FloatValue = 3.0f
+                });
+
+                // Jump -> Fall (when falling)
+                TransitionData jumpToFall = new()
+                {
+                    FromStateId = jumpState.Id,
+                    ToStateId = fallState.Id,
+                    Conditions = new List<ConditionData>
+                    {
+                        new()
+                        {
+                            Type = "FloatLessThan",
+                            ParameterName = "VerticalVelocity",
+                            FloatValue = -0.5f
+                        }
+                    }
+                };
+
+                // Fall -> Bounce (when long fall and near ground)
+                TransitionData fallToBounce = new()
+                {
+                    FromStateId = fallState.Id,
+                    ToStateId = bounceState.Id,
+                    Conditions = new List<ConditionData>
+                    {
+                        new()
+                        {
+                            Type = "Bool",
+                            ParameterName = "IsLongFall",
+                            BoolValue = true
+                        }
+                    }
+                };
+
+                // Fall -> Land (when grounded and not long fall)
+                TransitionData fallToLand = new()
+                {
+                    FromStateId = fallState.Id,
+                    ToStateId = landState.Id,
+                    Conditions = new List<ConditionData>
+                    {
+                        new()
+                        {
+                            Type = "Bool",
+                            ParameterName = "IsGrounded",
+                            BoolValue = true
+                        }
+                    }
+                };
+
+                // Add transitions to asset
+                asset.Transitions.Add(jumpStartToJump);
+                asset.Transitions.Add(jumpToFall);
+                asset.Transitions.Add(fallToBounce);
+                asset.Transitions.Add(fallToLand);
+
+                return asset;
+            }
         }
     }
 }

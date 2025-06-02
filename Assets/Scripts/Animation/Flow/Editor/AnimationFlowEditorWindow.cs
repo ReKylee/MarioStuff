@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
@@ -432,24 +431,24 @@ namespace Animation.Flow.Editor
             // Load Transitions
             foreach (TransitionData transitionData in flowAsset.Transitions)
             {
-                if (graphNodes.TryGetValue(transitionData.FromStateId, out AnimationStateNode fromNode) &&
-                    graphNodes.TryGetValue(transitionData.ToStateId, out AnimationStateNode toNode))
+                if (!graphNodes.TryGetValue(transitionData.FromStateId, out AnimationStateNode fromNode) ||
+                    !graphNodes.TryGetValue(transitionData.ToStateId, out AnimationStateNode toNode))
+                    continue;
+
+                // Get output port from the source node
+                Port outputPort = (Port)fromNode.outputContainer[0];
+
+                // Get input port from the target node
+                Port inputPort = (Port)toNode.inputContainer[0];
+
+                // Create edge
+                Edge edge = _graphView.ConnectPorts(outputPort, inputPort);
+
+                // Store conditions for this edge
+                string edgeId = EdgeConditionManager.Instance.GetEdgeId(edge);
+                if (!string.IsNullOrEmpty(edgeId) && transitionData.Conditions != null)
                 {
-                    // Get output port from the source node
-                    Port outputPort = (Port)fromNode.outputContainer[0];
-
-                    // Get input port from the target node
-                    Port inputPort = (Port)toNode.inputContainer[0];
-
-                    // Create edge
-                    Edge edge = _graphView.ConnectPorts(outputPort, inputPort);
-
-                    // Store conditions for this edge
-                    string edgeId = EdgeConditionManager.Instance.GetEdgeId(edge);
-                    if (!string.IsNullOrEmpty(edgeId) && transitionData.Conditions != null)
-                    {
-                        EdgeConditionManager.Instance.SetConditions(edgeId, transitionData.Conditions);
-                    }
+                    EdgeConditionManager.Instance.SetConditions(edgeId, transitionData.Conditions);
                 }
             }
 
@@ -481,34 +480,21 @@ namespace Animation.Flow.Editor
         private void UpdateTargetGameObject()
         {
             GameObject selectedObject = Selection.activeGameObject;
-            if (selectedObject)
-            {
-                // Check if the selected object has an AnimationFlowController
-                AnimationFlowController flowController = selectedObject.GetComponent<AnimationFlowController>();
-                _targetGameObject = selectedObject;
-                if (flowController)
-                {
+            if (!selectedObject)
+                return;
 
-                    // Try to get the animator through reflection
-                    MethodInfo methodInfo = flowController.GetType().GetMethod("GetAnimatorAdapter",
-                        BindingFlags.NonPublic | BindingFlags.Instance);
+            // Check if the selected object has an AnimationFlowController
+            AnimationFlowController flowController = selectedObject.GetComponent<AnimationFlowController>();
 
-                    if (methodInfo != null)
-                    {
-                        _targetAnimator = methodInfo.Invoke(flowController, null) as IAnimator;
-                    }
+            _targetGameObject = selectedObject;
 
-                }
-                else
-                {
-                    // Look for components implementing IAnimator
-                    _targetAnimator = selectedObject.GetComponent<IAnimator>();
+            // Look for components implementing IAnimator
+            _targetAnimator = flowController
+                ? flowController.GetAnimator()
+                : selectedObject.GetComponent<IAnimator>();
 
-                }
-
-                // If we have a graph view, notify it about the target change
-                _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
-            }
+            // If we have a graph view, notify it about the target change
+            _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
         }
 
         // Getter methods for target info
