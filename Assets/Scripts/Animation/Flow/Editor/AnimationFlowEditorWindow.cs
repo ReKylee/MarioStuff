@@ -62,7 +62,6 @@ namespace Animation.Flow.Editor
                 }
             }
 
-
             // Subscribe to editor closing to show save prompt if needed
             EditorApplication.wantsToQuit += WantsToQuit;
 
@@ -486,61 +485,77 @@ namespace Animation.Flow.Editor
             // Update target GameObject when selection changes
             UpdateTargetGameObject();
         }
+
         private void UpdateTargetGameObject()
         {
-
-
-            if (FindObjectsUsingAsset(_currentAsset))
+            // First priority: try to find objects using current asset
+            if (_currentAsset && TryGetAnimatorFromAsset(_currentAsset))
             {
-                Debug.Log("Found objects using the asset.");
                 return; // Successfully found an object using the asset
             }
 
+            // Second priority: try to use the selected object
             GameObject selectedObject = Selection.activeGameObject;
-            if (!selectedObject)
-                return;
-
-            // Fallback to selected object if no objects are using the asset
-            // Check if the selected object has an AnimationFlowController
-            AnimationFlowController flowController = selectedObject.GetComponent<AnimationFlowController>();
-
-            _targetGameObject = selectedObject;
-
-            // Look for components implementing IAnimator
-            _targetAnimator = flowController
-                ? flowController.GetAnimator()
-                : selectedObject.GetComponent<IAnimator>();
-
-            // If we have a graph view, notify it about the target change
-            _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
+            if (selectedObject && TryGetAnimatorFromGameObject(selectedObject))
+            {
+            }
         }
 
         /// <summary>
-        ///     Finds all GameObjects that use the specified AnimationFlowAsset
+        ///     Tries to get an animator from a GameObject, updating the target references if successful
         /// </summary>
-        /// <param name="asset">The AnimationFlowAsset to search for</param>
-        /// <returns>True if at least one object was found</returns>
-        private bool FindObjectsUsingAsset(AnimationFlowAsset asset)
+        private bool TryGetAnimatorFromGameObject(GameObject gameObject)
+        {
+            if (!gameObject)
+                return false;
+
+            _targetGameObject = gameObject;
+
+            // First check for a flow controller
+            AnimationFlowController flowController = gameObject.GetComponent<AnimationFlowController>();
+            if (flowController)
+            {
+                _targetAnimator = flowController.GetAnimator();
+                if (_targetAnimator != null)
+                {
+                    // If we have a graph view, notify it about the target change
+                    _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
+                    return true;
+                }
+            }
+
+            // No valid animator found on this object
+            return false;
+        }
+
+        /// <summary>
+        ///     Tries to get an animator from the controllers using this asset
+        /// </summary>
+        private bool TryGetAnimatorFromAsset(AnimationFlowAsset asset)
         {
             if (!asset)
                 return false;
 
             // Get the first controller directly from the asset
             AnimationFlowController controller = asset.GetController();
-
             if (!controller)
                 return false;
 
-            // Found an object using this asset
-            _targetGameObject = controller.gameObject;
             _targetAnimator = controller.GetAnimator();
+            if (_targetAnimator != null)
+            {
+                // If we have a graph view, notify it about the target change
+                _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
+                return true;
+            }
 
-            // Update the animation list in the graph view immediately
-            _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
-
-            return true;
-
+            return false;
         }
+
+        /// <summary>
+        ///     Legacy method, redirects to TryGetAnimatorFromAsset for backward compatibility
+        /// </summary>
+        private bool FindObjectsUsingAsset(AnimationFlowAsset asset) => TryGetAnimatorFromAsset(asset);
 
         // Getter methods for target info
         public GameObject GetTargetGameObject() => _targetGameObject;
