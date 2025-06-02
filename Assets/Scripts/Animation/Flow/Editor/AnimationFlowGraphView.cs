@@ -13,6 +13,7 @@ namespace Animation.Flow.Editor
     {
         // Track if we're currently handling a selection change to prevent recursion
         private bool _isHandlingSelection;
+        private List<ISelectable> _previousSelection = new();
 
         public AnimationFlowGraphView()
         {
@@ -38,37 +39,46 @@ namespace Animation.Flow.Editor
 
             // Set up node creation
             SetupNodeCreation();
-            
+            RegisterCallback<MouseUpEvent>(OnMouseUp);
         }
 
-        private override void OnSelectionChanged( evt)
+        private void OnMouseUp(MouseUpEvent evt)
         {
-            // Prevent recursive selection handling
-            if (_isHandlingSelection)
-                return;
-
-            _isHandlingSelection = true;
-
-            try
+            // Check if selection has changed
+            if (!SelectionsAreEqual(_previousSelection, selection))
             {
-                // Check if an edge is selected
-                if (selection.Count == 1 && selection[0] is AnimationFlowEdge edge)
-                {
-                    // Check if this is a valid edge between animation states
-                    if (edge.output?.node is AnimationStateNode && edge.input?.node is AnimationStateNode)
-                    {
-                        // Show the transition editor window
-                        string edgeId = EdgeConditionManager.Instance.GetEdgeId(edge);
-                        if (!string.IsNullOrEmpty(edgeId))
-                        {
-                            TransitionEditorWindow.ShowWindow(edge);
-                        }
-                    }
-                }
+                HandleSelectionChanged();
+
+                // Update previous selection
+                _previousSelection = selection.ToList();
             }
-            finally
+        }
+
+        private bool SelectionsAreEqual(List<ISelectable> selection1, List<ISelectable> selection2)
+        {
+            if (selection1.Count != selection2.Count)
+                return false;
+
+            for (int i = 0; i < selection1.Count; i++)
             {
-                _isHandlingSelection = false;
+                if (!selection2.Contains(selection1[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private void HandleSelectionChanged()
+        {
+            // Check if an edge is selected
+            if (selection.Count == 1 && selection[0] is AnimationFlowEdge edge)
+            {
+                // Check if this is a valid edge between animation states
+                if (edge.output?.node is AnimationStateNode && edge.input?.node is AnimationStateNode)
+                {
+                    // Show the transition editor window for this edge
+                    EdgeInspector.InspectEdge(edge);
+                }
             }
         }
         private GraphViewChange OnGraphViewChanged(GraphViewChange change)
