@@ -5,6 +5,7 @@ using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 namespace Animation.Flow.Editor
 {
@@ -61,6 +62,7 @@ namespace Animation.Flow.Editor
                 }
             }
 
+
             // Subscribe to editor closing to show save prompt if needed
             EditorApplication.wantsToQuit += WantsToQuit;
 
@@ -83,7 +85,7 @@ namespace Animation.Flow.Editor
         private bool WantsToQuit()
         {
             // If there are unsaved changes, prompt to save
-            if (_hasUnsavedChanges && _currentAsset != null)
+            if (_hasUnsavedChanges && _currentAsset)
             {
                 int choice = EditorUtility.DisplayDialogComplex(
                     "Unsaved Changes",
@@ -122,7 +124,7 @@ namespace Animation.Flow.Editor
         private void RefreshGraphView()
         {
             // Refresh only if needed
-            if (_currentAsset != null && _graphView != null)
+            if (_currentAsset && _graphView != null)
             {
                 LoadAsset(_currentAsset);
             }
@@ -154,9 +156,9 @@ namespace Animation.Flow.Editor
             // Mark graph as modified when changes occur
             _graphView.graphViewChanged += change =>
             {
-                if (change.edgesToCreate != null && change.edgesToCreate.Count > 0 ||
-                    change.movedElements != null && change.movedElements.Count > 0 ||
-                    change.elementsToRemove != null && change.elementsToRemove.Count > 0)
+                if (change.edgesToCreate is { Count: > 0 } ||
+                    change.movedElements is { Count: > 0 } ||
+                    change.elementsToRemove is { Count: > 0 })
                 {
                     _hasUnsavedChanges = true;
                 }
@@ -221,7 +223,7 @@ namespace Animation.Flow.Editor
                 return;
 
             AnimationFlowAsset flowAsset = AssetDatabase.LoadAssetAtPath<AnimationFlowAsset>(path);
-            bool newAsset = flowAsset == null;
+            bool newAsset = !flowAsset;
             if (newAsset)
             {
                 flowAsset = CreateInstance<AnimationFlowAsset>();
@@ -392,6 +394,14 @@ namespace Animation.Flow.Editor
                 _lastOpenedAssetPath = assetPath;
             }
 
+            // Find objects using this asset and update target animator
+            // Directly try to get the animator from the asset's controller first
+            if (!FindObjectsUsingAsset(flowAsset))
+            {
+                // Fallback to current selection if no controller is found
+                UpdateTargetGameObject();
+            }
+
             // Clear current graph and condition manager
             _graphView.ClearGraph();
             EdgeConditionManager.Instance.Clear();
@@ -476,13 +486,21 @@ namespace Animation.Flow.Editor
             // Update target GameObject when selection changes
             UpdateTargetGameObject();
         }
-
         private void UpdateTargetGameObject()
         {
+
+
+            if (FindObjectsUsingAsset(_currentAsset))
+            {
+                Debug.Log("Found objects using the asset.");
+                return; // Successfully found an object using the asset
+            }
+
             GameObject selectedObject = Selection.activeGameObject;
             if (!selectedObject)
                 return;
 
+            // Fallback to selected object if no objects are using the asset
             // Check if the selected object has an AnimationFlowController
             AnimationFlowController flowController = selectedObject.GetComponent<AnimationFlowController>();
 
@@ -495,6 +513,33 @@ namespace Animation.Flow.Editor
 
             // If we have a graph view, notify it about the target change
             _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
+        }
+
+        /// <summary>
+        ///     Finds all GameObjects that use the specified AnimationFlowAsset
+        /// </summary>
+        /// <param name="asset">The AnimationFlowAsset to search for</param>
+        /// <returns>True if at least one object was found</returns>
+        private bool FindObjectsUsingAsset(AnimationFlowAsset asset)
+        {
+            if (!asset)
+                return false;
+
+            // Get the first controller directly from the asset
+            AnimationFlowController controller = asset.GetController();
+
+            if (!controller)
+                return false;
+
+            // Found an object using this asset
+            _targetGameObject = controller.gameObject;
+            _targetAnimator = controller.GetAnimator();
+
+            // Update the animation list in the graph view immediately
+            _graphView?.OnTargetGameObjectChanged(_targetGameObject, _targetAnimator);
+
+            return true;
+
         }
 
         // Getter methods for target info

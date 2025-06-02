@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Animation.Flow;
+using Animation.Flow.Adapters;
+using GabrielBigardi.SpriteAnimator;
 using Kirby.Core.Components;
 using UnityEngine;
 
@@ -19,11 +21,13 @@ namespace Kirby.Core.Abilities.Animation
         private readonly float _fallingThreshold = -0.5f;
         private readonly float _jumpStartThreshold = 3.0f;
         private readonly float _longFallTime = 0.5f;
+        private SpriteAnimatorAdapter _animatorAdapter;
         private InputContext _currentInput;
         private float _fallStartTime;
         private bool _isFallingLongEnough;
 
         private KirbyController _kirbyController;
+        private SpriteAnimator _spriteAnimator;
 
         // Streamlined Awake method
         protected new void Awake()
@@ -32,6 +36,15 @@ namespace Kirby.Core.Abilities.Animation
             if (!_kirbyController)
             {
                 Debug.LogError("KirbyAnimationFlowController requires a KirbyController component.", this);
+                enabled = false;
+                return;
+            }
+
+            // Cache the sprite animator component
+            _spriteAnimator = GetComponent<SpriteAnimator>();
+            if (!_spriteAnimator)
+            {
+                Debug.LogError("KirbyAnimationFlowController requires a SpriteAnimator component.", this);
                 enabled = false;
                 return;
             }
@@ -52,6 +65,9 @@ namespace Kirby.Core.Abilities.Animation
             // Let the base controller handle animation state transitions
             base.Update();
         }
+        protected override IAnimator CreateAnimatorAdapter() =>
+            new SpriteAnimatorAdapter(_spriteAnimator);
+
 
         public void SetAnimationFlowAsset(AnimationFlowAsset flowAsset)
         {

@@ -44,7 +44,7 @@ namespace Animation.Flow.Editor
         /// </summary>
         public static List<string> GetAnimationNamesFromGameObject(GameObject gameObject)
         {
-            if (gameObject == null)
+            if (!gameObject)
                 return new List<string>(DefaultAnimations);
 
             // Try to find an AnimationFlowController on the GameObject

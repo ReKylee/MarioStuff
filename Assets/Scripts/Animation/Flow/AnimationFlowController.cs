@@ -20,7 +20,52 @@ namespace Animation.Flow
 
         private IAnimator _animatorAdapter;
         private IAnimationState _currentState;
+
+        // For tracking the previous asset to handle unregistering
+        private AnimationFlowAsset _previousFlowAsset;
         private float _timeInCurrentState;
+
+        // Public property to get/set the flow asset with proper registration handling
+        public AnimationFlowAsset FlowAsset
+        {
+            get => _flowAsset;
+            set
+            {
+#if UNITY_EDITOR
+                // Unregister from previous asset
+                if (_flowAsset)
+                {
+                    _flowAsset.UnregisterController(this);
+                }
+
+                // Assign new asset
+                _flowAsset = value;
+
+                // Register with new asset
+                if (_flowAsset)
+                {
+                    _flowAsset.RegisterController(this);
+                }
+
+                // If in editor, rebuild the controller with the new asset
+                if (!Application.isPlaying)
+                {
+                    // Only rebuild if the asset is valid
+                    if (_flowAsset)
+                    {
+                        _flowAsset.BuildFlowController(this);
+                    }
+                    else
+                    {
+                        ClearStates();
+                    }
+                }
+#else
+                _flowAsset = value;
+#endif
+            }
+        }
+
         protected void Awake()
         {
             InitializeController();
@@ -65,6 +110,17 @@ namespace Animation.Flow
             }
         }
 
+        // Handle controller destruction - unregister from asset
+        private void OnDestroy()
+        {
+#if UNITY_EDITOR
+            if (_flowAsset != null)
+            {
+                _flowAsset.UnregisterController(this);
+            }
+#endif
+        }
+
         private void OnGUI()
         {
             if (!_debugVisualization || _currentState == null)
@@ -89,6 +145,41 @@ namespace Animation.Flow
             GUILayout.EndVertical();
             GUILayout.EndArea();
         }
+
+        // Called in OnValidate to handle inspector changes
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            // Handle flow asset changes in the inspector
+            if (_flowAsset != _previousFlowAsset)
+            {
+                // Unregister from previous asset
+                if (_previousFlowAsset != null)
+                {
+                    _previousFlowAsset.UnregisterController(this);
+                }
+
+                // Register with new asset
+                if (_flowAsset != null)
+                {
+                    _flowAsset.RegisterController(this);
+                }
+
+                _previousFlowAsset = _flowAsset;
+            }
+        }
+#endif
+
+        /// <summary>
+        ///     Get the animator adapter for this controller.
+        ///     Must be implemented by derived classes to provide an appropriate IAnimator implementation.
+        /// </summary>
+        /// <returns>The animator adapter that will be used for animation control</returns>
+        protected abstract IAnimator CreateAnimatorAdapter();
+
+        /// <summary>
+        ///     Public method to expose the animator adapter to the editor and other components
+        /// </summary>
         public IAnimator GetAnimator() => _animatorAdapter;
 
         // Initialization for Enter Play Mode Options support
@@ -101,11 +192,20 @@ namespace Animation.Flow
 
         private void InitializeController()
         {
+            // Initialize animator adapter if not already set
             if (_animatorAdapter == null)
             {
-                Debug.LogError("Animator adapter is not provided by the child class.", this);
-                enabled = false;
-                return;
+                _animatorAdapter = CreateAnimatorAdapter();
+
+                if (_animatorAdapter == null)
+                {
+                    Debug.LogError(
+                        "Animator adapter was not provided by CreateAnimatorAdapter(). Override this method in your derived class.",
+                        this);
+
+                    enabled = false;
+                    return;
+                }
             }
 
             _animationContext = new AnimationContext(_animatorAdapter, gameObject);
@@ -119,7 +219,6 @@ namespace Animation.Flow
                 InitializeStates();
             }
         }
-
 
         /// <summary>
         ///     Transition to a new animation state

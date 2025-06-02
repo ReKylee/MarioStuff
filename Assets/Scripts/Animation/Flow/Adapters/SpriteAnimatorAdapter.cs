@@ -7,7 +7,7 @@ namespace Animation.Flow.Adapters
 {
     /// <summary>
     ///     Adapter for the GabrielBigardi.SpriteAnimator to work with our animation flow system
-    ///     Also implements IAnimatorProvider to avoid needing a separate provider component
+    ///     Also implements IAnimator to avoid needing a separate provider component
     /// </summary>
     public class SpriteAnimatorAdapter : IAnimator
     {

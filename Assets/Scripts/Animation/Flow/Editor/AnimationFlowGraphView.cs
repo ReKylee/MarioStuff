@@ -13,7 +13,7 @@ namespace Animation.Flow.Editor
     {
 
         // Store the available animation names
-        private List<string> _availableAnimations = new();
+        private List<string> _availableAnimations;
 
         // Clipboard data for copy/paste operations
         private List<ISelectable> _copiedElements = new();
@@ -370,7 +370,7 @@ namespace Animation.Flow.Editor
             {
                 _availableAnimations = AnimationNameProvider.GetAnimationNames(_targetAnimator);
             }
-            else if (_targetGameObject != null)
+            else if (_targetGameObject)
             {
                 _availableAnimations = AnimationNameProvider.GetAnimationNamesFromGameObject(_targetGameObject);
             }

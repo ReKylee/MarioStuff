@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Animation.Flow.Conditions;
 using Animation.Flow.States;
 using UnityEngine;
+#if UNITY_EDITOR
+#endif
 
 namespace Animation.Flow
 {
@@ -15,11 +17,19 @@ namespace Animation.Flow
         public List<AnimationStateData> States = new();
         public List<TransitionData> Transitions = new();
 
+        // List of controllers that use this asset (not serialized, only for editor usage)
+        [NonSerialized] private readonly List<AnimationFlowController> _controllers = new();
+
         /// <summary>
         ///     Create a runtime flow controller from this asset
         /// </summary>
         public void BuildFlowController(AnimationFlowController controller)
         {
+#if UNITY_EDITOR
+            // Register the controller when building from this asset
+            RegisterController(controller);
+#endif
+
             // Clear existing states
             controller.ClearStates();
 
@@ -133,6 +143,46 @@ namespace Animation.Flow
                 transition.AddCondition(condition);
             }
         }
+
+#if UNITY_EDITOR
+        // Called when this asset is assigned to a controller
+        public void RegisterController(AnimationFlowController controller)
+        {
+            if (controller != null && !_controllers.Contains(controller))
+            {
+                _controllers.Add(controller);
+            }
+        }
+
+        // Called when this asset is unassigned from a controller
+        public void UnregisterController(AnimationFlowController controller)
+        {
+            if (controller != null)
+            {
+                _controllers.Remove(controller);
+            }
+        }
+
+        // Get a controller that uses this asset (returns the first valid one)
+        public AnimationFlowController GetController()
+        {
+            // Remove any null/destroyed controllers
+            _controllers.RemoveAll(c => c == null || !c.gameObject.scene.IsValid());
+
+            // Return the first valid controller
+            return _controllers.Count > 0 ? _controllers[0] : null;
+        }
+
+        // Get all controllers that use this asset
+        public List<AnimationFlowController> GetControllers()
+        {
+            // Remove any null/destroyed controllers
+            _controllers.RemoveAll(c => c == null || !c.gameObject.scene.IsValid());
+
+            // Return a copy of the list to prevent external modification
+            return new List<AnimationFlowController>(_controllers);
+        }
+#endif
     }
 
     /// <summary>
