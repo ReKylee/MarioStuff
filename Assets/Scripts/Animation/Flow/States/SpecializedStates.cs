@@ -1,4 +1,6 @@
-using GabrielBigardi.SpriteAnimator;
+using UnityEngine;
+
+// Added for Debug.LogWarning
 
 namespace Animation.Flow.States
 {
@@ -20,12 +22,11 @@ namespace Animation.Flow.States
         {
             base.OnEnter(context);
 
-            // Hold on specific frame
-            SpriteAnimator animator = context.Animator as SpriteAnimator;
-            if (animator != null)
+            // Hold on specific frame using IAnimator
+            if (context.Animator != null)
             {
-                animator.SetCurrentFrame(_frameToHold);
-                animator.Pause();
+                context.Animator.SetCurrentFrame(_frameToHold);
+                context.Animator.Pause();
             }
         }
 
@@ -33,11 +34,10 @@ namespace Animation.Flow.States
         {
             base.OnExit(context);
 
-            // Resume animation on exit
-            SpriteAnimator animator = context.Animator as SpriteAnimator;
-            if (animator != null)
+            // Resume animation on exit using IAnimator
+            if (context.Animator != null)
             {
-                animator.Resume();
+                context.Animator.Resume();
             }
         }
     }
@@ -59,6 +59,8 @@ namespace Animation.Flow.States
     /// </summary>
     public class OneTimeState : AnimationStateBase
     {
+        private IAnimationContext _context; // Store context for the callback
+
         public OneTimeState(string id, string animationName)
             : base(id, animationName)
         {
@@ -68,15 +70,15 @@ namespace Animation.Flow.States
         public override void OnEnter(IAnimationContext context)
         {
             base.OnEnter(context);
+            _context = context; // Store the context
 
             // Track that we're starting the animation
             context.SetParameter("animationComplete", false);
 
-            // Register for animation complete event
-            SpriteAnimator animator = context.Animator as SpriteAnimator;
-            if (animator != null)
+            // Register for animation complete event using IAnimator
+            if (context.Animator != null)
             {
-                animator.OnAnimationComplete += HandleAnimationComplete;
+                context.Animator.RegisterAnimationCompleteCallback(HandleAnimationComplete);
             }
         }
 
@@ -84,29 +86,43 @@ namespace Animation.Flow.States
         {
             base.OnExit(context);
 
-            // Unregister from animation complete event
-            SpriteAnimator animator = context.Animator as SpriteAnimator;
-            if (animator != null)
+            // Unregister from animation complete event using IAnimator
+            if (context.Animator != null)
             {
-                animator.OnAnimationComplete -= HandleAnimationComplete;
+                context.Animator.UnregisterAnimationCompleteCallback(HandleAnimationComplete);
             }
+
+            _context = null; // Clear the stored context
         }
 
         private void HandleAnimationComplete()
         {
-            // When we receive the completion callback, set the parameter
-            // This will be picked up by AnimationCompleteCondition
+            // Now we can access the stored context to set the parameter
+            if (_context != null)
+            {
+                _context.SetParameter("animationComplete", true);
+            }
+            else
+            {
+                // This case should ideally not happen if OnEnter/OnExit are managed correctly
+                Debug.LogWarning("HandleAnimationComplete called but context was null.");
+            }
         }
 
+        // OnUpdate polling can be kept as a fallback or removed if the callback is reliable enough.
+        // For now, let's keep it to ensure completion is always caught.
         public override void OnUpdate(IAnimationContext context, float deltaTime)
         {
             base.OnUpdate(context, deltaTime);
 
-            // Check if animation is complete
-            SpriteAnimator animator = context.Animator as SpriteAnimator;
-            if (animator != null && animator.AnimationCompleted)
+            // Check if animation is complete using IAnimator
+            // This also handles cases where the callback might not have fired or context was lost
+            if (context.Animator != null && context.Animator.IsAnimationComplete)
             {
-                context.SetParameter("animationComplete", true);
+                if (!context.GetParameter<bool>("animationComplete")) // Only set if not already set by callback
+                {
+                    context.SetParameter("animationComplete", true);
+                }
             }
         }
     }

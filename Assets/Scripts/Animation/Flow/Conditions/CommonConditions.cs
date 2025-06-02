@@ -1,5 +1,3 @@
-using GabrielBigardi.SpriteAnimator;
-
 namespace Animation.Flow.Conditions
 {
     /// <summary>
@@ -51,11 +49,9 @@ namespace Animation.Flow.Conditions
     /// </summary>
     public class AnimationCompleteCondition : ITransitionCondition
     {
-        public bool IsSatisfied(IAnimationContext context)
-        {
-            SpriteAnimator animator = context.Animator as SpriteAnimator;
-            return animator != null && animator.AnimationCompleted;
-        }
+        public bool IsSatisfied(IAnimationContext context) =>
+            // Use IAnimator interface, no cast needed
+            context.Animator != null && context.Animator.IsAnimationComplete;
     }
 
     /// <summary>

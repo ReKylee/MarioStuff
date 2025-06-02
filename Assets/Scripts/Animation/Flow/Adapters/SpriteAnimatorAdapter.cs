@@ -10,7 +10,9 @@ namespace Animation.Flow.Adapters
     public class SpriteAnimatorAdapter : IAnimator
     {
         private readonly SpriteAnimator _animator;
-        private readonly Dictionary<string, Dictionary<int, Action>> _frameEvents = new();
+
+        // Changed to support multiple actions per frame event
+        private readonly Dictionary<string, Dictionary<int, List<Action>>> _frameEvents = new();
 
         public SpriteAnimatorAdapter(SpriteAnimator animator)
         {
@@ -62,22 +64,28 @@ namespace Animation.Flow.Adapters
 
         public void SetFrameEvent(string animationName, int frameIndex, Action callback)
         {
-            if (!_frameEvents.TryGetValue(animationName, out var animationEvents))
+            // Ensure we have a dictionary for this animation
+            if (!_frameEvents.TryGetValue(animationName, out var animEvents))
             {
-                animationEvents = new Dictionary<int, Action>();
-                _frameEvents[animationName] = animationEvents;
+                animEvents = new Dictionary<int, List<Action>>();
+                _frameEvents[animationName] = animEvents;
             }
 
-            animationEvents[frameIndex] = callback;
-
-            // Convert our frame events dictionary to the format SpriteAnimator expects
-            var spriteAnimatorEvents = new Dictionary<int, List<Action>>();
-            foreach (var frameEvent in animationEvents)
+            // Ensure we have a list for this frame index
+            if (!animEvents.TryGetValue(frameIndex, out var frameActions))
             {
-                spriteAnimatorEvents[frameEvent.Key] = new List<Action> { frameEvent.Value };
+                frameActions = new List<Action>();
+                animEvents[frameIndex] = frameActions;
             }
 
-            _animator.SetAnimationFrameEvents(animationName, spriteAnimatorEvents);
+            // Add the callback if it's not already there
+            if (!frameActions.Contains(callback))
+            {
+                frameActions.Add(callback);
+            }
+
+            // Apply frame events to the animator
+            ApplyFrameEvents(animationName);
         }
 
         public void ClearFrameEvents(string animationName)
@@ -85,9 +93,24 @@ namespace Animation.Flow.Adapters
             if (_frameEvents.ContainsKey(animationName))
             {
                 _frameEvents.Remove(animationName);
+                _animator.SetAnimationFrameEvents(animationName, null);
             }
+        }
 
-            _animator.SetAnimationFrameEvents(animationName, null);
+        private void ApplyFrameEvents(string animationName)
+        {
+            if (_frameEvents.TryGetValue(animationName, out var events))
+            {
+                // Create a copy of the events dictionary to pass to the animator
+                // SpriteAnimator expects Dictionary<int, List<Action>>
+                var spriteAnimatorEvents = new Dictionary<int, List<Action>>();
+                foreach (var kvp in events)
+                {
+                    spriteAnimatorEvents[kvp.Key] = new List<Action>(kvp.Value); // Ensure a new list is created
+                }
+
+                _animator.SetAnimationFrameEvents(animationName, spriteAnimatorEvents);
+            }
         }
     }
 }
