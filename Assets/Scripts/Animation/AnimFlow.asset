@@ -15,14 +15,17 @@ MonoBehaviour:
   states:
   - Id: 77297342-7441-4fe6-83fe-07b8087b0402
     StateType: Looping
-    AnimationName: Idle_Crouched
+    AnimationName: Idle
     IsInitialState: 0
-    Position: {x: 758, y: -117}
+    Position: {x: 773, y: 277}
     FrameToHold: 0
   - Id: db6423ad-9799-457e-bec4-2fa51fd69034
     StateType: Looping
     AnimationName: Idle
     IsInitialState: 1
-    Position: {x: 354, y: -133}
+    Position: {x: 369, y: 261}
     FrameToHold: 0
-  transitions: []
+  transitions:
+  - FromStateId: db6423ad-9799-457e-bec4-2fa51fd69034
+    ToStateId: 77297342-7441-4fe6-83fe-07b8087b0402
+    Conditions: []

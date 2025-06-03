@@ -42,6 +42,7 @@ namespace Animation.Flow.Editor
 
         // Dimensions and position
         private Vector2 _position;
+        private Vector2 _resizeStartPanelPosition;
         private Vector2 _resizeStartPosition;
         private Vector2 _resizeStartSize;
         private Vector2 _size = new(300, 400);
@@ -58,170 +59,122 @@ namespace Animation.Flow.Editor
             _position = new Vector2(container.worldBound.width - _size.x - 20, 20 + toolbarHeight);
 
             // Create root element that will contain the panel
-            _root = new VisualElement();
-            _root.style.position = Position.Absolute;
-            _root.style.width = _size.x;
-            _root.style.height = _size.y;
-            _root.style.left = _position.x;
-            _root.style.top = _position.y;
-            _root.style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.95f);
-            _root.style.borderBottomWidth = 1;
-            _root.style.borderTopWidth = 1;
-            _root.style.borderLeftWidth = 1;
-            _root.style.borderRightWidth = 1;
-            _root.style.borderBottomColor = new Color(0.5f, 0.5f, 0.5f, 1f);
-            _root.style.borderTopColor = new Color(0.5f, 0.5f, 0.5f, 1f);
-            _root.style.borderLeftColor = new Color(0.5f, 0.5f, 0.5f, 1f);
-            _root.style.borderRightColor = new Color(0.5f, 0.5f, 0.5f, 1f);
-            _root.style.borderBottomRightRadius = 3;
-            _root.style.borderBottomLeftRadius = 3;
-            _root.style.borderTopRightRadius = 3;
-            _root.style.borderTopLeftRadius = 3;
+            _root = new VisualElement
+            {
+                style =
+                {
+                    position = Position.Absolute,
+                    width = _size.x,
+                    height = _size.y,
+                    left = _position.x,
+                    top = _position.y,
+                    backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.95f),
+                    borderBottomWidth = 1,
+                    borderTopWidth = 1,
+                    borderLeftWidth = 1,
+                    borderRightWidth = 1,
+                    borderBottomColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                    borderTopColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                    borderLeftColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                    borderRightColor = new Color(0.5f, 0.5f, 0.5f, 1f),
+                    borderBottomRightRadius = 3,
+                    borderBottomLeftRadius = 3,
+                    borderTopRightRadius = 3,
+                    borderTopLeftRadius = 3
+                }
+            };
 
             // Add a title bar at the top
-            VisualElement titleBar = new();
-            titleBar.style.height = 24;
-            titleBar.style.backgroundColor = new Color(0.3f, 0.3f, 0.3f, 1f);
-            titleBar.style.flexDirection = FlexDirection.Row;
-            titleBar.style.justifyContent = Justify.SpaceBetween;
-            titleBar.style.alignItems = Align.Center;
-            titleBar.style.paddingLeft = 8;
-            titleBar.style.paddingRight = 4;
-            titleBar.style.borderTopRightRadius = 3;
-            titleBar.style.borderTopLeftRadius = 3;
+            VisualElement titleBar = new()
+            {
+                style =
+                {
+                    height = 24,
+                    backgroundColor = new Color(0.3f, 0.3f, 0.3f, 1f),
+                    flexDirection = FlexDirection.Row,
+                    justifyContent = Justify.SpaceBetween,
+                    alignItems = Align.Center,
+                    paddingLeft = 8,
+                    paddingRight = 4,
+                    borderTopRightRadius = 3,
+                    borderTopLeftRadius = 3
+                }
+            };
 
             // Make title bar draggable
-            titleBar.RegisterCallback<MouseDownEvent>(evt =>
-            {
-                if (evt.button == 0) // Left mouse button
-                {
-                    _isDragging = true;
-                    _dragStartPosition = evt.mousePosition - _position;
-                    evt.StopPropagation();
-                }
-            });
+            titleBar.RegisterCallback<MouseDownEvent>(OnTitlebarMouseDown);
 
             // Add title text
-            Label titleText = new("Transition Editor");
-            titleText.style.unityFontStyleAndWeight = FontStyle.Bold;
-            titleText.style.color = Color.white;
+            Label titleText = new("Transition Editor")
+            {
+                style =
+                {
+                    unityFontStyleAndWeight = FontStyle.Bold,
+                    color = Color.white
+                }
+            };
+
             titleBar.Add(titleText);
 
             // Add close button
-            Button closeButton = new(() => Hide());
-            closeButton.text = "×";
-            closeButton.style.width = 20;
-            closeButton.style.height = 20;
-            closeButton.style.fontSize = 16;
-            closeButton.style.backgroundColor = new Color(0, 0, 0, 0);
-            closeButton.style.color = Color.white;
-            closeButton.style.borderBottomWidth = 0;
-            closeButton.style.borderTopWidth = 0;
-            closeButton.style.borderLeftWidth = 0;
-            closeButton.style.borderRightWidth = 0;
+            Button closeButton = new(() => Hide())
+            {
+                text = "×",
+                style =
+                {
+                    width = 20,
+                    height = 20,
+                    fontSize = 16,
+                    backgroundColor = new Color(0, 0, 0, 0),
+                    color = Color.white,
+                    borderBottomWidth = 0,
+                    borderTopWidth = 0,
+                    borderLeftWidth = 0,
+                    borderRightWidth = 0
+                }
+            };
+
             titleBar.Add(closeButton);
 
             _root.Add(titleBar);
 
             // Add content container with padding
-            VisualElement content = new();
-            content.style.paddingBottom = 10;
-            content.style.paddingTop = 10;
-            content.style.paddingLeft = 10;
-            content.style.paddingRight = 10;
+            VisualElement content = new()
+            {
+                style =
+                {
+                    paddingBottom = 10,
+                    paddingTop = 10,
+                    paddingLeft = 10,
+                    paddingRight = 10
+                }
+            };
+
             _root.Add(content);
 
-            // Add resize handle in bottom left corner
-            VisualElement resizeHandle = new();
-            resizeHandle.style.position = Position.Absolute;
-            resizeHandle.style.left = 0;
-            resizeHandle.style.bottom = 0;
-            resizeHandle.style.width = 16;
-            resizeHandle.style.height = 16;
-            resizeHandle.style.cursor = StyleKeyword.Initial;
-            resizeHandle.style.backgroundImage = EditorGUIUtility.Load("d_WindowBottomResize@2x") as Texture2D;
-            resizeHandle.RegisterCallback<MouseDownEvent>(evt =>
+            // Add resize handle in bottom left corner 
+            VisualElement resizeHandle = new()
             {
-                if (evt.button == 0) // Left mouse button
+                style =
                 {
-                    _isResizing = true;
-                    _resizeStartSize = _size;
-                    _resizeStartPosition = evt.mousePosition;
-                    evt.StopPropagation();
+                    position = Position.Absolute,
+                    left = 0,
+                    bottom = 0,
+                    width = 16,
+                    height = 16,
+                    cursor = new StyleCursor(StyleKeyword.Auto),
+                    backgroundImage = EditorGUIUtility.IconContent("d_WindowBottomResize").image as Texture2D
                 }
-            });
+            };
+
+            resizeHandle.RegisterCallback<MouseDownEvent>(OnResizeHandleMouseDown);
 
             _root.Add(resizeHandle);
 
             // Register for mouse move and up events for dragging and resizing
-            container.RegisterCallback<MouseMoveEvent>(evt =>
-            {
-                if (_isDragging)
-                {
-                    // Calculate new position
-                    Vector2 newPosition = evt.mousePosition - _dragStartPosition;
+            container.RegisterCallback<MouseMoveEvent>(OnMouseMove);
 
-                    // Clamp position to ensure panel stays completely within container bounds
-                    // Prevent moving too far right or bottom
-                    newPosition.x = Mathf.Clamp(newPosition.x, 0, container.worldBound.width - _size.x);
-                    newPosition.y = Mathf.Clamp(newPosition.y, 0, container.worldBound.height - _size.y);
-
-                    // Also prevent moving too far left or top (should always be >= 0)
-                    newPosition.x = Mathf.Max(0, newPosition.x);
-                    newPosition.y = Mathf.Max(0, newPosition.y);
-
-                    _position = newPosition;
-                    _root.style.left = _position.x;
-                    _root.style.top = _position.y;
-                    evt.StopPropagation();
-                }
-                else if (_isResizing)
-                {
-                    // For bottom-left resize, we need to adjust both size and position
-                    Vector2 delta = evt.mousePosition - _resizeStartPosition;
-
-                    // Calculate new width (resizing from left means negative delta.x increases width)
-                    float newWidth = Mathf.Max(_resizeStartSize.x - delta.x, _minSize.x);
-
-                    // Calculate new height
-                    float newHeight = Mathf.Max(_resizeStartSize.y + delta.y, _minSize.y);
-
-                    // Calculate new position (only x needs to be adjusted based on width change)
-                    float positionDelta = _resizeStartSize.x - newWidth;
-
-                    // Calculate potential new position
-                    float newX = _position.x + positionDelta;
-
-                    // Ensure panel stays within bounds after resize
-                    // Check if new position would place the panel outside the left edge
-                    if (newX < 0)
-                    {
-                        // Adjust width to keep the panel within bounds
-                        newWidth = _resizeStartSize.x - _position.x;
-                        newWidth = Mathf.Max(newWidth, _minSize.x);
-                        newX = 0;
-                    }
-
-                    // Check if new height would extend beyond the bottom edge
-                    if (_position.y + newHeight > container.worldBound.height)
-                    {
-                        newHeight = container.worldBound.height - _position.y;
-                        newHeight = Mathf.Max(newHeight, _minSize.y);
-                    }
-
-                    // Apply new position and size
-                    _position.x = newX;
-                    _root.style.left = _position.x;
-
-                    _size = new Vector2(newWidth, newHeight);
-                    _root.style.width = _size.x;
-                    _root.style.height = _size.y;
-
-                    evt.StopPropagation();
-                }
-            });
-
-            container.RegisterCallback<MouseUpEvent>(evt =>
+            container.RegisterCallback<MouseUpEvent>(_ =>
             {
                 _isDragging = false;
                 _isResizing = false;
@@ -237,8 +190,102 @@ namespace Animation.Flow.Editor
             // Build UI within the content area
             CreateUI(content);
         }
-
         public bool IsVisible { get; private set; }
+        private void OnMouseMove(MouseMoveEvent evt)
+        {
+            OnDrag(evt);
+            OnResize(evt);
+            evt.StopPropagation();
+        }
+        private void OnResize(MouseMoveEvent evt)
+        {
+            if (!_isResizing)
+                return;
+
+            // Calculate the mouse movement delta from the start of the drag
+            Vector2 delta = evt.mousePosition - _resizeStartPosition;
+
+            // --- Calculate target dimensions and position for bottom-left resize ---
+            // For a bottom-left resize:
+            // - The width changes by -delta.x (dragging right decreases width, dragging left increases it)
+            // - The height changes by +delta.y (dragging down increases height, dragging up decreases it)
+            // - The top-right corner of the panel should remain fixed relative to its position at the start of the drag.
+
+            float targetWidth = _resizeStartSize.x - delta.x;
+            float targetHeight = _resizeStartSize.y + delta.y;
+
+            // Apply minimum size constraints
+            float newWidth = Mathf.Max(targetWidth, _minSize.x);
+            float newHeight = Mathf.Max(targetHeight, _minSize.y);
+
+            // Determine the fixed top-right X coordinate from the start of the drag
+            float fixedTopRightX = _resizeStartSize.x + _resizeStartPanelPosition.x;
+
+            // Calculate the new X position for the panel's left edge, maintaining the fixed top-right corner
+            float newX = fixedTopRightX - newWidth;
+
+            // Ensure panel stays within bounds and adjust dimensions
+            if (newX < 0)
+            {
+                newX = 0;
+                newWidth = Mathf.Clamp(fixedTopRightX, _minSize.x, _parentContainer.worldBound.width);
+            }
+
+            // Ensure panel height stays within container bounds
+            newHeight = Mathf.Clamp(newHeight, _minSize.y,
+                _parentContainer.worldBound.height - _position.y);
+
+            _position.x = newX;
+
+            _root.style.left = _position.x;
+            _root.style.top = _position.y;
+
+            _size = new Vector2(newWidth, newHeight);
+            _root.style.width = _size.x;
+            _root.style.height = _size.y;
+        }
+
+        private void OnDrag(MouseMoveEvent evt)
+        {
+            if (!_isDragging)
+                return;
+
+            // Calculate new position
+            Vector2 newPosition = evt.mousePosition - _dragStartPosition;
+
+            // Clamp position to ensure panel stays completely within container bounds
+            // Prevent moving too far right or bottom
+            newPosition.x = Mathf.Clamp(newPosition.x, 0, _parentContainer.worldBound.width - _size.x);
+            newPosition.y = Mathf.Clamp(newPosition.y, 0, _parentContainer.worldBound.height - _size.y);
+
+            // Also prevent moving too far left or top (should always be >= 0)
+            newPosition.x = Mathf.Max(0, newPosition.x);
+            newPosition.y = Mathf.Max(0, newPosition.y);
+
+            _position = newPosition;
+            _root.style.left = _position.x;
+            _root.style.top = _position.y;
+        }
+        private void OnTitlebarMouseDown(MouseDownEvent evt)
+        {
+            if (evt.button == 0) // Left mouse button
+            {
+                _isDragging = true;
+                _dragStartPosition = evt.mousePosition - _position;
+                evt.StopPropagation();
+            }
+        }
+        private void OnResizeHandleMouseDown(MouseDownEvent evt)
+        {
+            if (evt.button == 0) // Left mouse button
+            {
+                _isResizing = true;
+                _resizeStartSize = _size;
+                _resizeStartPosition = evt.mousePosition;
+                _resizeStartPanelPosition = _position;
+                evt.StopPropagation();
+            }
+        }
 
         public void Show(AnimationFlowEdge edge)
         {

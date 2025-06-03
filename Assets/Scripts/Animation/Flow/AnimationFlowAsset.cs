@@ -21,7 +21,7 @@ namespace Animation.Flow
         public List<TransitionData> transitions = new();
 
         // List of controllers that use this asset (not serialized, only for editor usage)
-        [NonSerialized] private readonly List<AnimationFlowController> _controllers = new();
+        [NonSerialized] private AnimationFlowController _controller;
 
         /// <summary>
         ///     Validate this asset to ensure all references are correct
@@ -337,9 +337,9 @@ namespace Animation.Flow
         /// </summary>
         public void RegisterController(AnimationFlowController controller)
         {
-            if (controller is not null && !_controllers.Contains(controller))
+            if (controller is not null)
             {
-                _controllers.Add(controller);
+                _controller = controller;
             }
         }
 
@@ -350,37 +350,15 @@ namespace Animation.Flow
         {
             if (controller is not null)
             {
-                _controllers.Remove(controller);
+                _controller = null;
             }
         }
 
         /// <summary>
         ///     Get a controller that uses this asset (returns the first valid one)
         /// </summary>
-        public AnimationFlowController GetController()
-        {
-            // Remove any null/destroyed controllers
-            _controllers.RemoveAll(c =>
-                !c || !c.gameObject || !c.gameObject.scene.IsValid()
-            );
+        public AnimationFlowController GetController() => _controller;
 
-            // Return the first valid controller
-            return _controllers.Count > 0 ? _controllers[0] : null;
-        }
-
-        /// <summary>
-        ///     Get all controllers that use this asset
-        /// </summary>
-        public List<AnimationFlowController> GetControllers()
-        {
-            // Remove any null/destroyed controllers
-            _controllers.RemoveAll(c =>
-                !c || !c.gameObject || !c.gameObject.scene.IsValid()
-            );
-
-            // Return a copy of the list to prevent external modification
-            return new List<AnimationFlowController>(_controllers);
-        }
 
         private void OnValidate()
         {
