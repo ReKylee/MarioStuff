@@ -15,15 +15,10 @@ namespace Animation.Flow.Editor
         public static EdgeConditionManager Instance => _instance ??= new EdgeConditionManager();
 
         // Get a unique identifier for an edge based on its connected nodes
-        public string GetEdgeId(Edge edge)
+        public static string GetEdgeId(Edge edge)
         {
-            if (edge?.output?.node == null || edge?.input?.node == null)
-                return null;
-
-            AnimationStateNode sourceNode = edge.output.node as AnimationStateNode;
-            AnimationStateNode targetNode = edge.input.node as AnimationStateNode;
-
-            if (sourceNode == null || targetNode == null)
+            if (edge?.output?.node is not AnimationStateNode sourceNode ||
+                edge.input?.node is not AnimationStateNode targetNode)
                 return null;
 
             return $"{sourceNode.ID}_{targetNode.ID}";

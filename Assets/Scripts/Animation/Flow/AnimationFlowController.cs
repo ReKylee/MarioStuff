@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -6,54 +7,58 @@ using UnityEngine;
 namespace Animation.Flow
 {
     /// <summary>
-    ///     Main controller for the animation flow system
+    ///     Base controller for the animation flow system.
+    ///     Handles state transitions, parameter management, and animation flow execution.
     /// </summary>
     public abstract class AnimationFlowController : MonoBehaviour
     {
-        [SerializeField] private string _initialStateId;
-        [SerializeField] private AnimationFlowAsset _flowAsset;
-        [SerializeField] private bool _debugVisualization;
+        [Tooltip("The animation flow asset that defines the state machine")] [SerializeField]
+        private AnimationFlowAsset flowAsset;
 
+        [Tooltip("The initial state ID to enter when the controller starts")] [SerializeField]
+        private string initialStateId;
+
+        [Tooltip("Enable debug visualization in the game view")] [SerializeField]
+        private bool debugVisualization;
+
+        // Runtime state machine data
         private readonly Dictionary<string, IAnimationState> _states = new();
-        private readonly Dictionary<string, float> _stateTimers = new();
-        private AnimationContext _animationContext; // Renamed for clarity from _context
 
-        private IAnimator _animatorAdapter;
+        // Animation context that provides parameters and animator access
+        private AnimationContext _animationContext;
+
+        // Cached animator adapter instance
+        private IAnimator _animator;
         private IAnimationState _currentState;
 
-        // For tracking the previous asset to handle unregistering
+        // Asset tracking
         private AnimationFlowAsset _previousFlowAsset;
         private float _timeInCurrentState;
 
-        // Public property to get/set the flow asset with proper registration handling
+        // Public access to the flow asset
         public AnimationFlowAsset FlowAsset
         {
-            get => _flowAsset;
+            get => flowAsset;
             set
             {
+                if (flowAsset == value) return;
+
 #if UNITY_EDITOR
                 // Unregister from previous asset
-                if (_flowAsset)
-                {
-                    _flowAsset.UnregisterController(this);
-                }
+                flowAsset?.UnregisterController(this);
 
                 // Assign new asset
-                _flowAsset = value;
+                flowAsset = value;
 
                 // Register with new asset
-                if (_flowAsset)
-                {
-                    _flowAsset.RegisterController(this);
-                }
+                flowAsset?.RegisterController(this);
 
-                // If in editor, rebuild the controller with the new asset
+                // Rebuild even in editor mode
                 if (!Application.isPlaying)
                 {
-                    // Only rebuild if the asset is valid
-                    if (_flowAsset)
+                    if (flowAsset is not null)
                     {
-                        _flowAsset.BuildFlowController(this);
+                        flowAsset.BuildFlowController(this);
                     }
                     else
                     {
@@ -63,27 +68,69 @@ namespace Animation.Flow
 #else
                 _flowAsset = value;
 #endif
+
+                // Rebuild if in play mode
+                if (Application.isPlaying)
+                {
+                    InitializeStateMachine();
+                }
             }
         }
 
-        protected void Awake()
+        /// <summary>
+        ///     Reset static data between domain reloads
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticData()
         {
-            InitializeController();
+            // This is a good place to reset any static data
         }
 
-        private void Start()
+        #region Unity Lifecycle
+
+        protected virtual void Awake()
+        {
+            InitializeAnimator();
+            InitializeStateMachine();
+        }
+
+        protected virtual void OnEnable()
+        {
+            // Ensure we're initialized when enabled
+            if (_animator is null)
+            {
+                InitializeAnimator();
+            }
+
+            if (_states.Count == 0 && flowAsset is not null)
+            {
+                InitializeStateMachine();
+            }
+        }
+
+        protected virtual void Start()
         {
             // Enter initial state if defined
-            if (!string.IsNullOrEmpty(_initialStateId) &&
-                _states.TryGetValue(_initialStateId, out IAnimationState initialState))
+            if (!string.IsNullOrEmpty(initialStateId) &&
+                _states.TryGetValue(initialStateId, out IAnimationState initialState))
             {
                 TransitionToState(initialState);
             }
+            else if (_states.Count > 0)
+            {
+                // If no initial state is specified but we have states,
+                // just enter the first one as a fallback
+                foreach (IAnimationState state in _states.Values)
+                {
+                    TransitionToState(state);
+                    break;
+                }
+            }
         }
 
-        protected void Update()
+        protected virtual void Update()
         {
-            if (_currentState == null)
+            if (_currentState is null)
                 return;
 
             // Update time in current state
@@ -95,39 +142,31 @@ namespace Animation.Flow
 
             // Check for transitions
             string nextStateId = _currentState.CheckTransitions(_animationContext);
-            if (!string.IsNullOrEmpty(nextStateId) && _states.TryGetValue(nextStateId, out IAnimationState nextState))
+            if (!string.IsNullOrEmpty(nextStateId) &&
+                _states.TryGetValue(nextStateId, out IAnimationState nextState))
             {
                 TransitionToState(nextState);
             }
         }
 
-        private void OnEnable()
-        {
-            // Ensure we're initialized when object is enabled/re-enabled
-            if (_animatorAdapter == null)
-            {
-                InitializeController();
-            }
-        }
-
-        // Handle controller destruction - unregister from asset
-        private void OnDestroy()
+        protected virtual void OnDestroy()
         {
 #if UNITY_EDITOR
-            if (_flowAsset != null)
+            // Unregister from asset when destroyed
+            if (flowAsset is not null)
             {
-                _flowAsset.UnregisterController(this);
+                flowAsset.UnregisterController(this);
             }
 #endif
         }
 
-        private void OnGUI()
+        protected virtual void OnGUI()
         {
-            if (!_debugVisualization || _currentState == null)
+            if (!debugVisualization || _currentState is null)
                 return;
 
             // Draw debug information in the game view
-            GUILayout.BeginArea(new Rect(10, 10, 300, 100));
+            GUILayout.BeginArea(new Rect(10, 10, 300, 120));
             GUI.color = Color.black;
             GUILayout.BeginVertical(GUI.skin.box);
             GUI.color = Color.white;
@@ -137,7 +176,8 @@ namespace Animation.Flow
 
             // Show available transitions
             string nextStateId = _currentState.CheckTransitions(_animationContext);
-            if (!string.IsNullOrEmpty(nextStateId) && _states.TryGetValue(nextStateId, out IAnimationState nextState))
+            if (!string.IsNullOrEmpty(nextStateId) &&
+                _states.TryGetValue(nextStateId, out IAnimationState nextState))
             {
                 GUILayout.Label($"Next Transition: → {nextState.Id}");
             }
@@ -146,92 +186,137 @@ namespace Animation.Flow
             GUILayout.EndArea();
         }
 
-        // Called in OnValidate to handle inspector changes
 #if UNITY_EDITOR
-        private void OnValidate()
+        /// <summary>
+        ///     Called when inspector values change
+        /// </summary>
+        protected virtual void OnValidate()
         {
             // Handle flow asset changes in the inspector
-            if (_flowAsset != _previousFlowAsset)
+            if (flowAsset != _previousFlowAsset)
             {
                 // Unregister from previous asset
-                if (_previousFlowAsset != null)
+                if (_previousFlowAsset is not null)
                 {
                     _previousFlowAsset.UnregisterController(this);
                 }
 
                 // Register with new asset
-                if (_flowAsset != null)
+                if (flowAsset is not null)
                 {
-                    _flowAsset.RegisterController(this);
+                    flowAsset.RegisterController(this);
                 }
 
-                _previousFlowAsset = _flowAsset;
+                _previousFlowAsset = flowAsset;
+            }
+
+            // Ensure the controller is initialized for editor mode
+            if (!Application.isPlaying)
+            {
+                if (_animator is null)
+                {
+                    InitializeAnimator();
+                }
+
+                if (flowAsset is not null && _states.Count == 0)
+                {
+                    InitializeStateMachine();
+                }
             }
         }
 #endif
 
-        /// <summary>
-        ///     Get the animator adapter for this controller.
-        ///     Must be implemented by derived classes to provide an appropriate IAnimator implementation.
-        /// </summary>
-        /// <returns>The animator adapter that will be used for animation control</returns>
-        protected abstract IAnimator CreateAnimatorAdapter();
+        #endregion
+
+        #region Initialization
 
         /// <summary>
-        ///     Public method to expose the animator adapter to the editor and other components
+        ///     Initialize the animator component
         /// </summary>
-        public IAnimator GetAnimator()
+        protected virtual void InitializeAnimator()
         {
-            _animatorAdapter ??= CreateAnimatorAdapter();
-
-            if (_animatorAdapter is null)
+            try
             {
-                Debug.LogWarning(
-                    $"CreateAnimatorAdapter returned null in {GetType().Name}. Animation list may be empty.", this);
-            }
+                _animator = CreateAnimator();
 
-            return _animatorAdapter;
+                if (_animator is null)
+                {
+                    Debug.LogWarning(
+                        $"[{GetType().Name}] Failed to create animator. Make sure the necessary components exist.",
+                        this);
+
+                    return;
+                }
+
+                // Create animation context with the animator
+                _animationContext = new AnimationContext(_animator, gameObject);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[{GetType().Name}] Error initializing animator: {ex.Message}", this);
+            }
         }
 
-        // Initialization for Enter Play Mode Options support
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticData()
+        /// <summary>
+        ///     Initialize the state machine from the flow asset
+        /// </summary>
+        protected virtual void InitializeStateMachine()
         {
-            // Reset any static data here that needs to be reset between domain reloads
-            // This is important when using Enter Play Mode Options with domain reload disabled
-        }
+            // Clear existing states
+            ClearStates();
 
-        private void InitializeController()
-        {
-            _animatorAdapter = GetAnimator();
-
-            if (_animatorAdapter == null)
+            // Make sure we have an animator
+            if (_animator is null)
             {
-                Debug.LogError(
-                    "Animator adapter was not provided by CreateAnimatorAdapter(). Override this method in your derived class.",
-                    this);
+                InitializeAnimator();
 
-                enabled = false;
-                return;
+                if (_animator is null)
+                {
+                    Debug.LogError($"[{GetType().Name}] Cannot initialize state machine: No animator available.", this);
+                    return;
+                }
             }
 
-            _animationContext = new AnimationContext(_animatorAdapter, gameObject);
-
-            if (_flowAsset)
+            // Make sure we have an animation context
+            if (_animationContext is null)
             {
-                _flowAsset.BuildFlowController(this);
+                _animationContext = new AnimationContext(_animator, gameObject);
+            }
+
+            // Build from asset if available
+            if (flowAsset is not null)
+            {
+                flowAsset.BuildFlowController(this);
             }
             else
             {
-                InitializeStates();
+                // Fall back to default state initialization if no asset
+                InitializeDefaultStates();
             }
         }
+
+        /// <summary>
+        ///     Create default states when no flow asset is provided
+        ///     Override in derived classes to provide default behavior
+        /// </summary>
+        protected virtual void InitializeDefaultStates()
+        {
+            // Base implementation does nothing
+            // Override in derived classes to create default states
+        }
+
+        #endregion
+
+        #region State Management
 
         /// <summary>
         ///     Transition to a new animation state
         /// </summary>
         private void TransitionToState(IAnimationState newState)
         {
+            if (newState is null)
+                return;
+
             // Exit current state
             _currentState?.OnExit(_animationContext);
 
@@ -240,7 +325,10 @@ namespace Animation.Flow
             _timeInCurrentState = 0f;
             _currentState.OnEnter(_animationContext);
 
-            Debug.Log($"Transitioned to animation state: {newState.Id}");
+            if (debugVisualization)
+            {
+                Debug.Log($"[{GetType().Name}] Transitioned to animation state: {newState.Id}", this);
+            }
         }
 
         /// <summary>
@@ -248,6 +336,7 @@ namespace Animation.Flow
         /// </summary>
         public void AddState(IAnimationState state)
         {
+            if (state is null) return;
             _states[state.Id] = state;
         }
 
@@ -258,6 +347,7 @@ namespace Animation.Flow
         {
             _states.Clear();
             _currentState = null;
+            _timeInCurrentState = 0f;
         }
 
         /// <summary>
@@ -265,7 +355,7 @@ namespace Animation.Flow
         /// </summary>
         public void SetInitialState(string stateId)
         {
-            _initialStateId = stateId;
+            initialStateId = stateId;
         }
 
         /// <summary>
@@ -283,24 +373,125 @@ namespace Animation.Flow
         }
 
         /// <summary>
+        ///     Get the current state ID
+        /// </summary>
+        public string GetCurrentStateId() => _currentState?.Id;
+
+        /// <summary>
+        ///     Check if a state with the given ID exists
+        /// </summary>
+        public bool HasState(string stateId) => _states.ContainsKey(stateId);
+
+        /// <summary>
+        ///     Get all state IDs
+        /// </summary>
+        public IEnumerable<string> GetStateIds() => _states.Keys;
+
+        #endregion
+
+        #region Parameter Management
+
+        /// <summary>
         ///     Set a parameter in the animation context
         /// </summary>
         public void SetParameter<T>(string name, T value)
         {
+            if (_animationContext is null)
+            {
+                // Create context if it doesn't exist yet
+                if (_animator is null)
+                {
+                    InitializeAnimator();
+                }
+
+                if (_animator is not null)
+                {
+                    _animationContext = new AnimationContext(_animator, gameObject);
+                }
+                else
+                {
+                    Debug.LogWarning(
+                        $"[{GetType().Name}] Cannot set parameter '{name}' - animation context not initialized.", this);
+
+                    return;
+                }
+            }
+
             _animationContext.SetParameter(name, value);
         }
 
         /// <summary>
         ///     Get a parameter from the animation context
         /// </summary>
-        public T GetParameter<T>(string name) => _animationContext.GetParameter<T>(name);
+        public T GetParameter<T>(string name)
+        {
+            if (_animationContext is null)
+                return default;
+
+            return _animationContext.GetParameter<T>(name);
+        }
 
         /// <summary>
-        ///     Initialize animation states - this would be replaced by a configuration system
+        ///     Check if a parameter exists
         /// </summary>
-        protected virtual void InitializeStates()
+        public bool HasParameter(string name) => _animationContext is not null && _animationContext.HasParameter(name);
+
+        #endregion
+
+        #region Animation Interface
+
+        /// <summary>
+        ///     Get available animations from the controller's animator
+        /// </summary>
+        public List<string> GetAvailableAnimations()
         {
-            // Override in derived classes or replace with configuration loading
+            if (_animator is null)
+            {
+                InitializeAnimator();
+
+                if (_animator is null)
+                    return new List<string>();
+            }
+
+            return _animator.GetAvailableAnimations();
         }
+
+        /// <summary>
+        ///     Play a specific animation directly
+        /// </summary>
+        public void PlayAnimation(string animationName)
+        {
+            if (_animator is null)
+            {
+                InitializeAnimator();
+
+                if (_animator is null)
+                    return;
+            }
+
+            _animator.Play(animationName);
+        }
+
+        /// <summary>
+        ///     Get the animator instance used by this controller
+        /// </summary>
+        public IAnimator GetAnimator()
+        {
+            if (_animator is null)
+            {
+                InitializeAnimator();
+            }
+
+            return _animator;
+        }
+
+        /// <summary>
+        ///     Create an animator adapter for this controller
+        ///     Must be implemented by derived classes
+        /// </summary>
+        protected abstract IAnimator CreateAnimator();
+
+        #endregion
+
     }
 }

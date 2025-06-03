@@ -47,7 +47,7 @@ namespace Animation.Flow.Editor
             if (output?.node is AnimationStateNode && input?.node is AnimationStateNode)
             {
                 // Get or create edge ID
-                string edgeId = EdgeConditionManager.Instance.GetEdgeId(this);
+                string edgeId = EdgeConditionManager.GetEdgeId(this);
                 if (!string.IsNullOrEmpty(edgeId))
                 {
                     // Ensure conditions list exists

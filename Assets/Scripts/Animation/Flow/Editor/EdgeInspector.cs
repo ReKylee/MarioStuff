@@ -11,24 +11,18 @@ namespace Animation.Flow.Editor
         // Static instance of the currently edited edge (follows singleton pattern for editor tools)
         private static EdgeInspector _instance;
 
-        // Cache of conditions for the current edge
-
-        // Current edge being inspected
-
-        // Edge ID for the current edge
-
         // Reference to the editor panel
         private TransitionEditorPanel _editorPanel;
 
         // Singleton access
         public static EdgeInspector Instance => _instance ??= new EdgeInspector();
 
-        // Public properties
-        public AnimationFlowEdge CurrentEdge { get; private set; }
+        // Private properties
+        private AnimationFlowEdge CurrentEdge { get; set; }
 
-        public List<ConditionData> Conditions { get; private set; }
+        private List<ConditionData> Conditions { get; set; }
 
-        public string CurrentEdgeId { get; private set; }
+        private string CurrentEdgeId { get; set; }
 
         // This method sets up the inspector for a specific edge
         public static void InspectEdge(AnimationFlowEdge edge)
@@ -45,21 +39,14 @@ namespace Animation.Flow.Editor
                 return;
 
             // Get the edge ID and conditions
-            CurrentEdgeId = EdgeConditionManager.Instance.GetEdgeId(CurrentEdge);
-            if (!string.IsNullOrEmpty(CurrentEdgeId))
-            {
-                Conditions = EdgeConditionManager.Instance.GetConditions(CurrentEdgeId);
-            }
-            else
-            {
-                Conditions = new List<ConditionData>();
-            }
+            CurrentEdgeId = EdgeConditionManager.GetEdgeId(CurrentEdge);
+
+            Conditions = !string.IsNullOrEmpty(CurrentEdgeId)
+                ? EdgeConditionManager.Instance.GetConditions(CurrentEdgeId)
+                : new List<ConditionData>();
 
             // Use the panel directly if it exists in the AnimationFlowGraphView
-            if (_editorPanel != null)
-            {
-                _editorPanel.Toggle(edge);
-            }
+            _editorPanel?.Toggle(edge);
         }
 
         // Save conditions for the current edge
@@ -84,20 +71,14 @@ namespace Animation.Flow.Editor
             sourceName = "Unknown";
             targetName = "Unknown";
 
-            if (CurrentEdge == null)
+            if (CurrentEdge?.output?.node is not AnimationStateNode sourceNode ||
+                CurrentEdge.input?.node is not AnimationStateNode targetNode)
                 return false;
 
-            AnimationStateNode sourceNode = CurrentEdge.output?.node as AnimationStateNode;
-            AnimationStateNode targetNode = CurrentEdge.input?.node as AnimationStateNode;
+            sourceName = sourceNode.AnimationName;
+            targetName = targetNode.AnimationName;
+            return true;
 
-            if (sourceNode != null && targetNode != null)
-            {
-                sourceName = sourceNode.AnimationName;
-                targetName = targetNode.AnimationName;
-                return true;
-            }
-
-            return false;
         }
     }
 }

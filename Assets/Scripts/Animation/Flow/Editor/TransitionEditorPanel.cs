@@ -282,7 +282,7 @@ namespace Animation.Flow.Editor
             _targetNode = edge.input?.node as AnimationStateNode;
 
             // Get the edge ID and conditions
-            _edgeId = EdgeConditionManager.Instance.GetEdgeId(edge);
+            _edgeId = EdgeConditionManager.GetEdgeId(edge);
             if (!string.IsNullOrEmpty(_edgeId))
             {
                 _conditions = EdgeConditionManager.Instance.GetConditions(_edgeId);

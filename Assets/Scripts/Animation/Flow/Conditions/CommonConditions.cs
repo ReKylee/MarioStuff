@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Animation.Flow.Conditions
 {
     /// <summary>
@@ -44,6 +46,21 @@ namespace Animation.Flow.Conditions
         }
     }
 
+    public class StringEqualsCondition : ITransitionCondition
+    {
+        private readonly string _parameterName;
+        private readonly string _targetValue;
+
+        public StringEqualsCondition(string parameterName, string targetValue)
+        {
+            _parameterName = parameterName;
+            _targetValue = targetValue;
+        }
+
+        public bool IsSatisfied(IAnimationContext context) =>
+            context.GetParameter<string>(_parameterName).Equals(_targetValue);
+    }
+
     /// <summary>
     ///     Transition when an animation has completed
     /// </summary>
@@ -51,7 +68,7 @@ namespace Animation.Flow.Conditions
     {
         public bool IsSatisfied(IAnimationContext context) =>
             // Use IAnimator interface, no cast needed
-            context.Animator != null && context.Animator.IsAnimationComplete;
+            context.Animator is { IsAnimationComplete: true };
     }
 
     /// <summary>
@@ -89,13 +106,8 @@ namespace Animation.Flow.Conditions
 
         public bool IsSatisfied(IAnimationContext context)
         {
-            foreach (ITransitionCondition condition in _conditions)
-            {
-                if (!condition.IsSatisfied(context))
-                    return false;
-            }
+            return _conditions.All(condition => condition.IsSatisfied(context));
 
-            return true;
         }
     }
 
@@ -113,13 +125,8 @@ namespace Animation.Flow.Conditions
 
         public bool IsSatisfied(IAnimationContext context)
         {
-            foreach (ITransitionCondition condition in _conditions)
-            {
-                if (condition.IsSatisfied(context))
-                    return true;
-            }
+            return _conditions.Any(condition => condition.IsSatisfied(context));
 
-            return false;
         }
     }
 }

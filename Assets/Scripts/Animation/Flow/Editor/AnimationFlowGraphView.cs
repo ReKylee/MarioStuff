@@ -55,9 +55,13 @@ namespace Animation.Flow.Editor
             // Register keyboard shortcuts
             RegisterKeyboardShortcuts();
 
-
             // Initialize with default animations
-            _availableAnimations = AnimationNameProvider.GetAnimationNamesFromSelection();
+            _availableAnimations = new List<string>
+            {
+                "Idle", "Walk", "Run", "Jump", "Fall"
+            };
+
+            Debug.Log("[AnimationFlowGraphView] Initialized with default animations");
         }
 
         private GraphViewChange OnGraphViewChanged(GraphViewChange change)
@@ -68,7 +72,7 @@ namespace Animation.Flow.Editor
                 foreach (Edge edge in change.edgesToCreate)
                 {
                     // Get the edge ID from our condition manager
-                    string edgeId = EdgeConditionManager.Instance.GetEdgeId(edge);
+                    string edgeId = EdgeConditionManager.GetEdgeId(edge);
 
                     // Initialize with empty conditions list
                     if (!string.IsNullOrEmpty(edgeId))
@@ -86,9 +90,9 @@ namespace Animation.Flow.Editor
             // Define node types with their corresponding classes for more type safety
             var nodeTypes = new Dictionary<string, Type>
             {
-                { "Hold Frame State", typeof(HoldFrameState) },
+                { "Looping State", typeof(LoopingState) },
                 { "One Time State", typeof(OneTimeState) },
-                { "Looping State", typeof(LoopingState) }
+                { "Hold Frame State", typeof(HoldFrameState) }
             };
 
             // Add right-click context menu for node creation
@@ -97,13 +101,55 @@ namespace Animation.Flow.Editor
                 // Convert screen position to graph position
                 Vector2 localMousePosition = contentViewContainer.WorldToLocal(menuEvent.mousePosition);
 
-                // Add each node type from our dictionary without the disabled header
+                // Add animation state options at the top level 
+                // Add each node type directly to it
                 foreach (var nodeType in nodeTypes)
                 {
-                    menuEvent.menu.AppendAction(nodeType.Key,
-                        action => CreateStateNode(nodeType.Value.Name.Replace("State", ""), "NewAnimation",
+                    menuEvent.menu.AppendAction($"✨ Create Animation State/{nodeType.Key}",
+                        _ => CreateStateNode(nodeType.Value.Name.Replace("State", ""), "NewAnimation",
                             new Rect(localMousePosition, new Vector2(150, 200))));
                 }
+
+                // Add separator
+                menuEvent.menu.AppendSeparator();
+
+                // Add selection and navigation options
+                menuEvent.menu.AppendAction("🔍 Frame Selection", _ => FrameSelection(),
+                    selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+                menuEvent.menu.AppendAction("🔍 Frame All", _ => FrameAll());
+
+                // Add separator
+                menuEvent.menu.AppendSeparator();
+
+                // Add edit options
+                menuEvent.menu.AppendAction("✂️ Cut", _ =>
+                {
+                    // Store selected nodes for cutting
+                    _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
+                    DeleteElements(selection.OfType<GraphElement>().ToList());
+                }, selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+                menuEvent.menu.AppendAction("📝 Copy",
+                    _ => { _copiedElements = selection.Where(e => e is AnimationStateNode).ToList(); },
+                    selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+                menuEvent.menu.AppendAction("📋 Paste", _ => PasteElements(),
+                    _copiedElements.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+                menuEvent.menu.AppendAction("🗑️ Delete",
+                    _ => { DeleteElements(selection.OfType<GraphElement>().ToList()); },
+                    selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+                // Add separator and select options
+                menuEvent.menu.AppendSeparator();
+                menuEvent.menu.AppendAction("📌 Select All Nodes", _ =>
+                {
+                    foreach (Node node in nodes)
+                    {
+                        AddToSelection(node);
+                    }
+                });
             }));
 
             // Set up the "+" button functionality
@@ -114,6 +160,10 @@ namespace Animation.Flow.Editor
 
                 // Create context menu
                 GenericMenu menu = new();
+
+                // Add a heading as the first item
+                menu.AddDisabledItem(new GUIContent("✨ Create Animation State"));
+                menu.AddSeparator("");
 
                 // Add each node type from our dictionary
                 foreach (var nodeType in nodeTypes)
@@ -159,7 +209,7 @@ namespace Animation.Flow.Editor
             {
                 if (evt.ctrlKey && evt.keyCode == KeyCode.V)
                 {
-                    PasteElements(evt.originalMousePosition);
+                    PasteElements();
                     evt.StopPropagation();
                 }
             });
@@ -170,7 +220,7 @@ namespace Animation.Flow.Editor
                 if (evt.ctrlKey && evt.keyCode == KeyCode.D)
                 {
                     _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
-                    PasteElements(evt.originalMousePosition, 20);
+                    PasteElements(20);
                     evt.StopPropagation();
                 }
             });
@@ -228,7 +278,7 @@ namespace Animation.Flow.Editor
             return edge;
         }
 
-        private void PasteElements(Vector2 position, float offset = 0)
+        private void PasteElements(float offset = 0)
         {
             if (_copiedElements == null || _copiedElements.Count == 0)
                 return;
@@ -344,10 +394,10 @@ namespace Animation.Flow.Editor
             AddElement(node);
 
             // Force immediate layout update to ensure ports are visible
+            node.RefreshAnimationList(_availableAnimations);
             node.RefreshExpandedState();
             node.RefreshPorts();
 
-            // Auto-set initial state if this is the first node
             if (nodes.ToList().Count == 1) // It's 1 because we just added this node
             {
                 node.IsInitialState = true;
@@ -366,7 +416,7 @@ namespace Animation.Flow.Editor
             _targetAnimator = targetAnimator;
 
             // Update available animations
-            if (_targetAnimator != null)
+            if (_targetAnimator is not null)
             {
                 _availableAnimations = AnimationNameProvider.GetAnimationNames(_targetAnimator);
             }

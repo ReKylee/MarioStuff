@@ -318,11 +318,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d102ca1f27f48494ba55836d16dd4070, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _initialStateId: 
-  _flowAsset: {fileID: 11400000, guid: 818719aba7b11b14aa3f5dbc2dcafeb1, type: 2}
-  _debugVisualization: 1
+  flowAsset: {fileID: 11400000, guid: 818719aba7b11b14aa3f5dbc2dcafeb1, type: 2}
+  initialStateId: 
+  debugVisualization: 1
   _jumpAnimationFlow: {fileID: 0}
   _jumpApexThreshold: 2
+  _fallingThreshold: -0.5
+  _jumpStartThreshold: 3
+  _longFallTime: 0.5
 --- !u!1 &5139845219191842715
 GameObject:
   m_ObjectHideFlags: 0

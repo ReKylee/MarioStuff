@@ -12,29 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fb3a5b10d1667949b83903b56c197b7, type: 3}
   m_Name: AnimFlow
   m_EditorClassIdentifier: 
-  States:
-  - Id: 7bfa4ff7-71bb-46ec-880c-833861a977c8
+  states:
+  - Id: 12fad33d-1bef-4bee-b449-0b0403829952
     StateType: Looping
-    AnimationName: ds
-    IsInitialState: 0
-    Position: {x: 380, y: -113}
-    FrameToHold: 0
-  - Id: affed92d-3be2-4c8a-a24f-50f31ab70375
-    StateType: HoldFrame
-    AnimationName: 22
-    IsInitialState: 0
-    Position: {x: 308, y: 83}
-    FrameToHold: 0
-  - Id: 3c9cebaa-f010-4b20-9b07-40f7dc5f32df
-    StateType: 
-    AnimationName: aa
+    AnimationName: Idle
     IsInitialState: 1
-    Position: {x: -70, y: 8}
+    Position: {x: 382, y: -131}
     FrameToHold: 0
-  Transitions:
-  - FromStateId: 3c9cebaa-f010-4b20-9b07-40f7dc5f32df
-    ToStateId: 7bfa4ff7-71bb-46ec-880c-833861a977c8
-    Conditions: []
-  - FromStateId: 3c9cebaa-f010-4b20-9b07-40f7dc5f32df
-    ToStateId: affed92d-3be2-4c8a-a24f-50f31ab70375
-    Conditions: []
+  transitions: []

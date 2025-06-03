@@ -214,25 +214,20 @@ namespace Animation.Flow.Editor
             // Add refresh button next to dropdown
             Button refreshButton = new(() =>
             {
-                if (parent is AnimationFlowGraphView view)
-                {
-                    // Get animator from editor window if possible
-                    AnimationFlowEditorWindow editorWindow = EditorWindow.GetWindow<AnimationFlowEditorWindow>();
-                    IAnimator animator = editorWindow?.GetTargetAnimator();
+                if (parent is not AnimationFlowGraphView)
+                    return;
 
-                    // Update animation list based on the animator
-                    List<string> updatedAnimations;
-                    if (animator != null)
-                    {
-                        updatedAnimations = AnimationNameProvider.GetAnimationNames(animator);
-                    }
-                    else
-                    {
-                        updatedAnimations = AnimationNameProvider.GetAnimationNamesFromSelection();
-                    }
+                // Get animator from editor window if possible
+                AnimationFlowEditorWindow editorWindow = EditorWindow.GetWindow<AnimationFlowEditorWindow>();
+                IAnimator animator = editorWindow?.GetTargetAnimator();
 
-                    RefreshAnimationList(updatedAnimations);
-                }
+                // Update animation list based on the animator
+                List<string> updatedAnimations;
+                updatedAnimations = animator is not null
+                    ? AnimationNameProvider.GetAnimationNames(animator)
+                    : AnimationNameProvider.GetAnimationNamesFromSelection();
+
+                RefreshAnimationList(updatedAnimations);
             })
             {
                 text = "⟳"
@@ -279,12 +274,13 @@ namespace Animation.Flow.Editor
                 // Update node visual style
                 titleContainer.style.backgroundColor = GetStateColor();
 
+                // Only enforce single initial state if we're turning this ON
                 if (!wasInitial && IsInitialState)
                 {
                     // Clear other initial states
-                    if (parent is GraphView graphView)
+                    if (parent is GraphView view)
                     {
-                        var nodes = graphView.nodes.ToList().Cast<AnimationStateNode>();
+                        var nodes = view.nodes.ToList().Cast<AnimationStateNode>();
                         foreach (AnimationStateNode node in nodes)
                         {
                             if (node != this && node._initialStateToggle != null)
@@ -305,6 +301,7 @@ namespace Animation.Flow.Editor
             switch (StateType)
             {
                 case "HoldFrame":
+                    // Only show frame to hold for HoldFrame state type
                     VisualElement frameContainer = new();
                     frameContainer.style.flexDirection = FlexDirection.Row;
                     frameContainer.style.marginLeft = 8;

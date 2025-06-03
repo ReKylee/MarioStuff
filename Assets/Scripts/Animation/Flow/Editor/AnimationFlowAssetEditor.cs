@@ -24,13 +24,13 @@ namespace Animation.Flow.Editor
         public static bool OnOpenAsset(int instanceID, int line)
         {
             Object obj = EditorUtility.InstanceIDToObject(instanceID);
-            if (obj is AnimationFlowAsset flowAsset)
-            {
-                OpenInFlowEditor(flowAsset);
-                return true;
-            }
+            if (obj is not AnimationFlowAsset flowAsset)
+                return false;
 
-            return false;
+            Debug.Log($"[Animation Flow Editor] Opening asset: {flowAsset.name}");
+            OpenInFlowEditor(flowAsset);
+            return true;
+
         }
 
         private static void OpenInFlowEditor(AnimationFlowAsset flowAsset)
@@ -42,6 +42,7 @@ namespace Animation.Flow.Editor
                     false,
                     typeof(SceneView));
 
+            Debug.Log($"[Animation Flow Editor] Opening window for asset: {flowAsset.name}");
             window.LoadAsset(flowAsset);
             window.Focus();
         }

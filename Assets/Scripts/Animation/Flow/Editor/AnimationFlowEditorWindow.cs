@@ -256,8 +256,8 @@ namespace Animation.Flow.Editor
             Undo.RecordObject(flowAsset, "Save Animation Flow");
 
             // Clear existing data if overwriting
-            flowAsset.States.Clear();
-            flowAsset.Transitions.Clear();
+            flowAsset.states.Clear();
+            flowAsset.transitions.Clear();
 
             // Populate States
             foreach (Node viewNode in _graphView.nodes.ToList())
@@ -274,7 +274,7 @@ namespace Animation.Flow.Editor
                         FrameToHold = stateNode.FrameToHold
                     };
 
-                    flowAsset.States.Add(stateData);
+                    flowAsset.states.Add(stateData);
                 }
             }
 
@@ -284,7 +284,7 @@ namespace Animation.Flow.Editor
                 if (edge.output.node is AnimationStateNode outputNode &&
                     edge.input.node is AnimationStateNode inputNode)
                 {
-                    string edgeId = EdgeConditionManager.Instance.GetEdgeId(edge);
+                    string edgeId = EdgeConditionManager.GetEdgeId(edge);
                     var conditions = new List<ConditionData>();
 
                     // Get conditions either from EdgeConditionManager or from AnimationFlowEdge
@@ -304,7 +304,7 @@ namespace Animation.Flow.Editor
                         Conditions = conditions
                     };
 
-                    flowAsset.Transitions.Add(transitionData);
+                    flowAsset.transitions.Add(transitionData);
                 }
             }
 
@@ -374,16 +374,17 @@ namespace Animation.Flow.Editor
         {
             if (_graphView is null)
             {
-                Debug.LogError("GraphView is not available.");
+                Debug.LogError("[Animation Flow Editor] GraphView is not available.");
                 return;
             }
 
             if (!flowAsset)
             {
-                Debug.LogError("Invalid Animation Flow Asset");
+                Debug.LogError("[Animation Flow Editor] Invalid Animation Flow Asset");
                 return;
             }
 
+            Debug.Log($"[Animation Flow Editor] Loading asset: {flowAsset.name}");
             _currentAsset = flowAsset;
 
             // Remember this asset for domain reload
@@ -394,11 +395,27 @@ namespace Animation.Flow.Editor
             }
 
             // Find objects using this asset and update target animator
-            // Directly try to get the animator from the asset's controller first
-            if (!FindObjectsUsingAsset(flowAsset))
+            Debug.Log("[Animation Flow Editor] Attempting to find objects using this asset...");
+            bool foundController = FindObjectsUsingAsset(flowAsset);
+            Debug.Log($"[Animation Flow Editor] Found controller: {foundController}");
+
+            if (!foundController)
             {
                 // Fallback to current selection if no controller is found
+                Debug.Log("[Animation Flow Editor] No controller found, falling back to selection...");
                 UpdateTargetGameObject();
+            }
+
+            // Log animation sources
+            if (_targetAnimator != null)
+            {
+                Debug.Log($"[Animation Flow Editor] Target animator found: {_targetAnimator.GetType().Name}");
+                var animations = _targetAnimator.GetAvailableAnimations();
+                Debug.Log($"[Animation Flow Editor] Available animations from target: {string.Join(", ", animations)}");
+            }
+            else
+            {
+                Debug.LogWarning("[Animation Flow Editor] No target animator found!");
             }
 
             // Clear current graph and condition manager
@@ -409,7 +426,7 @@ namespace Animation.Flow.Editor
             var graphNodes = new Dictionary<string, AnimationStateNode>();
 
             // Load States
-            foreach (AnimationStateData stateData in flowAsset.States)
+            foreach (AnimationStateData stateData in flowAsset.states)
             {
                 AnimationStateNode node = _graphView.CreateStateNode(
                     stateData.StateType,
@@ -438,7 +455,7 @@ namespace Animation.Flow.Editor
             }
 
             // Load Transitions
-            foreach (TransitionData transitionData in flowAsset.Transitions)
+            foreach (TransitionData transitionData in flowAsset.transitions)
             {
                 if (!graphNodes.TryGetValue(transitionData.FromStateId, out AnimationStateNode fromNode) ||
                     !graphNodes.TryGetValue(transitionData.ToStateId, out AnimationStateNode toNode))
@@ -454,7 +471,7 @@ namespace Animation.Flow.Editor
                 Edge edge = _graphView.ConnectPorts(outputPort, inputPort);
 
                 // Store conditions for this edge
-                string edgeId = EdgeConditionManager.Instance.GetEdgeId(edge);
+                string edgeId = EdgeConditionManager.GetEdgeId(edge);
                 if (!string.IsNullOrEmpty(edgeId) && transitionData.Conditions != null)
                 {
                     EdgeConditionManager.Instance.SetConditions(edgeId, transitionData.Conditions);
