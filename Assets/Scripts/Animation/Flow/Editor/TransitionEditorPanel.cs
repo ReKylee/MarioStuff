@@ -33,6 +33,9 @@ namespace Animation.Flow.Editor
         private Toggle _isBoolean;
         private bool _isDragging;
 
+        // Track whether the panel is being interacted with
+        private bool _isInteracting;
+
         // For resizing
         private bool _isResizing;
 
@@ -300,15 +303,61 @@ namespace Animation.Flow.Editor
                 _root.style.top = _position.y;
             }
 
+            // Register panel-wide mouse events
+            RegisterPanelEvents();
+
             _root.style.display = DisplayStyle.Flex;
             IsVisible = true;
         }
 
         public void Hide()
         {
+            // Unregister panel events when hiding
+            UnregisterPanelEvents();
+
             _root.style.display = DisplayStyle.None;
             IsVisible = false;
+            _isInteracting = false;
         }
+
+        private void RegisterPanelEvents()
+        {
+            // Register panel-wide events to track interaction
+            _root.RegisterCallback<MouseDownEvent>(OnPanelMouseDown);
+            _root.RegisterCallback<MouseUpEvent>(OnPanelMouseUp);
+            _root.RegisterCallback<MouseLeaveEvent>(OnPanelMouseLeave);
+        }
+
+        private void UnregisterPanelEvents()
+        {
+            // Unregister panel events
+            _root.UnregisterCallback<MouseDownEvent>(OnPanelMouseDown);
+            _root.UnregisterCallback<MouseUpEvent>(OnPanelMouseUp);
+            _root.UnregisterCallback<MouseLeaveEvent>(OnPanelMouseLeave);
+        }
+
+        private void OnPanelMouseDown(MouseDownEvent evt)
+        {
+            _isInteracting = true;
+            evt.StopPropagation();
+        }
+
+        private void OnPanelMouseUp(MouseUpEvent evt)
+        {
+            evt.StopPropagation();
+        }
+
+        private void OnPanelMouseLeave(MouseLeaveEvent evt)
+        {
+            // Only clear interaction state if not dragging or resizing
+            if (!_isDragging && !_isResizing)
+            {
+                _isInteracting = false;
+            }
+        }
+
+        // Check if panel is currently being interacted with
+        public bool IsBeingInteracted() => IsVisible && (_isInteracting || _isDragging || _isResizing);
 
         public void Toggle(AnimationFlowEdge edge)
         {

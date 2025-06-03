@@ -29,13 +29,19 @@ namespace Animation.Flow.Editor
         {
             Instance.BeginInspectEdge(edge);
         }
+
         public static void UnSelectEdge()
         {
             Instance.EndInspectEdge();
         }
+
         private void EndInspectEdge()
         {
-            _editorPanel?.Hide();
+            // Only hide the panel if it's not being interacted with
+            if (_editorPanel?.IsBeingInteracted() == false)
+            {
+                _editorPanel.Hide();
+            }
         }
 
         // Begin inspecting an edge
