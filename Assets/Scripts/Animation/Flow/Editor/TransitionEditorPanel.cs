@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Animation.Flow.Conditions;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -543,12 +544,6 @@ namespace Animation.Flow.Editor
                 if (i % 2 == 0)
                     conditionContainer.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f, 0.3f);
 
-                // Condition description
-                string description = GetConditionDescription(condition);
-                Label descLabel = new(description);
-                descLabel.style.flexGrow = 1;
-                descLabel.style.fontSize = 12;
-                conditionContainer.Add(descLabel);
 
                 // Remove button
                 Button removeButton = new(() => RemoveCondition(index)) { text = "×" };
@@ -579,16 +574,6 @@ namespace Animation.Flow.Editor
                 ParameterName = _parameterName
             };
 
-            if (_isBoolean.value)
-            {
-                condition.Type = "Bool";
-                condition.BoolValue = _boolValue;
-            }
-            else
-            {
-                condition.Type = "Float" + _compareType.Replace(" ", "");
-                condition.FloatValue = _floatValue;
-            }
 
             _conditions.Add(condition);
             SaveConditions();
@@ -602,7 +587,8 @@ namespace Animation.Flow.Editor
         {
             ConditionData condition = new()
             {
-                Type = "AnimationComplete",
+                DataType = ConditionDataType.Animation,
+                ComparisonType = ComparisonType.Completed,
                 ParameterName = ""
             };
 
@@ -615,7 +601,8 @@ namespace Animation.Flow.Editor
         {
             ConditionData condition = new()
             {
-                Type = "TimeElapsed",
+                DataType = ConditionDataType.Time,
+                ComparisonType = ComparisonType.Elapsed,
                 ParameterName = "StateTime",
                 FloatValue = 0.5f
             };
@@ -643,32 +630,13 @@ namespace Animation.Flow.Editor
 
                 // Mark the asset dirty so changes are saved
                 AnimationFlowEditorWindow editorWindow = EditorWindow.GetWindow<AnimationFlowEditorWindow>();
-                if (editorWindow != null)
+                if (editorWindow)
                 {
                     EditorUtility.SetDirty(editorWindow);
                 }
             }
         }
-
-        private string GetConditionDescription(ConditionData condition)
-        {
-            return condition.Type switch
-            {
-                "Bool" => $"{condition.ParameterName} {(condition.BoolValue ? "is true" : "is false")}",
-                "FloatEquals" => $"{condition.ParameterName} = {condition.FloatValue}",
-                "FloatLessThan" => $"{condition.ParameterName} < {condition.FloatValue}",
-                "FloatGreaterThan" => $"{condition.ParameterName} > {condition.FloatValue}",
-                "AnimationComplete" => "Animation is complete",
-                "TimeElapsed" => $"Time in state > {condition.FloatValue}s",
-                _ => $"Unknown condition: {condition.Type}"
-            };
-        }
     }
 
-    public enum ComparisonType
-    {
-        Equals,
-        LessThan,
-        GreaterThan
-    }
+
 }

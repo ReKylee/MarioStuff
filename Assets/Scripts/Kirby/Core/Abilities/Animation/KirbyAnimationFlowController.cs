@@ -1,7 +1,6 @@
-using System;
-using System.Collections.Generic;
-using Animation.Flow;
 using Animation.Flow.Adapters;
+using Animation.Flow.Core;
+using Animation.Flow.Interfaces;
 using GabrielBigardi.SpriteAnimator;
 using Kirby.Core.Components;
 using UnityEngine;
@@ -34,6 +33,18 @@ namespace Kirby.Core.Abilities.Animation
         // Required components
         private KirbyController _kirbyController;
         private SpriteAnimator _spriteAnimator;
+
+        #region Animation Flow Control
+
+        /// <summary>
+        ///     Set the animation flow asset
+        /// </summary>
+        public void SetAnimationFlowAsset(AnimationFlowAsset flowAsset)
+        {
+            FlowAsset = flowAsset;
+        }
+
+        #endregion
 
         #region Lifecycle Methods
 
@@ -126,31 +137,6 @@ namespace Kirby.Core.Abilities.Animation
 
         #endregion
 
-        #region Animation Flow Control
-
-        /// <summary>
-        ///     Set the animation flow asset
-        /// </summary>
-        public void SetAnimationFlowAsset(AnimationFlowAsset flowAsset)
-        {
-            FlowAsset = flowAsset;
-        }
-
-
-        /// <summary>
-        ///     Create default animation states when no flow asset is provided
-        /// </summary>
-        protected override void InitializeDefaultStates()
-        {
-            // Use the factory to create a default jump animation flow
-            AnimationFlowAsset defaultFlow = KirbyJumpAnimationFactory.CreateJumpAnimationFlow();
-
-            // Build the flow controller from the default flow
-            defaultFlow.BuildFlowController(this);
-        }
-
-        #endregion
-
         #region Animation Parameters
 
         /// <summary>
@@ -238,176 +224,6 @@ namespace Kirby.Core.Abilities.Animation
 
         #endregion
 
-    }
-
-    /// <summary>
-    ///     Factory for creating Kirby's jump animation flow
-    /// </summary>
-    public static class KirbyJumpAnimationFactory
-    {
-        // State IDs
-        private static readonly string JumpStartStateId = Guid.NewGuid().ToString();
-        private static readonly string JumpStateId = Guid.NewGuid().ToString();
-        private static readonly string FallStateId = Guid.NewGuid().ToString();
-        private static readonly string BounceStateId = Guid.NewGuid().ToString();
-        private static readonly string LandStateId = Guid.NewGuid().ToString();
-
-        /// <summary>
-        ///     Create a default jump animation flow programmatically
-        /// </summary>
-        public static AnimationFlowAsset CreateJumpAnimationFlow()
-        {
-            AnimationFlowAsset asset = ScriptableObject.CreateInstance<AnimationFlowAsset>();
-
-            // Create and add states
-            asset.states.AddRange(CreateStates());
-
-            // Create and add transitions
-            asset.transitions.AddRange(CreateTransitions());
-
-            return asset;
-        }
-
-        /// <summary>
-        ///     Create the states for the jump animation flow
-        /// </summary>
-        private static List<AnimationStateData> CreateStates() =>
-            new()
-            {
-                // Jump start state (hold frame)
-                new AnimationStateData
-                {
-                    Id = JumpStartStateId,
-                    StateType = AnimationStateType.HoldFrame.ToString(),
-                    AnimationName = "JumpStart",
-                    IsInitialState = true,
-                    Position = new Vector2(100, 100)
-                },
-
-                // Jump state (one time)
-                new AnimationStateData
-                {
-                    Id = JumpStateId,
-                    StateType = AnimationStateType.OneTime.ToString(),
-                    AnimationName = "Jump",
-                    Position = new Vector2(300, 100)
-                },
-
-                // Fall state (looping)
-                new AnimationStateData
-                {
-                    Id = FallStateId,
-                    StateType = AnimationStateType.Looping.ToString(),
-                    AnimationName = "Fall",
-                    Position = new Vector2(500, 100)
-                },
-
-                // Bounce state (one time)
-                new AnimationStateData
-                {
-                    Id = BounceStateId,
-                    StateType = AnimationStateType.OneTime.ToString(),
-                    AnimationName = "BounceOffFloor",
-                    Position = new Vector2(500, 300)
-                },
-
-                // Land state (one time)
-                new AnimationStateData
-                {
-                    Id = LandStateId,
-                    StateType = AnimationStateType.OneTime.ToString(),
-                    AnimationName = "Land",
-                    Position = new Vector2(300, 300)
-                }
-            };
-
-        /// <summary>
-        ///     Create the transitions for the jump animation flow
-        /// </summary>
-        private static List<TransitionData> CreateTransitions() =>
-            new()
-            {
-                // JumpStart -> Jump (when button released or near apex)
-                new TransitionData
-                {
-                    FromStateId = JumpStartStateId,
-                    ToStateId = JumpStateId,
-                    Conditions = new List<ConditionData>
-                    {
-                        new()
-                        {
-                            Type = ConditionType.AnyCondition.ToString(),
-                            ParameterName = ""
-                        },
-                        new()
-                        {
-                            Type = ConditionType.Bool.ToString(),
-                            ParameterName = "JumpReleased",
-                            BoolValue = true
-                        },
-                        new()
-                        {
-                            Type = ConditionType.FloatLessThan.ToString(),
-                            ParameterName = "VerticalVelocity",
-                            FloatValue = 3.0f
-                        }
-                    }
-                },
-
-                // Jump -> Fall (when falling)
-                new TransitionData
-                {
-                    FromStateId = JumpStateId,
-                    ToStateId = FallStateId,
-                    Conditions = new List<ConditionData>
-                    {
-                        new()
-                        {
-                            Type = ConditionType.FloatLessThan.ToString(),
-                            ParameterName = "VerticalVelocity",
-                            FloatValue = -0.5f
-                        }
-                    }
-                },
-
-                // Fall -> Bounce (when long fall and near ground)
-                new TransitionData
-                {
-                    FromStateId = FallStateId,
-                    ToStateId = BounceStateId,
-                    Conditions = new List<ConditionData>
-                    {
-                        new()
-                        {
-                            Type = ConditionType.Bool.ToString(),
-                            ParameterName = "IsLongFall",
-                            BoolValue = true
-                        },
-                        new()
-                        {
-                            Type = ConditionType.Bool.ToString(),
-                            ParameterName = "IsGrounded",
-                            BoolValue = true
-                        }
-                    }
-                },
-
-                // Fall -> Land (when grounded and not long fall)
-                new TransitionData
-                {
-                    FromStateId = FallStateId,
-                    ToStateId = LandStateId,
-                    Conditions = new List<ConditionData>
-                    {
-                        new()
-                        {
-                            Type = ConditionType.Bool.ToString(),
-                            ParameterName = "IsGrounded",
-                            BoolValue = true
-                        }
-                    }
-                }
-            };
     }
 
 

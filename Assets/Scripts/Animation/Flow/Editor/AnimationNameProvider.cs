@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Animation.Flow.Adapters;
+using Animation.Flow.Core;
+using Animation.Flow.Interfaces;
 using GabrielBigardi.SpriteAnimator;
 using UnityEditor;
 using UnityEngine;
@@ -71,8 +73,7 @@ namespace Animation.Flow.Editor
                 MethodInfo methodInfo = flowController.GetType().GetMethod("GetAnimatorAdapter",
                     BindingFlags.NonPublic | BindingFlags.Instance);
 
-                IAnimator animator = methodInfo?.Invoke(flowController, null) as IAnimator;
-                if (animator != null)
+                if (methodInfo?.Invoke(flowController, null) is IAnimator animator)
                 {
                     Debug.Log($"[AnimationNameProvider] Got animator from controller: {animator.GetType().Name}");
                     return GetAnimationNames(animator);
