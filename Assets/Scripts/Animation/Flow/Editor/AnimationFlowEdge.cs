@@ -39,6 +39,12 @@ namespace Animation.Flow.Editor
             evt.StopPropagation();
         }
 
+        public override void OnUnselected()
+        {
+            base.OnUnselected();
+            EdgeInspector.UnSelectEdge();
+
+        }
         public override void OnSelected()
         {
             base.OnSelected();

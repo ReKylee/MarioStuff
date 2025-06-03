@@ -29,6 +29,14 @@ namespace Animation.Flow.Editor
         {
             Instance.BeginInspectEdge(edge);
         }
+        public static void UnSelectEdge()
+        {
+            Instance.EndInspectEdge();
+        }
+        private void EndInspectEdge()
+        {
+            _editorPanel?.Hide();
+        }
 
         // Begin inspecting an edge
         private void BeginInspectEdge(AnimationFlowEdge edge)
@@ -46,7 +54,7 @@ namespace Animation.Flow.Editor
                 : new List<ConditionData>();
 
             // Use the panel directly if it exists in the AnimationFlowGraphView
-            _editorPanel?.Toggle(edge);
+            _editorPanel?.Show(edge);
         }
 
         // Save conditions for the current edge
