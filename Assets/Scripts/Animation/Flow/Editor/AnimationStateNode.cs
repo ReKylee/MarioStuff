@@ -32,7 +32,6 @@ namespace Animation.Flow.Editor
         public string StateType { get; }
         public string AnimationName { get; set; }
         public bool IsInitialState { get; set; }
-        public int FrameToHold { get; set; }
         public string ID { get; set; }
 
         /// <summary>
@@ -71,11 +70,6 @@ namespace Animation.Flow.Editor
             titleContainer.style.backgroundColor = GetStateColor();
         }
 
-        public void RefreshFrameToHoldField()
-        {
-            if (_frameToHoldField != null)
-                _frameToHoldField.value = FrameToHold;
-        }
 
         private void BuildNodeUI()
         {
@@ -297,38 +291,11 @@ namespace Animation.Flow.Editor
             toggleContainer.Add(_initialStateToggle);
             _contentContainer.Add(toggleContainer);
 
-            // Add type-specific UI
-            switch (StateType)
-            {
-                case "HoldFrame":
-                    // Only show frame to hold for HoldFrame state type
-                    VisualElement frameContainer = new();
-                    frameContainer.style.flexDirection = FlexDirection.Row;
-                    frameContainer.style.marginLeft = 8;
-                    frameContainer.style.marginRight = 8;
-                    frameContainer.style.marginTop = 8;
-                    frameContainer.style.marginBottom = 8;
 
-                    Label frameLabel = new("Hold Frame:");
-                    frameLabel.style.minWidth = 70;
-                    frameLabel.style.color = new Color(0.9f, 0.9f, 0.9f);
-                    frameContainer.Add(frameLabel);
-
-                    _frameToHoldField = new IntegerField();
-                    _frameToHoldField.value = FrameToHold;
-                    _frameToHoldField.RegisterValueChangedCallback(evt => FrameToHold = evt.newValue);
-                    _frameToHoldField.style.flexGrow = 1;
-                    frameContainer.Add(_frameToHoldField);
-
-                    _contentContainer.Add(frameContainer);
-                    break;
-                default:
-                    // Add some padding at the bottom for other node types
-                    VisualElement spacer = new();
-                    spacer.style.height = 8;
-                    _contentContainer.Add(spacer);
-                    break;
-            }
+            // Add some padding at the bottom for other node types
+            VisualElement spacer = new();
+            spacer.style.height = 8;
+            _contentContainer.Add(spacer);
 
             // Create and style ports differently, using arrow-like visuals
             StylePortContainers();
@@ -378,6 +345,57 @@ namespace Animation.Flow.Editor
                 default:
                     return new Color(0.3f, 0.3f, 0.3f); // Gray for unknown
             }
+        }
+
+        /// <summary>
+        ///     Mark this node as having an invalid animation
+        /// </summary>
+        /// <param name="missingAnimationName">Name of the missing animation</param>
+        public void MarkAsInvalid(string missingAnimationName)
+        {
+            // Add a warning class to the node
+            AddToClassList("animation-node-warning");
+
+            // Change the border color to orange to indicate a warning
+            mainContainer.style.borderLeftColor = new Color(1f, 0.6f, 0f);
+            mainContainer.style.borderRightColor = new Color(1f, 0.6f, 0f);
+            mainContainer.style.borderTopColor = new Color(1f, 0.6f, 0f);
+            mainContainer.style.borderBottomColor = new Color(1f, 0.6f, 0f);
+            mainContainer.style.borderLeftWidth = 2;
+            mainContainer.style.borderRightWidth = 2;
+            mainContainer.style.borderTopWidth = 2;
+            mainContainer.style.borderBottomWidth = 2;
+
+            // Add warning text to the title
+            title = $"{AnimationName} ⚠️";
+
+            // Add tooltip
+            tooltip = $"Warning: Animation '{missingAnimationName}' does not exist in the current controller.";
+        }
+
+        /// <summary>
+        ///     Clear the invalid state visual indicators
+        /// </summary>
+        public void ClearInvalidState()
+        {
+            // Remove warning class
+            RemoveFromClassList("animation-node-warning");
+
+            // Reset border
+            mainContainer.style.borderLeftWidth = 1;
+            mainContainer.style.borderRightWidth = 1;
+            mainContainer.style.borderTopWidth = 1;
+            mainContainer.style.borderBottomWidth = 1;
+            mainContainer.style.borderLeftColor = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+            mainContainer.style.borderRightColor = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+            mainContainer.style.borderTopColor = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+            mainContainer.style.borderBottomColor = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+
+            // Reset title
+            title = AnimationName;
+
+            // Clear tooltip
+            tooltip = "";
         }
     }
 }

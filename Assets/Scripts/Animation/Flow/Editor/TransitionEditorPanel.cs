@@ -556,23 +556,16 @@ namespace Animation.Flow.Editor
 
         private string GetConditionDescription(ConditionData condition)
         {
-            switch (condition.Type)
+            return condition.Type switch
             {
-                case "Bool":
-                    return $"{condition.ParameterName} {(condition.BoolValue ? "is true" : "is false")}";
-                case "FloatEquals":
-                    return $"{condition.ParameterName} = {condition.FloatValue}";
-                case "FloatLessThan":
-                    return $"{condition.ParameterName} < {condition.FloatValue}";
-                case "FloatGreaterThan":
-                    return $"{condition.ParameterName} > {condition.FloatValue}";
-                case "AnimationComplete":
-                    return "Animation is complete";
-                case "TimeElapsed":
-                    return $"Time in state > {condition.FloatValue}s";
-                default:
-                    return $"Unknown condition: {condition.Type}";
-            }
+                "Bool" => $"{condition.ParameterName} {(condition.BoolValue ? "is true" : "is false")}",
+                "FloatEquals" => $"{condition.ParameterName} = {condition.FloatValue}",
+                "FloatLessThan" => $"{condition.ParameterName} < {condition.FloatValue}",
+                "FloatGreaterThan" => $"{condition.ParameterName} > {condition.FloatValue}",
+                "AnimationComplete" => "Animation is complete",
+                "TimeElapsed" => $"Time in state > {condition.FloatValue}s",
+                _ => $"Unknown condition: {condition.Type}"
+            };
         }
     }
 

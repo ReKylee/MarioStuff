@@ -11,7 +11,6 @@ namespace Animation.Flow.Editor
 {
     public class AnimationFlowGraphView : GraphView
     {
-
         // Store the available animation names
         private List<string> _availableAnimations;
 
@@ -26,6 +25,7 @@ namespace Animation.Flow.Editor
         private GameObject _targetGameObject;
 
         // Transition editor panel (embedded in the graph view)
+        private TransitionEditorPanel _transitionEditorPanel;
 
         public AnimationFlowGraphView()
         {
@@ -46,14 +46,17 @@ namespace Animation.Flow.Editor
             StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
                 "Assets/Scripts/Animation/Flow/Editor/AnimationFlowEditor.uss");
 
-            if (styleSheet != null)
+            if (styleSheet is not null)
                 styleSheets.Add(styleSheet);
 
             // Set up node creation
             SetupNodeCreation();
 
+            _transitionEditorPanel = new TransitionEditorPanel(this);
+
             // Register keyboard shortcuts
             RegisterKeyboardShortcuts();
+
 
             // Initialize with default animations
             _availableAnimations = new List<string>
@@ -62,6 +65,170 @@ namespace Animation.Flow.Editor
             };
 
             Debug.Log("[AnimationFlowGraphView] Initialized with default animations");
+        }
+
+        /// <summary>
+        ///     Get current available animations list
+        /// </summary>
+        public List<string> GetAvailableAnimations() => new(_availableAnimations);
+
+        /// <summary>
+        ///     Called when the target GameObject changes - this updates animation lists
+        /// </summary>
+        public void OnTargetGameObjectChanged(GameObject targetGameObject, IAnimator targetAnimator)
+        {
+            _targetGameObject = targetGameObject;
+            _targetAnimator = targetAnimator;
+
+            Debug.Log(
+                $"[AnimationFlowGraphView] Target changed to {(_targetGameObject ? _targetGameObject.name : "null")}");
+
+            // Update available animations from the target
+            if (_targetAnimator != null)
+            {
+                // Get animations from the target animator
+                _availableAnimations = _targetAnimator.GetAvailableAnimations();
+
+                if (_availableAnimations != null)
+                {
+                    Debug.Log($"[AnimationFlowGraphView] Got {_availableAnimations.Count} animations from animator");
+                }
+                else
+                {
+                    Debug.LogWarning("[AnimationFlowGraphView] Animator.GetAvailableAnimations() returned null");
+                    _availableAnimations = new List<string>();
+                }
+            }
+            else
+            {
+                // Fall back to default animations
+                _availableAnimations = AnimationNameProvider.GetAnimationNamesFromSelection();
+                Debug.Log($"[AnimationFlowGraphView] Using {_availableAnimations.Count} fallback animations");
+            }
+
+            // Refresh animation dropdowns in existing nodes and validate compatibility
+            RefreshNodeAnimationLists();
+        }
+
+        /// <summary>
+        ///     Refresh animation lists in all existing nodes and validate compatibility
+        /// </summary>
+        private void RefreshNodeAnimationLists()
+        {
+            foreach (Node node in nodes.ToList())
+            {
+                if (node is AnimationStateNode animNode)
+                {
+                    // Check if the animation exists in the current adapter
+                    bool isAnimationValid = _availableAnimations.Contains(animNode.AnimationName);
+
+                    // Update the animation list
+                    animNode.RefreshAnimationList(_availableAnimations);
+
+                    // Mark the node as invalid if its animation doesn't exist
+                    if (!isAnimationValid)
+                    {
+                        animNode.MarkAsInvalid(animNode.AnimationName);
+                    }
+                    else
+                    {
+                        animNode.ClearInvalidState();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Create a new animation state node
+        /// </summary>
+        public AnimationStateNode CreateStateNode(string stateType, string animationName, Rect position,
+            string customId = null, bool isInitialState = false, int frameToHold = 0)
+        {
+            // Create a new animation state node
+            AnimationStateNode node = new(stateType, animationName);
+
+            // Set custom ID if provided
+            if (!string.IsNullOrEmpty(customId))
+            {
+                node.ID = customId;
+            }
+
+            // Set initial state
+            if (isInitialState)
+            {
+                // Clear initial state from other nodes
+                foreach (Node existingNode in nodes.ToList())
+                {
+                    if (existingNode is AnimationStateNode { IsInitialState: true } existingAnimNode)
+                    {
+                        existingAnimNode.IsInitialState = false;
+                        existingAnimNode.RefreshInitialStateToggle();
+                    }
+                }
+
+                // Set this node as initial
+                node.IsInitialState = true;
+                node.RefreshInitialStateToggle();
+            }
+
+
+            // Set position
+            node.SetPosition(position);
+
+            // Create input port - all states can have multiple incoming transitions
+            Port inputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi,
+                typeof(bool));
+
+            inputPort.portName = "In";
+            node.inputContainer.Add(inputPort);
+
+            // Create output port - all states can have multiple outgoing transitions
+            Port outputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi,
+                typeof(bool));
+
+            outputPort.portName = "Out";
+            node.outputContainer.Add(outputPort);
+
+            // Refresh animation list
+            node.RefreshAnimationList(_availableAnimations);
+
+            // Validate animation compatibility
+            if (!_availableAnimations.Contains(animationName))
+            {
+                node.MarkAsInvalid(animationName);
+            }
+
+            // Add node to graph
+            AddElement(node);
+
+            return node;
+        }
+
+        /// <summary>
+        ///     Clear all elements from the graph
+        /// </summary>
+        public void ClearGraph()
+        {
+            // Clear all edges
+            edges.ForEach(edge => RemoveElement(edge));
+
+            // Clear all nodes
+            nodes.ForEach(node => RemoveElement(node));
+
+            // Clear selection
+            ClearSelection();
+        }
+
+        /// <summary>
+        ///     Frame the view to show all content
+        /// </summary>
+        public new void FrameAll()
+        {
+            if (nodes.ToList().Count > 0)
+            {
+                // The base FrameAll method doesn't take parameters, so call it without arguments
+                base.FrameAll();
+            }
         }
 
         private GraphViewChange OnGraphViewChanged(GraphViewChange change)
@@ -291,182 +458,58 @@ namespace Animation.Flow.Editor
             // First pass: create new nodes
             foreach (ISelectable element in _copiedElements)
             {
-                if (element is AnimationStateNode sourceNode)
+                if (element is AnimationStateNode origNode)
                 {
-                    // Get the position of the original node and offset it
-                    Rect sourceRect = sourceNode.GetPosition();
-                    Vector2 newPos = new(
-                        sourceRect.x + offset,
-                        sourceRect.y + offset
-                    );
+                    // Get position with offset
+                    Rect originalPos = origNode.GetPosition();
+                    Rect newPos = new(
+                        originalPos.x + offset,
+                        originalPos.y + offset,
+                        originalPos.width,
+                        originalPos.height);
 
-                    // Create a new node with same properties but a new ID
+                    // Clone the node
                     AnimationStateNode newNode = CreateStateNode(
-                        sourceNode.StateType,
-                        sourceNode.AnimationName + " (Copy)",
-                        new Rect(newPos, sourceRect.size),
-                        null, // Generate a new ID
-                        false, // Not initial state
-                        sourceNode.FrameToHold
-                    );
+                        origNode.StateType,
+                        origNode.AnimationName,
+                        newPos);
 
-                    // Add to selection
+                    // Keep track of the mapping
+                    originalToNew[origNode.ID] = newNode;
+
+                    // Select the new node
                     AddToSelection(newNode);
-
-                    // Track the relationship between original and new
-                    originalToNew[sourceNode.ID] = newNode;
                 }
             }
 
-            // Second pass: recreate connections between copied nodes
+            // Second pass: recreate connections between pasted nodes
             foreach (ISelectable element in _copiedElements)
             {
-                if (element is AnimationStateNode sourceNode)
+                if (element is AnimationStateNode origNode)
                 {
-                    // Find all edges connected to this source node
-                    var connectedEdges = edges.ToList()
-                        .Where(e => e.output.node == sourceNode || e.input.node == sourceNode);
+                    // Skip if not in our map
+                    if (!originalToNew.TryGetValue(origNode.ID, out AnimationStateNode newNode))
+                        continue;
 
-                    foreach (Edge edge in connectedEdges)
+                    // Get the output port of this node
+                    Port outputPort = (Port)newNode.outputContainer[0];
+
+                    // Check all connections from original node's output port
+                    Port origOutputPort = (Port)origNode.outputContainer[0];
+                    foreach (Edge origEdge in origOutputPort.connections)
                     {
-                        // Only create edges between copied nodes
-                        if (edge.output.node is AnimationStateNode outputNode &&
-                            edge.input.node is AnimationStateNode inputNode)
+                        // Only if target is also in our pasted set
+                        if (origEdge.input.node is AnimationStateNode origTargetNode &&
+                            originalToNew.TryGetValue(origTargetNode.ID, out AnimationStateNode newTargetNode))
                         {
-                            if (_copiedElements.Contains(outputNode) &&
-                                _copiedElements.Contains(inputNode))
-                            {
-                                // Get the corresponding new nodes
-                                AnimationStateNode newOutputNode = originalToNew[outputNode.ID];
-                                AnimationStateNode newInputNode = originalToNew[inputNode.ID];
+                            // Get input port of target
+                            Port inputPort = (Port)newTargetNode.inputContainer[0];
 
-                                // Find the correct ports
-                                Port outputPort = newOutputNode.outputContainer.Q<Port>();
-                                Port inputPort = newInputNode.inputContainer.Q<Port>();
-
-                                // Connect them
-                                if (outputPort != null && inputPort != null)
-                                {
-                                    ConnectPorts(outputPort, inputPort);
-                                }
-                            }
+                            // Create new edge
+                            ConnectPorts(outputPort, inputPort);
                         }
                     }
                 }
-            }
-        }
-
-        public AnimationStateNode CreateStateNode(string stateType, string animationName, Rect position,
-            string id = null, bool isInitialState = false, int frameToHold = 0)
-        {
-            AnimationStateNode node = new(stateType, animationName);
-            node.SetPosition(position);
-
-            // Set provided ID if one is passed, otherwise the constructor will create a new GUID
-            if (!string.IsNullOrEmpty(id))
-            {
-                node.ID = id;
-            }
-
-            // Set initial state if specified
-            node.IsInitialState = isInitialState;
-
-            // Set frame to hold if specified
-            node.FrameToHold = frameToHold;
-
-            // Create standard input port using the default Edge type
-            Port inputPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Input,
-                Port.Capacity.Multi, typeof(bool));
-
-            inputPort.portName = "In";
-
-            // Create standard output port using the default Edge type
-            Port outputPort = Port.Create<Edge>(Orientation.Horizontal, Direction.Output,
-                Port.Capacity.Multi, typeof(bool));
-
-            outputPort.portName = "Out";
-
-            // Add ports to node
-            node.inputContainer.Add(inputPort);
-            node.outputContainer.Add(outputPort);
-
-            // Add node to graph
-            AddElement(node);
-
-            // Force immediate layout update to ensure ports are visible
-            node.RefreshAnimationList(_availableAnimations);
-            node.RefreshExpandedState();
-            node.RefreshPorts();
-
-            if (nodes.ToList().Count == 1) // It's 1 because we just added this node
-            {
-                node.IsInitialState = true;
-                node.RefreshInitialStateToggle();
-            }
-
-            return node;
-        }
-
-        /// <summary>
-        ///     Called when the target GameObject changes
-        /// </summary>
-        public void OnTargetGameObjectChanged(GameObject targetGameObject, IAnimator targetAnimator)
-        {
-            _targetGameObject = targetGameObject;
-            _targetAnimator = targetAnimator;
-
-            // Update available animations
-            if (_targetAnimator is not null)
-            {
-                _availableAnimations = AnimationNameProvider.GetAnimationNames(_targetAnimator);
-            }
-            else if (_targetGameObject)
-            {
-                _availableAnimations = AnimationNameProvider.GetAnimationNamesFromGameObject(_targetGameObject);
-            }
-            else
-            {
-                _availableAnimations = AnimationNameProvider.GetAnimationNamesFromSelection();
-            }
-
-            // Refresh animation dropdowns in existing nodes
-            RefreshNodeAnimationLists();
-        }
-
-        /// <summary>
-        ///     Refresh animation lists in all existing nodes
-        /// </summary>
-        private void RefreshNodeAnimationLists()
-        {
-            foreach (Node node in nodes.ToList())
-            {
-                if (node is AnimationStateNode animNode)
-                {
-                    animNode.RefreshAnimationList(_availableAnimations);
-                }
-            }
-        }
-
-        /// <summary>
-        ///     Get the current list of available animations
-        /// </summary>
-        public List<string> GetAvailableAnimations() => new(_availableAnimations);
-
-        /// <summary>
-        ///     Clears all nodes and edges from the graph view
-        /// </summary>
-        public void ClearGraph()
-        {
-            // Remove all edges
-            foreach (Edge edge in edges.ToList())
-            {
-                RemoveElement(edge);
-            }
-
-            // Remove all nodes
-            foreach (Node node in nodes.ToList())
-            {
-                RemoveElement(node);
             }
         }
     }

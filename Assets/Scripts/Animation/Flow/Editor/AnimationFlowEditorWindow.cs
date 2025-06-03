@@ -270,8 +270,7 @@ namespace Animation.Flow.Editor
                         StateType = stateNode.StateType,
                         AnimationName = stateNode.AnimationName,
                         IsInitialState = stateNode.IsInitialState,
-                        Position = stateNode.GetPosition().position,
-                        FrameToHold = stateNode.FrameToHold
+                        Position = stateNode.GetPosition().position
                     };
 
                     flowAsset.states.Add(stateData);
@@ -439,12 +438,6 @@ namespace Animation.Flow.Editor
 
                 graphNodes[stateData.Id] = node;
 
-                // Set frame to hold for HoldFrame state type
-                if (stateData.StateType == "HoldFrame")
-                {
-                    node.FrameToHold = stateData.FrameToHold;
-                    node.RefreshFrameToHoldField();
-                }
 
                 // Set initial state
                 if (stateData.IsInitialState)
