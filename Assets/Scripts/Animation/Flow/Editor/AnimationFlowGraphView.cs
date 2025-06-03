@@ -175,34 +175,53 @@ namespace Animation.Flow.Editor
             // Set position
             node.SetPosition(position);
 
-            // Create input port - all states can have multiple incoming transitions
-            Port inputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Multi,
-                typeof(bool));
+            // Create standard input port using the default Edge type
+            Port inputPort = Port.Create<AnimationFlowEdge>(Orientation.Horizontal, Direction.Input,
+                Port.Capacity.Multi, typeof(bool));
 
             inputPort.portName = "In";
             node.inputContainer.Add(inputPort);
 
-            // Create output port - all states can have multiple outgoing transitions
-            Port outputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Multi,
-                typeof(bool));
+            // Create standard output port using the default Edge type
+            Port outputPort = Port.Create<AnimationFlowEdge>(Orientation.Horizontal, Direction.Output,
+                Port.Capacity.Multi, typeof(bool));
 
             outputPort.portName = "Out";
             node.outputContainer.Add(outputPort);
 
-            // Refresh animation list
-            node.RefreshAnimationList(_availableAnimations);
-
-            // Validate animation compatibility
-            if (!_availableAnimations.Contains(animationName))
-            {
-                node.MarkAsInvalid(animationName);
-            }
-
             // Add node to graph
             AddElement(node);
 
+            // Force port refresh again after adding output port
+            node.RefreshExpandedState();
+            node.RefreshPorts();
+
+
+            // Refresh animation list
+            node.RefreshAnimationList(_availableAnimations);
+
+            // Validate animation compatibility, but only if the animation name doesn't exist 
+            // AND we have animations available (otherwise everything would be marked invalid)
+            if (_availableAnimations.Count > 0 && !_availableAnimations.Contains(animationName))
+            {
+                node.MarkAsInvalid(animationName);
+            }
+            else
+            {
+                // Make sure it starts in a valid state
+                node.ClearInvalidState();
+            }
+
+
             return node;
         }
+        public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter) =>
+            ports.Where(port =>
+                    startPort != port &&
+                    startPort.direction != port.direction &&
+                    startPort.node != port.node)
+                .ToList();
+
 
         /// <summary>
         ///     Clear all elements from the graph
@@ -447,7 +466,7 @@ namespace Animation.Flow.Editor
 
         private void PasteElements(float offset = 0)
         {
-            if (_copiedElements == null || _copiedElements.Count == 0)
+            if (_copiedElements is null || _copiedElements.Count == 0)
                 return;
 
             ClearSelection();

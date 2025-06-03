@@ -13,10 +13,16 @@ MonoBehaviour:
   m_Name: AnimFlow
   m_EditorClassIdentifier: 
   states:
-  - Id: 12fad33d-1bef-4bee-b449-0b0403829952
+  - Id: 77297342-7441-4fe6-83fe-07b8087b0402
+    StateType: Looping
+    AnimationName: Idle_Crouched
+    IsInitialState: 0
+    Position: {x: 758, y: -117}
+    FrameToHold: 0
+  - Id: db6423ad-9799-457e-bec4-2fa51fd69034
     StateType: Looping
     AnimationName: Idle
     IsInitialState: 1
-    Position: {x: 382, y: -131}
+    Position: {x: 354, y: -133}
     FrameToHold: 0
   transitions: []

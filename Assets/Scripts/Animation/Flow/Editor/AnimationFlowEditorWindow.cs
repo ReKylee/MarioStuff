@@ -250,7 +250,7 @@ namespace Animation.Flow.Editor
 
         private void SaveToAsset(AnimationFlowAsset flowAsset)
         {
-            if (flowAsset == null || _graphView == null) return;
+            if (!flowAsset || _graphView is null) return;
 
             // Record the asset for undo operations
             Undo.RecordObject(flowAsset, "Save Animation Flow");
