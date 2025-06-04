@@ -225,7 +225,8 @@ namespace Animation.Flow.Editor.Panels
             {
                 _isResizing = true;
                 _resizeStartPosition = evt.mousePosition;
-                _resizeStartSize = _size;
+                // Get the current actual size from the resolved style
+                _resizeStartSize = new Vector2(resolvedStyle.width, resolvedStyle.height);
                 _resizeStartPanelPosition = _position;
                 evt.StopPropagation();
             }

@@ -78,6 +78,8 @@ namespace Animation.Flow.Editor.Panels.Parameters
             // Create a header container to hold the button
             VisualElement headerContainer = new();
             headerContainer.AddToClassList("parameter-panel-header");
+            headerContainer.style.width = new StyleLength(StyleKeyword.Auto);
+            headerContainer.style.flexGrow = 1;
             headerContainer.Add(addParameterButton);
 
             ContentContainer.Add(headerContainer);

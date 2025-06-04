@@ -16,15 +16,31 @@ namespace Animation.Flow.Editor.Panels.Conditions
 
         private void CreateUI()
         {
+            // Main layout with drag handle and remove button at the ends
+            style.justifyContent = Justify.SpaceBetween;
+
             // Drag handle
             Label dragHandle = new("≡");
             dragHandle.AddToClassList("drag-handle");
             Add(dragHandle);
 
+            // Create a middle container to hold the parameter name, comparison button, and value field
+            VisualElement middleContainer = new();
+            middleContainer.style.flexDirection = FlexDirection.Row;
+            middleContainer.style.flexGrow = 1;
+            middleContainer.style.flexShrink = 1;
+            middleContainer.style.justifyContent = Justify.SpaceBetween;
+            middleContainer.style.alignItems = Align.Center;
+            middleContainer.style.marginLeft = 5;
+            middleContainer.style.marginRight = 5;
+            middleContainer.style.minWidth = 0;
+            middleContainer.style.overflow = Overflow.Hidden;
+            Add(middleContainer);
+
             // Parameter name - show as label instead of editable field
             Label paramLabel = new(_condition.ParameterName);
             paramLabel.AddToClassList("parameter-name-label");
-            Add(paramLabel);
+            middleContainer.Add(paramLabel);
 
             // Comparison type dropdown as a button that opens a menu
             Button comparisonButton = new();
@@ -62,11 +78,11 @@ namespace Animation.Flow.Editor.Panels.Conditions
                 };
             }
 
-            Add(comparisonButton);
+            middleContainer.Add(comparisonButton);
 
             // Value field based on parameter type
             VisualElement valueField = CreateTypeSpecificValueField(_condition);
-            Add(valueField);
+            middleContainer.Add(valueField);
 
             // Remove button
             Button removeButton = new(() => _panel.RemoveCondition(_condition)) { text = "×" };
@@ -164,9 +180,12 @@ namespace Animation.Flow.Editor.Panels.Conditions
             AddToClassList("condition-element");
             style.flexDirection = FlexDirection.Row;
             style.marginLeft = condition.NestingLevel * 20;
-            style.justifyContent = Justify.FlexStart;
+            style.justifyContent = Justify.SpaceBetween;
             style.alignItems = Align.Center;
             style.flexWrap = Wrap.NoWrap;
+            style.width = Length.Percent(100);
+            style.minWidth = 0;
+            style.overflow = Overflow.Hidden;
 
             _comparisonSelector = new ComparisonTypeSelector(condition.DataType);
             CreateUI();

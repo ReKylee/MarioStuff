@@ -81,10 +81,15 @@ namespace Animation.Flow.Editor.Panels.Conditions
             headerSection.AddToClassList("composite-header");
             Add(headerSection);
 
+            // Create a container for header content (excluding the remove button)
+            VisualElement headerContent = new();
+            headerContent.AddToClassList("composite-header-content");
+            headerSection.Add(headerContent);
+
             // Drag handle
             Label dragHandle = new("≡");
             dragHandle.AddToClassList("drag-handle");
-            headerSection.Add(dragHandle);
+            headerContent.Add(dragHandle);
 
             // Create NOT toggle button (before the composite type)
             _notToggleButton = new Button(ToggleNot)
@@ -106,7 +111,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
                 _notToggleButton.AddToClassList("disabled");
             }
 
-            headerSection.Add(_notToggleButton);
+            headerContent.Add(_notToggleButton);
 
             // Composite type button - clicking cycles through available types
             _compositeTypeButton = new Button(CycleCompositeType)
@@ -124,7 +129,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
             _compositeTypeButton.EnableInClassList("and-type", compositeType == CompositeType.And);
             _compositeTypeButton.EnableInClassList("or-type", compositeType == CompositeType.Or);
 
-            headerSection.Add(_compositeTypeButton);
+            headerContent.Add(_compositeTypeButton);
 
             // Remove button
             Button removeButton = new(() => _panel.RemoveCondition(_condition)) { text = "×" };
