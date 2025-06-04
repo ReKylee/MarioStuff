@@ -54,8 +54,6 @@ namespace Animation.Flow.Editor
             if (styleSheet is not null)
                 styleSheets.Add(styleSheet);
 
-            // Set up node creation
-            SetupNodeCreation();
 
             _transitionEditorPanel = new TransitionEditorPanel(this);
 
@@ -275,83 +273,75 @@ namespace Animation.Flow.Editor
 
             return change;
         }
-
-        private void SetupNodeCreation()
+        public override void BuildContextualMenu(ContextualMenuPopulateEvent menuEvent)
         {
+            // Convert screen position to graph position
+            Vector2 localMousePosition = contentViewContainer.WorldToLocal(menuEvent.mousePosition);
 
-
-            // Add right-click context menu for node creation
-            this.AddManipulator(new ContextualMenuManipulator(menuEvent =>
+            // Add "Create Animation State" as a submenu with all node types
+            foreach (AnimationStateType nodeType in StateTypeRegistry.GetRegisteredStateTypes())
             {
-                // Convert screen position to graph position
-                Vector2 localMousePosition = contentViewContainer.WorldToLocal(menuEvent.mousePosition);
+                menuEvent.menu.AppendAction($"✨ Create Animation State/{nodeType.ToString()}",
+                    _ => CreateStateNode(nodeType, "NewAnimation",
+                        new Rect(localMousePosition, new Vector2(150, 200))));
+            }
 
-                // Add "Create Animation State" as a submenu with all node types
-                foreach (AnimationStateType nodeType in StateTypeRegistry.GetRegisteredStateTypes())
+            // Add separator between create and edit actions
+            menuEvent.menu.AppendSeparator();
+
+            // EDIT SECTION
+            // Add edit options in the requested order
+            menuEvent.menu.AppendAction("✂️ Cut", _ =>
+            {
+                // Store selected nodes for cutting
+                _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
+                DeleteElements(selection.OfType<GraphElement>().ToList());
+            }, selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            menuEvent.menu.AppendAction("📝 Copy",
+                _ => { _copiedElements = selection.Where(e => e is AnimationStateNode).ToList(); },
+                selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            menuEvent.menu.AppendAction("📋 Paste", _ => PasteElements(),
+                _copiedElements.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            menuEvent.menu.AppendAction("🗑️ Delete",
+                _ => { DeleteElements(selection.OfType<GraphElement>().ToList()); },
+                selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            // Add separator before duplicate
+            menuEvent.menu.AppendSeparator();
+
+            // Duplicate option
+            menuEvent.menu.AppendAction("⿻ Duplicate", _ =>
+            {
+                _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
+                PasteElements(20);
+            }, selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            // Add separator before view options
+            menuEvent.menu.AppendSeparator();
+
+            // VIEW SECTION
+            // Add selection and navigation options
+            menuEvent.menu.AppendAction("🔍 Frame Selection", _ => FrameSelection(),
+                selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+            menuEvent.menu.AppendAction("🔍 Frame All", _ => FrameAll());
+
+            // Add separator before select all
+            menuEvent.menu.AppendSeparator();
+
+            // SELECT SECTION
+            menuEvent.menu.AppendAction("📌 Select All Nodes", _ =>
+            {
+                foreach (Node node in nodes)
                 {
-                    menuEvent.menu.AppendAction($"✨ Create Animation State/{nodeType.ToString()}",
-                        _ => CreateStateNode(nodeType, "NewAnimation",
-                            new Rect(localMousePosition, new Vector2(150, 200))));
+                    AddToSelection(node);
                 }
-
-                // Add separator between create and edit actions
-                menuEvent.menu.AppendSeparator();
-
-                // EDIT SECTION
-                // Add edit options in the requested order
-                menuEvent.menu.AppendAction("✂️ Cut", _ =>
-                {
-                    // Store selected nodes for cutting
-                    _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
-                    DeleteElements(selection.OfType<GraphElement>().ToList());
-                }, selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
-
-                menuEvent.menu.AppendAction("📝 Copy",
-                    _ => { _copiedElements = selection.Where(e => e is AnimationStateNode).ToList(); },
-                    selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
-
-                menuEvent.menu.AppendAction("📋 Paste", _ => PasteElements(),
-                    _copiedElements.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
-
-                menuEvent.menu.AppendAction("🗑️ Delete",
-                    _ => { DeleteElements(selection.OfType<GraphElement>().ToList()); },
-                    selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
-
-                // Add separator before duplicate
-                menuEvent.menu.AppendSeparator();
-
-                // Duplicate option
-                menuEvent.menu.AppendAction("🔄 Duplicate", _ =>
-                {
-                    _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
-                    PasteElements(20);
-                }, selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
-
-                // Add separator before view options
-                menuEvent.menu.AppendSeparator();
-
-                // VIEW SECTION
-                // Add selection and navigation options
-                menuEvent.menu.AppendAction("🔍 Frame Selection", _ => FrameSelection(),
-                    selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
-
-                menuEvent.menu.AppendAction("🔍 Frame All", _ => FrameAll());
-
-                // Add separator before select all
-                menuEvent.menu.AppendSeparator();
-
-                // SELECT SECTION
-                menuEvent.menu.AppendAction("📌 Select All Nodes", _ =>
-                {
-                    foreach (Node node in nodes)
-                    {
-                        AddToSelection(node);
-                    }
-                });
-            }));
-
-
+            });
         }
+
 
         private void RegisterKeyboardShortcuts()
         {
