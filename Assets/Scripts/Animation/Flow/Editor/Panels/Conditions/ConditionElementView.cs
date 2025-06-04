@@ -82,9 +82,21 @@ namespace Animation.Flow.Editor.Panels.Conditions
             switch (condition.DataType)
             {
                 case ConditionDataType.Boolean:
+                    // Set up container box style for the toggle
+                    field.style.minWidth = 30;
+                    field.style.maxWidth = 30;
+                    field.style.minHeight = 20;
+                    field.style.maxHeight = 20;
+                    field.style.justifyContent = Justify.Center;
+                    field.style.alignItems = Align.Center;
+
                     Toggle toggle = new();
                     toggle.value = condition.BoolValue;
-                    // Style is now handled in the CSS
+                    toggle.style.marginLeft = 0;
+                    toggle.style.marginRight = 0;
+                    toggle.style.marginTop = 0;
+                    toggle.style.marginBottom = 0;
+
                     toggle.RegisterValueChangedCallback(evt =>
                     {
                         condition.BoolValue = evt.newValue;
@@ -154,6 +166,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
             style.marginLeft = condition.NestingLevel * 20;
             style.justifyContent = Justify.FlexStart;
             style.alignItems = Align.Center;
+            style.flexWrap = Wrap.NoWrap;
 
             _comparisonSelector = new ComparisonTypeSelector(condition.DataType);
             CreateUI();
