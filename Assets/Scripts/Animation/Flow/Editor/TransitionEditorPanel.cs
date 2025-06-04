@@ -167,7 +167,12 @@ namespace Animation.Flow.Editor
                 // Update the clone position to follow the mouse cursor
                 if (_draggedElementClone != null)
                 {
-                    _draggedElementClone.style.display = DisplayStyle.Flex;
+                    // Ensure clone is in parent container
+                    if (_draggedElementClone.parent != _parentContainer)
+                    {
+                        _parentContainer.Add(_draggedElementClone);
+                    }
+
                     _draggedElementClone.style.left =
                         evt.mousePosition.x - _draggedElementClone.resolvedStyle.width / 2;
 
@@ -426,10 +431,14 @@ namespace Animation.Flow.Editor
                     _draggedCondition = null;
                 }
 
-                // Clean up visual elements
+                // Clean up visual elements - ensure clone is properly removed
                 if (_draggedElementClone != null)
                 {
-                    _parentContainer.Remove(_draggedElementClone);
+                    if (_draggedElementClone.parent != null)
+                    {
+                        _draggedElementClone.parent.Remove(_draggedElementClone);
+                    }
+
                     _draggedElementClone = null;
                 }
 
@@ -1835,6 +1844,9 @@ namespace Animation.Flow.Editor
             _draggedElementClone = new VisualElement();
             _draggedElementClone.AddToClassList("dragging-clone");
 
+            // Force higher priority by setting style directly as well
+            // _draggedElementClone.style.zIndex = 9999;
+
             // Match source size with a bit extra padding for better visibility
             _draggedElementClone.style.width = sourceElement.resolvedStyle.width;
             _draggedElementClone.style.height = sourceElement.resolvedStyle.height;
@@ -1845,7 +1857,7 @@ namespace Animation.Flow.Editor
             _draggedElementClone.style.top = mousePosition.y - 15; // Offset to position slightly above cursor
 
             // Set z-index to appear above other elements
-            _draggedElementClone.style.zIndex = 999;
+            // _draggedElementClone.style.zIndex = 999;
 
             // Add visual styling
             _draggedElementClone.style.backgroundColor = new Color(0.3f, 0.4f, 0.5f, 0.9f);
@@ -1855,8 +1867,7 @@ namespace Animation.Flow.Editor
             _draggedElementClone.style.paddingBottom = 4;
 
             // Copy some visual properties from source
-            ConditionData condition = sourceElement.userData as ConditionData;
-            if (condition != null)
+            if (sourceElement.userData is ConditionData condition)
             {
                 Label cloneLabel = new(condition.DataType == ConditionDataType.Composite
                     ? $"{condition.StringValue} Group"
@@ -1868,10 +1879,8 @@ namespace Animation.Flow.Editor
                 _draggedElementClone.Add(cloneLabel);
             }
 
-            // Initially hidden
-            _draggedElementClone.style.display = DisplayStyle.None;
-
             // Add to parent container which contains the entire graph
+            // The clone is immediately visible - no need to hide it initially
             _parentContainer.Add(_draggedElementClone);
         }
 
