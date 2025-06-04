@@ -234,6 +234,30 @@ Port {
     margin-top: 4px;
 }
 
+.section-label {
+    font-size: 14px;
+    -unity-font-style: bold;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.conditions-list-container {
+    min-height: 100px;
+}
+
+.remove-button {
+    width: 20px;
+    height: 20px;
+    background-color: rgba(128, 26, 26, 153);
+    color: white;
+    border-bottom-left-radius: 3px;
+}
+
+.parameter-field {
+    flex-grow: 1;
+    margin-right: 5px;
+}
+
 .condition-actions {
     flex-direction: row;
     justify-content: flex-end;

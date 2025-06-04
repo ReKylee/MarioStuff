@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Animation.Flow.Conditions;
 using UnityEditor;
 using UnityEngine;
@@ -11,34 +13,45 @@ namespace Animation.Flow.Editor
     /// </summary>
     public class TransitionEditorPanel
     {
+
+        // Condition editor support
+        private readonly Dictionary<string, VisualElement> _conditionElements = new();
         private readonly Vector2 _minSize = new(250, 300);
         private readonly VisualElement _parentContainer;
 
         // Container for the panel
         private readonly VisualElement _root;
-        private bool _boolValue = true;
-        private Toggle _boolValueToggle;
-        private string _compareType = "Equals";
-        private EnumField _compareTypeField;
         private List<ConditionData> _conditions;
+        private VisualElement _conditionsContainer;
 
         // UI Elements
         private ScrollView _conditionsScrollView;
+        private VisualElement _contentContainer;
         private AnimationFlowEdge _currentEdge;
+        private ConditionData _draggedCondition;
+
+        // Drag and drop support
+        private VisualElement _draggedElement;
+        private int _draggedStartIndex;
 
         // For dragging
         private Vector2 _dragStartPosition;
+        private VisualElement _dropIndicator;
         private string _edgeId;
         private float _floatValue;
         private FloatField _floatValueField;
         private Toggle _isBoolean;
         private bool _isDragging;
+        private bool _isDraggingCondition;
 
         // Track whether the panel is being interacted with
         private bool _isInteracting;
 
         // For resizing
         private bool _isResizing;
+        private string _newCompositeType = "And";
+        private ConditionDataType _newConditionType = ConditionDataType.Boolean;
+        private EnumField _newConditionTypeField;
 
         // Data for new condition
         private string _parameterName = "";
@@ -58,7 +71,6 @@ namespace Animation.Flow.Editor
             _parentContainer = container;
 
             // Position in top right corner with padding, accounting for toolbar height
-            // Estimate toolbar height (standard Unity editor toolbar is typically around 20-24px)
             const float toolbarHeight = 24;
             _position = new Vector2(container.worldBound.width - _size.x - 20, 20 + toolbarHeight);
 
@@ -71,105 +83,46 @@ namespace Animation.Flow.Editor
                     width = _size.x,
                     height = _size.y,
                     left = _position.x,
-                    top = _position.y,
-                    backgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.95f),
-                    borderBottomWidth = 1,
-                    borderTopWidth = 1,
-                    borderLeftWidth = 1,
-                    borderRightWidth = 1,
-                    borderBottomColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                    borderTopColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                    borderLeftColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                    borderRightColor = new Color(0.5f, 0.5f, 0.5f, 1f),
-                    borderBottomRightRadius = 3,
-                    borderBottomLeftRadius = 3,
-                    borderTopRightRadius = 3,
-                    borderTopLeftRadius = 3
+                    top = _position.y
                 }
             };
 
+            _root.AddToClassList("transition-editor-panel");
+
             // Add a title bar at the top
-            VisualElement titleBar = new()
-            {
-                style =
-                {
-                    height = 24,
-                    backgroundColor = new Color(0.3f, 0.3f, 0.3f, 1f),
-                    flexDirection = FlexDirection.Row,
-                    justifyContent = Justify.SpaceBetween,
-                    alignItems = Align.Center,
-                    paddingLeft = 8,
-                    paddingRight = 4,
-                    borderTopRightRadius = 3,
-                    borderTopLeftRadius = 3
-                }
-            };
+            VisualElement titleBar = new();
+            titleBar.AddToClassList("panel-title-bar");
 
             // Make title bar draggable
             titleBar.RegisterCallback<MouseDownEvent>(OnTitlebarMouseDown);
 
             // Add title text
-            Label titleText = new("Transition Editor")
-            {
-                style =
-                {
-                    unityFontStyleAndWeight = FontStyle.Bold,
-                    color = Color.white
-                }
-            };
-
+            Label titleText = new("Transition Editor");
+            titleText.AddToClassList("panel-title-text");
             titleBar.Add(titleText);
 
             // Add close button
             Button closeButton = new(() => Hide())
             {
-                text = "×",
-                style =
-                {
-                    width = 20,
-                    height = 20,
-                    fontSize = 16,
-                    backgroundColor = new Color(0, 0, 0, 0),
-                    color = Color.white,
-                    borderBottomWidth = 0,
-                    borderTopWidth = 0,
-                    borderLeftWidth = 0,
-                    borderRightWidth = 0
-                }
+                text = "×"
             };
+
+            closeButton.AddToClassList("panel-close-button");
 
             titleBar.Add(closeButton);
 
             _root.Add(titleBar);
 
-            // Add content container with padding
-            VisualElement content = new()
-            {
-                style =
-                {
-                    paddingBottom = 10,
-                    paddingTop = 10,
-                    paddingLeft = 10,
-                    paddingRight = 10
-                }
-            };
-
+            // Add content container
+            VisualElement content = new();
+            content.AddToClassList("panel-content");
             _root.Add(content);
 
             // Add resize handle in bottom left corner 
-            VisualElement resizeHandle = new()
-            {
-                style =
-                {
-                    position = Position.Absolute,
-                    left = 0,
-                    bottom = 0,
-                    width = 16,
-                    height = 16,
-                    cursor = new StyleCursor(StyleKeyword.Auto),
-                    backgroundImage = EditorGUIUtility.IconContent("d_WindowBottomResize").image as Texture2D
-                }
-            };
+            VisualElement resizeHandle = new();
+            resizeHandle.AddToClassList("panel-resize-handle");
+            resizeHandle.style.backgroundImage =
+                EditorGUIUtility.IconContent("d_WindowBottomResize").image as Texture2D;
 
             resizeHandle.RegisterCallback<MouseDownEvent>(OnResizeHandleMouseDown);
 
@@ -197,10 +150,89 @@ namespace Animation.Flow.Editor
         public bool IsVisible { get; private set; }
         private void OnMouseMove(MouseMoveEvent evt)
         {
+            // Handle drag-and-drop of conditions
+            if (_isDraggingCondition && _draggedElement != null)
+            {
+                UpdateDropTarget(evt.mousePosition);
+                evt.StopPropagation();
+                return;
+            }
+
+            // Handle panel dragging and resizing
             OnDrag(evt);
             OnResize(evt);
             evt.StopPropagation();
         }
+
+        private void UpdateDropTarget(Vector2 mousePosition)
+        {
+            // Find what element is under the mouse
+            bool foundTarget = false;
+
+            foreach (VisualElement element in _conditionElements.Values)
+            {
+                if (element == _draggedElement) continue;
+
+                if (element.worldBound.Contains(mousePosition))
+                {
+                    foundTarget = true;
+                    ConditionData targetCondition = element.userData as ConditionData;
+
+                    // Show drop indicator
+                    _dropIndicator.style.display = DisplayStyle.Flex;
+
+                    // Determine drop position relative to the target element
+                    float relativeY = mousePosition.y - element.worldBound.y;
+                    float elementHeight = element.worldBound.height;
+
+                    if (targetCondition.DataType == ConditionDataType.Composite &&
+                        relativeY > elementHeight * 0.3f && relativeY < elementHeight * 0.7f)
+                    {
+                        // Dropping inside composite - highlight the entire composite
+                        element.style.backgroundColor = new Color(0.3f, 0.5f, 0.7f, 0.3f);
+                    }
+                    else
+                    {
+                        // Position indicator for dropping above or below
+                        _conditionsContainer.Remove(_dropIndicator);
+
+                        if (relativeY <= elementHeight * 0.5f)
+                        {
+                            // Position above element
+                            int index = _conditionsContainer.IndexOf(element);
+                            _conditionsContainer.Insert(index, _dropIndicator);
+                        }
+                        else
+                        {
+                            // Position below element
+                            int index = _conditionsContainer.IndexOf(element) + 1;
+                            if (index < _conditionsContainer.childCount)
+                                _conditionsContainer.Insert(index, _dropIndicator);
+                            else
+                                _conditionsContainer.Add(_dropIndicator);
+                        }
+                    }
+
+                    break;
+                }
+            }
+
+            if (!foundTarget)
+            {
+                _dropIndicator.style.display = DisplayStyle.None;
+
+                // Reset any highlighted elements
+                foreach (VisualElement element in _conditionElements.Values)
+                {
+                    if (element.userData is ConditionData condition &&
+                        condition.DataType == ConditionDataType.Composite)
+                    {
+                        element.style.backgroundColor = new Color(0.2f, 0.3f, 0.4f, 0.4f);
+                    }
+                }
+            }
+        }
+
         private void OnResize(MouseMoveEvent evt)
         {
             if (!_isResizing)
@@ -247,6 +279,14 @@ namespace Animation.Flow.Editor
             _size = new Vector2(newWidth, newHeight);
             _root.style.width = _size.x;
             _root.style.height = _size.y;
+
+            // Adjust scroll view height to accommodate the conditions list
+            if (_conditionsScrollView != null)
+            {
+                // Calculate available height for scroll view by subtracting other elements' heights
+                float availableHeight = _size.y - 200; // Rough estimate for other UI elements
+                _conditionsScrollView.style.height = Mathf.Max(100, availableHeight);
+            }
         }
 
         private void OnDrag(MouseMoveEvent evt)
@@ -400,187 +440,701 @@ namespace Animation.Flow.Editor
                 }
             }
 
+            // Initialize condition positions if needed
+            InitializeConditionPositions();
+
+            // Clear cached condition elements before refreshing
+            _conditionElements.Clear();
+
             // Refresh the conditions list
             RefreshConditionsList();
         }
 
+        private void InitializeConditionPositions()
+        {
+            if (_conditions == null || _conditions.Count == 0) return;
+
+            // For any conditions without group indices set, assign sequential indices based on list order
+            int rootIndex = 0;
+            var compositeIndices = new Dictionary<string, int>();
+
+            foreach (ConditionData condition in _conditions)
+            {
+                // Ensure UniqueId is set
+                if (string.IsNullOrEmpty(condition.UniqueId))
+                {
+                    condition.UniqueId = Guid.NewGuid().ToString();
+                }
+
+                // If no parent group (root level condition)
+                if (string.IsNullOrEmpty(condition.ParentGroupId))
+                {
+                    condition.GroupIndex = rootIndex++;
+                    condition.NestingLevel = 0;
+                }
+                else
+                {
+                    // Child of a composite
+                    if (!compositeIndices.ContainsKey(condition.ParentGroupId))
+                    {
+                        compositeIndices[condition.ParentGroupId] = 0;
+                    }
+
+                    condition.GroupIndex = compositeIndices[condition.ParentGroupId]++;
+
+                    // Find parent's nesting level
+                    ConditionData parent = _conditions.FirstOrDefault(c => c.UniqueId == condition.ParentGroupId);
+                    if (parent != null)
+                    {
+                        condition.NestingLevel = parent.NestingLevel + 1;
+                    }
+                }
+            }
+        }
+
         private void CreateUI(VisualElement content)
         {
-            // Existing conditions section
+            // Store content container for later use with auto-sizing
+            _contentContainer = content;
+
+            // Conditions Section
             Label conditionsLabel = new("Conditions");
-            conditionsLabel.style.fontSize = 14;
-            conditionsLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            conditionsLabel.style.marginTop = 5;
+            conditionsLabel.AddToClassList("transition-editor-panel-header");
             content.Add(conditionsLabel);
+
+            // Create a container for the conditions list
+            VisualElement conditionsListContainer = new();
+            conditionsListContainer.AddToClassList("droppable-area");
+            conditionsListContainer.style.minHeight = 100; // Minimum height
+            content.Add(conditionsListContainer);
 
             // Scroll view for conditions
             _conditionsScrollView = new ScrollView();
-            _conditionsScrollView.style.height = 120;
-            _conditionsScrollView.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.5f);
-            _conditionsScrollView.style.borderBottomWidth = 1;
-            _conditionsScrollView.style.borderTopWidth = 1;
-            _conditionsScrollView.style.borderLeftWidth = 1;
-            _conditionsScrollView.style.borderRightWidth = 1;
-            _conditionsScrollView.style.borderBottomColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            _conditionsScrollView.style.borderTopColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            _conditionsScrollView.style.borderLeftColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            _conditionsScrollView.style.borderRightColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-            content.Add(_conditionsScrollView);
+            _conditionsScrollView.AddToClassList("flex-container");
+            conditionsListContainer.Add(_conditionsScrollView);
 
-            // Add new condition section
-            Label newConditionLabel = new("Add Condition");
+            // Create container for draggable conditions
+            _conditionsContainer = new VisualElement();
+            _conditionsContainer.AddToClassList("flex-container");
+            _conditionsScrollView.Add(_conditionsContainer);
+
+            // Create drop indicator element (hidden by default)
+            _dropIndicator = new VisualElement();
+            _dropIndicator.AddToClassList("drop-indicator");
+            _dropIndicator.style.display = DisplayStyle.None;
+            _conditionsContainer.Add(_dropIndicator);
+
+            // Add New Condition Section
+            VisualElement addConditionSection = new(); // Create the missing container
+            addConditionSection.AddToClassList("add-condition-section");
+            content.Add(addConditionSection);
+
+            // Add New Condition Section
+            Label newConditionLabel = new("Add New Condition");
             newConditionLabel.style.fontSize = 14;
             newConditionLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            newConditionLabel.style.marginTop = 10;
+            newConditionLabel.style.marginTop = 15;
             newConditionLabel.style.marginBottom = 5;
             content.Add(newConditionLabel);
 
-            // Parameter name field
-            _parameterNameField = new TextField("Parameter Name");
-            _parameterNameField.RegisterValueChangedCallback(evt => _parameterName = evt.newValue);
-            content.Add(_parameterNameField);
-
-            // Is Boolean toggle
-            _isBoolean = new Toggle("Is Boolean");
-            _isBoolean.value = true;
-            _isBoolean.RegisterValueChangedCallback(evt =>
+            // Condition Type Selector
+            _newConditionTypeField = new EnumField("Type", ConditionDataType.Boolean);
+            _newConditionTypeField.RegisterValueChangedCallback(evt =>
             {
-                _boolValueToggle.style.display = evt.newValue ? DisplayStyle.Flex : DisplayStyle.None;
-                _compareTypeField.style.display = evt.newValue ? DisplayStyle.None : DisplayStyle.Flex;
-                _floatValueField.style.display = evt.newValue ? DisplayStyle.None : DisplayStyle.Flex;
+                _newConditionType = (ConditionDataType)evt.newValue;
+                RefreshNewConditionFields();
             });
 
-            content.Add(_isBoolean);
+            content.Add(_newConditionTypeField);
 
-            // Boolean value toggle (only shown when Is Boolean is true)
-            _boolValueToggle = new Toggle("Value");
-            _boolValueToggle.RegisterValueChangedCallback(evt => _boolValue = evt.newValue);
-            content.Add(_boolValueToggle);
+            // Container for type-specific fields that will change based on selection
+            VisualElement typeSpecificContainer = new();
+            typeSpecificContainer.name = "typeSpecificContainer";
+            typeSpecificContainer.AddToClassList("condition-content");
+            addConditionSection.Add(typeSpecificContainer);
 
-            // Compare type dropdown (only shown when Is Boolean is false)
-            _compareTypeField = new EnumField("Comparison", ComparisonType.Equals);
-            _compareTypeField.RegisterValueChangedCallback(evt =>
-            {
-                ComparisonType value = (ComparisonType)evt.newValue;
-                switch (value)
-                {
-                    case ComparisonType.Equals:
-                        _compareType = "Equals";
-                        break;
-                    case ComparisonType.LessThan:
-                        _compareType = "Less Than";
-                        break;
-                    case ComparisonType.GreaterThan:
-                        _compareType = "Greater Than";
-                        break;
-                }
-            });
+            // Create Add Condition Button
+            Button addButton = new(AddNewCondition) { text = "Add Condition" };
+            addButton.AddToClassList("top-margin");
+            addConditionSection.Add(addButton);
 
-            _compareTypeField.style.display = DisplayStyle.None;
-            content.Add(_compareTypeField);
+            // Add Composite Condition Section
+            VisualElement compositeSection = new();
+            compositeSection.AddToClassList("add-condition-section");
+            content.Add(compositeSection);
 
-            // Float value field (only shown when Is Boolean is false)
-            _floatValueField = new FloatField("Value");
-            _floatValueField.RegisterValueChangedCallback(evt => _floatValue = evt.newValue);
-            _floatValueField.style.display = DisplayStyle.None;
-            content.Add(_floatValueField);
+            Label compositeLabel = new("Add Composite Condition");
+            compositeLabel.AddToClassList("transition-editor-panel-header");
+            compositeSection.Add(compositeLabel);
 
-            // Add Condition button
-            Button addButton = new(AddCondition) { text = "Add Condition" };
-            addButton.style.marginTop = 8;
-            content.Add(addButton);
+            // Composite Type Selection
+            VisualElement compositeTypeContainer = new();
+            compositeTypeContainer.AddToClassList("quick-add-container");
 
-            // Special conditions section
+            // AND Button
+            Button andButton = new(() => AddCompositeCondition("And")) { text = "AND Group" };
+            andButton.AddToClassList("quick-add-button");
+            andButton.AddToClassList("group-button");
+            compositeTypeContainer.Add(andButton);
+
+            // OR Button
+            Button orButton = new(() => AddCompositeCondition("Or")) { text = "OR Group" };
+            orButton.AddToClassList("quick-add-button");
+            orButton.AddToClassList("group-button");
+            compositeTypeContainer.Add(orButton);
+
+            compositeSection.Add(compositeTypeContainer);
+
+            // Special Conditions Section
+            VisualElement specialSection = new();
+            specialSection.AddToClassList("add-condition-section");
+            content.Add(specialSection);
+
             Label specialConditionsLabel = new("Special Conditions");
-            specialConditionsLabel.style.fontSize = 14;
-            specialConditionsLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            specialConditionsLabel.style.marginTop = 12;
-            specialConditionsLabel.style.marginBottom = 5;
-            content.Add(specialConditionsLabel);
+            specialConditionsLabel.AddToClassList("transition-editor-panel-header");
+            specialSection.Add(specialConditionsLabel);
 
-            // Add Animation Complete button
-            Button animCompleteButton = new(AddAnimationCompleteCondition)
-                { text = "Add Animation Complete" };
+            // Special Conditions Container
+            VisualElement specialButtonsContainer = new();
+            specialButtonsContainer.AddToClassList("quick-add-container");
 
-            content.Add(animCompleteButton);
+            // Add Animation Complete Button
+            Button animCompleteButton = new(AddAnimationCompleteCondition) { text = "Animation Complete" };
+            animCompleteButton.AddToClassList("quick-add-button");
+            specialButtonsContainer.Add(animCompleteButton);
 
-            // Add Time Elapsed button
-            Button timeElapsedButton = new(AddTimeElapsedCondition) { text = "Add Time Elapsed (0.5s)" };
-            content.Add(timeElapsedButton);
+            // Add Time Elapsed Button
+            Button timeElapsedButton = new(AddTimeElapsedCondition) { text = "Time Elapsed (0.5s)" };
+            timeElapsedButton.AddToClassList("quick-add-button");
+            specialButtonsContainer.Add(timeElapsedButton);
+
+            specialSection.Add(specialButtonsContainer);
+
+            // Initialize the new condition fields
+            RefreshNewConditionFields();
         }
 
         private void RefreshConditionsList()
         {
-            if (_conditionsScrollView == null) return;
+            if (_conditionsContainer == null) return;
 
-            _conditionsScrollView.Clear();
+            // Clear the conditions dictionary and container
+            _conditionElements.Clear();
+            _conditionsContainer.Clear();
+            _conditionsContainer.Add(_dropIndicator); // Re-add the drop indicator (still hidden)
+
+            // Adjust panel height based on number of conditions (with min and max limits)
+            int conditionsCount = _conditions?.Count ?? 0;
+            float calculatedHeight = Math.Max(_minSize.y, 300 + conditionsCount * 40);
+            _size.y = Math.Min(calculatedHeight, _parentContainer.worldBound.height * 0.8f);
+            _root.style.height = _size.y;
 
             if (_conditions == null || _conditions.Count == 0)
             {
                 Label noConditionsLabel = new("No conditions. This transition will always occur.");
-                noConditionsLabel.style.paddingBottom = 8;
-                noConditionsLabel.style.paddingTop = 8;
-                noConditionsLabel.style.paddingLeft = 8;
-                noConditionsLabel.style.paddingRight = 8;
-                noConditionsLabel.style.color = new Color(0.7f, 0.7f, 0.7f);
-                _conditionsScrollView.Add(noConditionsLabel);
+                noConditionsLabel.AddToClassList("empty-state-label");
+                _conditionsContainer.Add(noConditionsLabel);
                 return;
             }
 
-            for (int i = 0; i < _conditions.Count; i++)
+            // Sort conditions by nesting level and group index
+            var sortedConditions = _conditions
+                .OrderBy(c => c.NestingLevel)
+                .ThenBy(c => c.GroupIndex)
+                .ToList();
+
+            // Create UI for each condition
+            for (int i = 0; i < sortedConditions.Count; i++)
             {
-                int index = i; // Capture index for lambda
-                ConditionData condition = _conditions[i];
-
-                VisualElement conditionContainer = new();
-                conditionContainer.style.flexDirection = FlexDirection.Row;
-                conditionContainer.style.justifyContent = Justify.SpaceBetween;
-                conditionContainer.style.paddingLeft = 5;
-                conditionContainer.style.paddingRight = 5;
-                conditionContainer.style.paddingTop = 3;
-                conditionContainer.style.paddingBottom = 3;
-
-                // Alternating row colors
-                if (i % 2 == 0)
-                    conditionContainer.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f, 0.3f);
-
-
-                // Remove button
-                Button removeButton = new(() => RemoveCondition(index)) { text = "×" };
-                removeButton.style.width = 20;
-                removeButton.style.height = 20;
-                removeButton.style.backgroundColor = new Color(0.5f, 0.1f, 0.1f, 0.6f);
-                removeButton.style.color = Color.white;
-                removeButton.style.borderBottomRightRadius = 3;
-                removeButton.style.borderBottomLeftRadius = 3;
-                removeButton.style.borderTopRightRadius = 3;
-                removeButton.style.borderTopLeftRadius = 3;
-                conditionContainer.Add(removeButton);
-
-                _conditionsScrollView.Add(conditionContainer);
+                ConditionData condition = sortedConditions[i];
+                CreateConditionElement(condition, i);
             }
         }
 
-        private void AddCondition()
+        private VisualElement CreateConditionElement(ConditionData condition, int index)
         {
-            if (string.IsNullOrEmpty(_parameterName))
+            // Create the condition container
+            VisualElement conditionElement = new();
+            string conditionId = condition.UniqueId;
+            conditionElement.userData = condition; // Store the condition data in the element
+
+            // Set styles based on condition type and nesting
+            SetupConditionStyles(conditionElement, condition, index);
+
+            // Make element draggable
+            MakeElementDraggable(conditionElement);
+
+            // Add to dictionary for easy reference
+            _conditionElements[conditionId] = conditionElement;
+
+            // Add to container
+            _conditionsContainer.Add(conditionElement);
+
+            // Create the content based on condition type
+            if (condition.DataType == ConditionDataType.Composite)
             {
-                EditorUtility.DisplayDialog("Invalid Condition", "Parameter name cannot be empty.", "OK");
-                return;
+                CreateCompositeConditionContent(conditionElement, condition);
+            }
+            else
+            {
+                CreateStandardConditionContent(conditionElement, condition);
             }
 
+            return conditionElement;
+        }
+
+        private void SetupConditionStyles(VisualElement element, ConditionData condition, int index)
+        {
+            // Basic styles for all condition elements
+            element.style.flexDirection = FlexDirection.Row;
+            element.style.paddingLeft = 5 + condition.NestingLevel * 15; // Indent based on nesting level
+            element.style.paddingRight = 5;
+            element.style.paddingTop = 3;
+            element.style.paddingBottom = 3;
+            element.style.marginTop = 2;
+            element.style.marginBottom = 2;
+
+            // Visual indicator for drop target
+            element.style.borderLeftWidth = 2;
+            element.style.borderLeftColor = condition.DataType == ConditionDataType.Composite
+                ? new Color(0.4f, 0.7f, 0.9f, 0.8f)
+                : new Color(0.4f, 0.4f, 0.4f, 0.4f);
+
+            // Alternating row colors
+            if (index % 2 == 0)
+                element.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f, 0.3f);
+
+            // Special style for composite conditions
+            if (condition.DataType == ConditionDataType.Composite)
+            {
+                element.style.backgroundColor = new Color(0.2f, 0.3f, 0.4f, 0.4f);
+            }
+        }
+
+        private void CreateStandardConditionContent(VisualElement container, ConditionData condition)
+        {
+            // Drag handle
+            VisualElement dragHandle = CreateDragHandle();
+            container.Add(dragHandle);
+
+            // Parameter name field (editable)
+            TextField paramNameField = new();
+            paramNameField.AddToClassList("parameter-field");
+            paramNameField.value = condition.ParameterName;
+            paramNameField.RegisterValueChangedCallback(evt =>
+            {
+                condition.ParameterName = evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(paramNameField);
+
+            // Value and comparison type - type-specific UI
+            VisualElement valueContainer = CreateValueEditor(condition);
+            container.Add(valueContainer);
+
+            // Remove button
+            Button removeButton = new(() => RemoveCondition(condition)) { text = "×" };
+            removeButton.AddToClassList("remove-button");
+            container.Add(removeButton);
+        }
+
+        private void CreateCompositeConditionContent(VisualElement container, ConditionData condition)
+        {
+            // Drag handle
+            VisualElement dragHandle = CreateDragHandle();
+            container.Add(dragHandle);
+
+            // Composite type indicator
+            string compositeType = condition.StringValue;
+            string typeName = string.IsNullOrEmpty(compositeType) ? "AND" : compositeType.ToUpper();
+            Label compositeLabel = new(typeName);
+            compositeLabel.AddToClassList("condition-type-tag");
+            compositeLabel.AddToClassList(typeName.ToLower());
+            container.Add(compositeLabel);
+
+            // Toggle between AND/OR
+            Button toggleTypeButton = new(() => ToggleCompositeType(condition)) { text = "Toggle" };
+            toggleTypeButton.AddToClassList("quick-add-button");
+            toggleTypeButton.style.minWidth = 60;
+            container.Add(toggleTypeButton);
+
+            // Spacer
+            VisualElement spacer = new();
+            spacer.AddToClassList("flex-container");
+            container.Add(spacer);
+
+            // Remove button
+            Button removeButton = new(() => RemoveCondition(condition)) { text = "×" };
+            removeButton.AddToClassList("condition-action-button");
+            container.Add(removeButton);
+        }
+
+        private VisualElement CreateDragHandle()
+        {
+            VisualElement dragHandle = new();
+            dragHandle.style.width = 12;
+            dragHandle.style.height = 20;
+            dragHandle.style.marginRight = 5;
+            dragHandle.style.backgroundImage =
+                EditorGUIUtility.IconContent("d_VerticalLayoutGroup Icon").image as Texture2D;
+
+            dragHandle.style.opacity = 0.6f;
+            return dragHandle;
+        }
+
+        private VisualElement CreateValueEditor(ConditionData condition)
+        {
+            VisualElement container = new();
+            container.style.flexDirection = FlexDirection.Row;
+
+            switch (condition.DataType)
+            {
+                case ConditionDataType.Boolean:
+                    CreateBooleanEditor(container, condition);
+                    break;
+                case ConditionDataType.Float:
+                    CreateFloatEditor(container, condition);
+                    break;
+                case ConditionDataType.Integer:
+                    CreateIntegerEditor(container, condition);
+                    break;
+                case ConditionDataType.String:
+                    CreateStringEditor(container, condition);
+                    break;
+                case ConditionDataType.Time:
+                    CreateTimeEditor(container, condition);
+                    break;
+                case ConditionDataType.Animation:
+                    CreateAnimationEditor(container, condition);
+                    break;
+            }
+
+            return container;
+        }
+
+        private void CreateBooleanEditor(VisualElement container, ConditionData condition)
+        {
+            // Comparison type dropdown (Is/Is Not)
+            EnumField comparisonField = new(condition.ComparisonType);
+            comparisonField.style.width = 80;
+            comparisonField.style.marginRight = 5;
+            comparisonField.RegisterValueChangedCallback(evt =>
+            {
+                condition.ComparisonType = (ComparisonType)evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(comparisonField);
+
+            // Toggle for boolean value
+            Toggle valueToggle = new("Value");
+            valueToggle.value = condition.BoolValue;
+            valueToggle.RegisterValueChangedCallback(evt =>
+            {
+                condition.BoolValue = evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(valueToggle);
+        }
+
+        private void CreateFloatEditor(VisualElement container, ConditionData condition)
+        {
+            // Comparison type dropdown
+            EnumField comparisonField = new(condition.ComparisonType);
+            comparisonField.style.width = 80;
+            comparisonField.style.marginRight = 5;
+            comparisonField.RegisterValueChangedCallback(evt =>
+            {
+                condition.ComparisonType = (ComparisonType)evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(comparisonField);
+
+            // Float value field
+            FloatField valueField = new();
+            valueField.value = condition.FloatValue;
+            valueField.RegisterValueChangedCallback(evt =>
+            {
+                condition.FloatValue = evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(valueField);
+        }
+
+        private void CreateIntegerEditor(VisualElement container, ConditionData condition)
+        {
+            // Comparison type dropdown
+            EnumField comparisonField = new(condition.ComparisonType);
+            comparisonField.style.width = 80;
+            comparisonField.style.marginRight = 5;
+            comparisonField.RegisterValueChangedCallback(evt =>
+            {
+                condition.ComparisonType = (ComparisonType)evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(comparisonField);
+
+            // Integer value field
+            IntegerField valueField = new();
+            valueField.value = condition.IntValue;
+            valueField.RegisterValueChangedCallback(evt =>
+            {
+                condition.IntValue = evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(valueField);
+        }
+
+        private void CreateStringEditor(VisualElement container, ConditionData condition)
+        {
+            // Comparison type dropdown
+            EnumField comparisonField = new(condition.ComparisonType);
+            comparisonField.style.width = 80;
+            comparisonField.style.marginRight = 5;
+            comparisonField.RegisterValueChangedCallback(evt =>
+            {
+                condition.ComparisonType = (ComparisonType)evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(comparisonField);
+
+            // String value field
+            TextField valueField = new();
+            valueField.style.flexGrow = 1;
+            valueField.value = condition.StringValue;
+            valueField.RegisterValueChangedCallback(evt =>
+            {
+                condition.StringValue = evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(valueField);
+        }
+
+        private void CreateTimeEditor(VisualElement container, ConditionData condition)
+        {
+            // Label for time condition
+            Label timeLabel = new("Wait ");
+            container.Add(timeLabel);
+
+            // Float value field for seconds
+            FloatField valueField = new();
+            valueField.style.width = 50;
+            valueField.value = condition.FloatValue;
+            valueField.RegisterValueChangedCallback(evt =>
+            {
+                condition.FloatValue = evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(valueField);
+
+            // Seconds label
+            Label secondsLabel = new(" seconds");
+            container.Add(secondsLabel);
+        }
+
+        private void CreateAnimationEditor(VisualElement container, ConditionData condition)
+        {
+            // Just a label for animation complete condition
+            Label animLabel = new("Animation Complete");
+            container.Add(animLabel);
+        }
+
+        private void RefreshNewConditionFields()
+        {
+            // Get the container for type-specific fields
+            VisualElement container = _contentContainer.Q("typeSpecificContainer");
+            if (container == null) return;
+
+            // Clear existing fields
+            container.Clear();
+
+            // Add appropriate fields based on the selected condition type
+            switch (_newConditionType)
+            {
+                case ConditionDataType.Boolean:
+                    // Parameter name field
+                    TextField boolParamField = new("Parameter Name");
+                    container.Add(boolParamField);
+
+                    // Comparison type dropdown
+                    EnumField boolComparisonField = new("Comparison", ComparisonType.IsTrue);
+                    container.Add(boolComparisonField);
+                    break;
+
+                case ConditionDataType.Float:
+                    // Parameter name field
+                    TextField floatParamField = new("Parameter Name");
+                    container.Add(floatParamField);
+
+                    // Comparison type dropdown
+                    EnumField floatComparisonField = new("Comparison", ComparisonType.Equals);
+                    container.Add(floatComparisonField);
+
+                    // Value field
+                    FloatField floatValueField = new("Value");
+                    container.Add(floatValueField);
+                    break;
+
+                case ConditionDataType.Integer:
+                    // Parameter name field
+                    TextField intParamField = new("Parameter Name");
+                    container.Add(intParamField);
+
+                    // Comparison type dropdown
+                    EnumField intComparisonField = new("Comparison", ComparisonType.Equals);
+                    container.Add(intComparisonField);
+
+                    // Value field
+                    IntegerField intValueField = new("Value");
+                    container.Add(intValueField);
+                    break;
+
+                case ConditionDataType.String:
+                    // Parameter name field
+                    TextField stringParamField = new("Parameter Name");
+                    container.Add(stringParamField);
+
+                    // Comparison type dropdown
+                    EnumField stringComparisonField = new("Comparison", ComparisonType.Equals);
+                    container.Add(stringComparisonField);
+
+                    // Value field
+                    TextField stringValueField = new("Value");
+                    container.Add(stringValueField);
+                    break;
+
+                case ConditionDataType.Composite:
+                    // Composite type field (AND/OR)
+                    Label compositeTypeLabel = new("Group Type");
+                    container.Add(compositeTypeLabel);
+
+                    VisualElement radioGroup = new();
+                    radioGroup.style.flexDirection = FlexDirection.Row;
+
+                    Toggle andToggle = new("AND");
+                    andToggle.value = true;
+                    andToggle.RegisterValueChangedCallback(evt =>
+                    {
+                        if (evt.newValue) _newCompositeType = "And";
+                    });
+
+                    radioGroup.Add(andToggle);
+
+                    Toggle orToggle = new("OR");
+                    orToggle.RegisterValueChangedCallback(evt =>
+                    {
+                        if (evt.newValue) _newCompositeType = "Or";
+                        andToggle.SetValueWithoutNotify(!evt.newValue);
+                    });
+
+                    radioGroup.Add(orToggle);
+
+                    container.Add(radioGroup);
+                    break;
+            }
+        }
+
+        private void AddNewCondition()
+        {
             ConditionData condition = new()
             {
-                ParameterName = _parameterName
+                DataType = _newConditionType
             };
 
+            // Get values from the UI fields
+            VisualElement container = _contentContainer.Q("typeSpecificContainer");
+            if (container != null)
+            {
+                switch (_newConditionType)
+                {
+                    case ConditionDataType.Boolean:
+                        TextField boolParamField = container.Q<TextField>();
+                        if (boolParamField != null) condition.ParameterName = boolParamField.value;
+
+                        EnumField boolComparisonField = container.Q<EnumField>();
+                        if (boolComparisonField != null)
+                            condition.ComparisonType = (ComparisonType)boolComparisonField.value;
+
+                        break;
+
+                    case ConditionDataType.Float:
+                        TextField floatParamField = container.Q<TextField>();
+                        if (floatParamField != null) condition.ParameterName = floatParamField.value;
+
+                        EnumField floatComparisonField = container.Q<EnumField>();
+                        if (floatComparisonField != null)
+                            condition.ComparisonType = (ComparisonType)floatComparisonField.value;
+
+                        FloatField floatValueField = container.Q<FloatField>();
+                        if (floatValueField != null) condition.FloatValue = floatValueField.value;
+                        break;
+
+                    case ConditionDataType.Integer:
+                        TextField intParamField = container.Q<TextField>();
+                        if (intParamField != null) condition.ParameterName = intParamField.value;
+
+                        EnumField intComparisonField = container.Q<EnumField>();
+                        if (intComparisonField != null)
+                            condition.ComparisonType = (ComparisonType)intComparisonField.value;
+
+                        IntegerField intValueField = container.Q<IntegerField>();
+                        if (intValueField != null) condition.IntValue = intValueField.value;
+                        break;
+
+                    case ConditionDataType.String:
+                        TextField stringParamField = container.Q<TextField>();
+                        if (stringParamField != null) condition.ParameterName = stringParamField.value;
+
+                        EnumField stringComparisonField = container.Q<EnumField>();
+                        if (stringComparisonField != null)
+                            condition.ComparisonType = (ComparisonType)stringComparisonField.value;
+
+                        TextField stringValueField = container.Q<TextField>();
+                        if (stringValueField != null) condition.StringValue = stringValueField.value;
+                        break;
+
+                    case ConditionDataType.Composite:
+                        // Store the composite type in StringValue
+                        condition.StringValue = _newCompositeType;
+                        break;
+                }
+            }
 
             _conditions.Add(condition);
             SaveConditions();
             RefreshConditionsList();
+        }
 
-            // Clear parameter name field
-            _parameterNameField.value = "";
+        private void AddCompositeCondition(string type)
+        {
+            ConditionData condition = new()
+            {
+                DataType = ConditionDataType.Composite,
+                StringValue = type // Store AND/OR in StringValue
+            };
+
+            _conditions.Add(condition);
+            SaveConditions();
+            RefreshConditionsList();
+        }
+
+        private void ToggleCompositeType(ConditionData condition)
+        {
+            if (condition.DataType != ConditionDataType.Composite) return;
+
+            // Toggle between And and Or
+            condition.StringValue = condition.StringValue == "And" ? "Or" : "And";
+            SaveConditions();
+            RefreshConditionsList();
         }
 
         private void AddAnimationCompleteCondition()
@@ -612,14 +1166,245 @@ namespace Animation.Flow.Editor
             RefreshConditionsList();
         }
 
-        private void RemoveCondition(int index)
+        private void RemoveCondition(ConditionData condition)
         {
-            if (index >= 0 && index < _conditions.Count)
+            // Check if it's a composite and find all child conditions
+            if (condition.DataType == ConditionDataType.Composite)
             {
-                _conditions.RemoveAt(index);
-                SaveConditions();
-                RefreshConditionsList();
+                // Find child conditions that have this as parent
+                var childConditions = _conditions.Where(c => c.ParentGroupId == condition.UniqueId).ToList();
+
+                // Update their parent group to the parent of the composite being removed
+                foreach (ConditionData child in childConditions)
+                {
+                    child.ParentGroupId = condition.ParentGroupId;
+                    child.NestingLevel = Math.Max(0, condition.NestingLevel); // Keep same nesting level or 0
+                }
             }
+
+            // Remove the condition
+            _conditions.Remove(condition);
+
+            // Update indices of remaining conditions
+            UpdateConditionIndices();
+
+            SaveConditions();
+            RefreshConditionsList();
+        }
+
+        private void UpdateConditionIndices()
+        {
+            // Group conditions by parent group
+            var groupedConditions = _conditions.GroupBy(c => c.ParentGroupId);
+
+            // For each group, update the indices
+            foreach (var group in groupedConditions)
+            {
+                int index = 0;
+                foreach (ConditionData condition in group.OrderBy(c => c.GroupIndex))
+                {
+                    condition.GroupIndex = index++;
+                }
+            }
+        }
+
+        private void MakeElementDraggable(VisualElement element)
+        {
+            // MouseDown - start drag
+            element.RegisterCallback<MouseDownEvent>(evt =>
+            {
+                if (evt.button == 0 && !_isDraggingCondition) // Left button
+                {
+                    _draggedElement = element;
+                    _draggedCondition = element.userData as ConditionData;
+                    _draggedStartIndex = _conditions.IndexOf(_draggedCondition);
+                    _isDraggingCondition = true;
+
+                    // Visual feedback
+                    element.style.opacity = 0.6f;
+                    evt.StopPropagation();
+                }
+            });
+
+            // MouseMove - update drop indicator
+            element.RegisterCallback<MouseMoveEvent>(evt =>
+            {
+                if (_isDraggingCondition && _draggedElement != null)
+                {
+                    evt.StopPropagation();
+                }
+            });
+
+            // MouseUp - drop
+            element.RegisterCallback<MouseUpEvent>(evt =>
+            {
+                if (_isDraggingCondition && _draggedElement != null)
+                {
+                    _isDraggingCondition = false;
+                    _draggedElement.style.opacity = 1.0f;
+                    _draggedElement = null;
+                    _dropIndicator.style.display = DisplayStyle.None;
+                    evt.StopPropagation();
+                }
+            });
+
+            // DragEnter - show drop indicator
+            element.RegisterCallback<MouseOverEvent>(evt =>
+            {
+                if (_isDraggingCondition && _draggedElement != null && _draggedElement != element)
+                {
+                    // Get target condition
+                    ConditionData targetCondition = element.userData as ConditionData;
+                    if (targetCondition == null) return;
+
+                    // Show drop indicator
+                    _dropIndicator.style.display = DisplayStyle.Flex;
+
+                    // Position drop indicator
+                    int targetIndex = _conditionsContainer.IndexOf(element);
+                    _conditionsContainer.Remove(_dropIndicator);
+                    _conditionsContainer.Insert(targetIndex, _dropIndicator);
+
+                    // Handle drop logic
+                    HandleDropOperation(targetCondition, evt.mousePosition);
+
+                    evt.StopPropagation();
+                }
+            });
+        }
+
+        private void HandleDropOperation(ConditionData targetCondition, Vector2 mousePosition)
+        {
+            if (_draggedCondition == null || targetCondition == null) return;
+
+            // Don't allow dropping a parent onto its child
+            if (IsParentOf(_draggedCondition, targetCondition)) return;
+
+            // Get the Y position within the target element to determine if dropping above, inside, or below
+            VisualElement targetElement = _conditionElements[targetCondition.UniqueId];
+            float relativeY = mousePosition.y - targetElement.worldBound.y;
+            float elementHeight = targetElement.worldBound.height;
+
+            if (targetCondition.DataType == ConditionDataType.Composite)
+            {
+                // For composites, determine if dropping inside or above/below
+                if (relativeY > elementHeight * 0.3f && relativeY < elementHeight * 0.7f)
+                {
+                    // Dropping inside the composite
+                    MoveConditionToComposite(_draggedCondition, targetCondition);
+                }
+                else if (relativeY <= elementHeight * 0.3f)
+                {
+                    // Dropping above the composite
+                    MoveConditionAbove(_draggedCondition, targetCondition);
+                }
+                else
+                {
+                    // Dropping below the composite
+                    MoveConditionBelow(_draggedCondition, targetCondition);
+                }
+            }
+            else
+            {
+                // For regular conditions, determine if dropping above or below
+                if (relativeY <= elementHeight * 0.5f)
+                {
+                    // Dropping above
+                    MoveConditionAbove(_draggedCondition, targetCondition);
+                }
+                else
+                {
+                    // Dropping below
+                    MoveConditionBelow(_draggedCondition, targetCondition);
+                }
+            }
+
+            // Save changes
+            SaveConditions();
+            RefreshConditionsList();
+        }
+
+        private bool IsParentOf(ConditionData potentialParent, ConditionData potentialChild)
+        {
+            if (potentialParent.DataType != ConditionDataType.Composite) return false;
+
+            // Check if the child has this parent directly
+            if (potentialChild.ParentGroupId == potentialParent.UniqueId) return true;
+
+            // Check ancestors recursively
+            foreach (ConditionData condition in _conditions)
+            {
+                if (condition.ParentGroupId == potentialParent.UniqueId)
+                {
+                    if (IsParentOf(condition, potentialChild)) return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void MoveConditionToComposite(ConditionData conditionToMove, ConditionData compositeCondition)
+        {
+            if (compositeCondition.DataType != ConditionDataType.Composite) return;
+
+            // Find all conditions in the target composite
+            var childrenInComposite = _conditions.Where(c => c.ParentGroupId == compositeCondition.UniqueId).ToList();
+
+            // Set new parent and update nesting level
+            conditionToMove.ParentGroupId = compositeCondition.UniqueId;
+            conditionToMove.NestingLevel = compositeCondition.NestingLevel + 1;
+            conditionToMove.GroupIndex =
+                childrenInComposite.Count > 0 ? childrenInComposite.Max(c => c.GroupIndex) + 1 : 0;
+        }
+
+        private void MoveConditionAbove(ConditionData conditionToMove, ConditionData targetCondition)
+        {
+            // Set same parent group as the target
+            conditionToMove.ParentGroupId = targetCondition.ParentGroupId;
+            conditionToMove.NestingLevel = targetCondition.NestingLevel;
+
+            // Get all conditions with the same parent
+            var siblingsConditions = _conditions
+                .Where(c => c.ParentGroupId == targetCondition.ParentGroupId)
+                .OrderBy(c => c.GroupIndex)
+                .ToList();
+
+            // Shift indices to make room
+            foreach (ConditionData sibling in siblingsConditions)
+            {
+                if (sibling.GroupIndex >= targetCondition.GroupIndex && sibling != conditionToMove)
+                {
+                    sibling.GroupIndex++;
+                }
+            }
+
+            // Set the index of the moved condition
+            conditionToMove.GroupIndex = targetCondition.GroupIndex;
+        }
+
+        private void MoveConditionBelow(ConditionData conditionToMove, ConditionData targetCondition)
+        {
+            // Set same parent group as the target
+            conditionToMove.ParentGroupId = targetCondition.ParentGroupId;
+            conditionToMove.NestingLevel = targetCondition.NestingLevel;
+
+            // Get all conditions with the same parent
+            var siblingsConditions = _conditions
+                .Where(c => c.ParentGroupId == targetCondition.ParentGroupId)
+                .OrderBy(c => c.GroupIndex)
+                .ToList();
+
+            // Shift indices to make room
+            foreach (ConditionData sibling in siblingsConditions)
+            {
+                if (sibling.GroupIndex > targetCondition.GroupIndex && sibling != conditionToMove)
+                {
+                    sibling.GroupIndex++;
+                }
+            }
+
+            // Set the index of the moved condition
+            conditionToMove.GroupIndex = targetCondition.GroupIndex + 1;
         }
 
         private void SaveConditions()
@@ -630,7 +1415,7 @@ namespace Animation.Flow.Editor
 
                 // Mark the asset dirty so changes are saved
                 AnimationFlowEditorWindow editorWindow = EditorWindow.GetWindow<AnimationFlowEditorWindow>();
-                if (editorWindow)
+                if (editorWindow != null)
                 {
                     EditorUtility.SetDirty(editorWindow);
                 }
