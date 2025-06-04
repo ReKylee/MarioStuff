@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.Panels.Parameters
 {
     /// <summary>
     ///     Panel showing available parameters that can be dragged

@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using Animation.Flow.Conditions;
+using Animation.Flow.Editor.Managers;
+using Animation.Flow.Editor.Panels.Conditions;
+using Animation.Flow.Editor.Panels.Parameters;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.Panels
 {
     /// <summary>
     ///     Main transition editor panel that contains parameter and condition panels

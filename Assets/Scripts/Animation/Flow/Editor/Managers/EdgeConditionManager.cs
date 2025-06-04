@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Animation.Flow.Conditions;
 using UnityEditor.Experimental.GraphView;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.Managers
 {
     // Class to store conditions for edges in the editor
     // This allows us to associate conditions with standard Edge objects

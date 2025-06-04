@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Animation.Flow.Conditions;
 using UnityEngine.UIElements;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.Panels.Conditions
 {
 
     /// <summary>

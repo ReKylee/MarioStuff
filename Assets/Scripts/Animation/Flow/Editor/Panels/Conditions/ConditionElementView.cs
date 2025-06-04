@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.Panels.Conditions
 {
     /// <summary>
     ///     Visual element for a single condition

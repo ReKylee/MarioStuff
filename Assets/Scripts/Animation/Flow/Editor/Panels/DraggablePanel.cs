@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.Panels
 {
     /// <summary>
     ///     Base class for draggable and resizable panels

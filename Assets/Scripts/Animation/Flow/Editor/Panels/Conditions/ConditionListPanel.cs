@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Animation.Flow.Conditions;
-using Editor;
+using Animation.Flow.Editor.Factories;
+using Animation.Flow.Editor.Panels.Parameters;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.Panels.Conditions
 {
     /// <summary>
     ///     Panel showing the list of conditions

@@ -1,6 +1,6 @@
 ﻿using Animation.Flow.Conditions;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.Panels.Parameters
 {
     /// <summary>
     ///     Data for parameters that can be used in conditions

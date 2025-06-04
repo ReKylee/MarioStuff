@@ -1,10 +1,9 @@
 ﻿using System;
 using Animation.Flow.Conditions;
-using Animation.Flow.Editor;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Editor
+namespace Animation.Flow.Editor.Panels.Conditions
 {
 
     /// <summary>

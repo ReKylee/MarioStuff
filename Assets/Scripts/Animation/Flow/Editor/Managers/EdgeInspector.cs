@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using Animation.Flow.Conditions;
+using Animation.Flow.Editor.Panels;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.Managers
 {
     /// <summary>
     ///     Manages the inspection and editing of edges in the Animation Flow graph

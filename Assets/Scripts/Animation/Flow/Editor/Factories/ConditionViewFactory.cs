@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using Animation.Flow.Conditions;
-using Editor;
+using Animation.Flow.Editor.Panels.Conditions;
 using UnityEngine.UIElements;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.Factories
 {
     /// <summary>
     ///     Factory for creating condition views
