@@ -13,7 +13,6 @@ namespace Animation.Flow.Editor
     /// </summary>
     public class TransitionEditorPanel
     {
-
         // Condition editor support
         private readonly Dictionary<string, VisualElement> _conditionElements = new();
         private readonly Vector2 _minSize = new(250, 300);
@@ -32,6 +31,7 @@ namespace Animation.Flow.Editor
 
         // Drag and drop support
         private VisualElement _draggedElement;
+        private VisualElement _draggedElementClone; // Clone for visual feedback during dragging
         private int _draggedStartIndex;
 
         // For dragging
@@ -80,12 +80,24 @@ namespace Animation.Flow.Editor
                 style =
                 {
                     position = Position.Absolute,
-                    width = _size.x,
-                    height = _size.y,
                     left = _position.x,
                     top = _position.y
                 }
             };
+
+            // Load the stylesheet
+            StyleSheet stylesheet =
+                AssetDatabase.LoadAssetAtPath<StyleSheet>(
+                    "Assets/Scripts/Animation/Flow/Editor/TransitionEditorPanel.uss");
+
+            if (stylesheet != null)
+            {
+                _root.styleSheets.Add(stylesheet);
+            }
+            else
+            {
+                Debug.LogError("Could not load TransitionEditorPanel.uss stylesheet");
+            }
 
             _root.AddToClassList("transition-editor-panel");
 
@@ -131,11 +143,7 @@ namespace Animation.Flow.Editor
             // Register for mouse move and up events for dragging and resizing
             container.RegisterCallback<MouseMoveEvent>(OnMouseMove);
 
-            container.RegisterCallback<MouseUpEvent>(_ =>
-            {
-                _isDragging = false;
-                _isResizing = false;
-            });
+            container.RegisterCallback<MouseUpEvent>(OnContainerMouseUp);
 
             // Add to container but hide initially
             container.Add(_root);
@@ -153,8 +161,22 @@ namespace Animation.Flow.Editor
             // Handle drag-and-drop of conditions
             if (_isDraggingCondition && _draggedElement != null)
             {
+                // Update the drop target indicators
                 UpdateDropTarget(evt.mousePosition);
-                evt.StopPropagation();
+
+                // Update the clone position to follow the mouse cursor
+                if (_draggedElementClone != null)
+                {
+                    _draggedElementClone.style.display = DisplayStyle.Flex;
+                    _draggedElementClone.style.left =
+                        evt.mousePosition.x - _draggedElementClone.resolvedStyle.width / 2;
+
+                    _draggedElementClone.style.top =
+                        evt.mousePosition.y - 15; // Offset to position slightly above cursor
+                }
+
+                // Prevent interaction with condition elements during drag
+                evt.StopImmediatePropagation();
                 return;
             }
 
@@ -166,71 +188,132 @@ namespace Animation.Flow.Editor
 
         private void UpdateDropTarget(Vector2 mousePosition)
         {
-            // Find what element is under the mouse
-            bool foundTarget = false;
+            // Reset all visual states first
+            _dropIndicator.style.display = DisplayStyle.None;
 
+            // Make sure to remove the indicator from any current parent
+            if (_dropIndicator.parent != null)
+            {
+                _dropIndicator.parent.Remove(_dropIndicator);
+            }
+
+            foreach (VisualElement element in _conditionElements.Values)
+            {
+                if (element.userData is ConditionData { DataType: ConditionDataType.Composite })
+                {
+                    element.RemoveFromClassList("drop-target-composite");
+                }
+            }
+
+            // If we're not dragging, exit early
+            if (!_isDraggingCondition || _draggedElement == null || _draggedCondition == null)
+                return;
+
+            // Check if we're over the conditions container itself for an "append to end" operation
+            if (_conditionsContainer.worldBound.Contains(mousePosition) &&
+                _conditionElements.Count > 0 &&
+                !IsOverAnyConditionElement(mousePosition))
+            {
+                // Position indicator at the end
+                _dropIndicator.style.display = DisplayStyle.Flex;
+                _conditionsContainer.Add(_dropIndicator);
+                return;
+            }
+
+            // Check each condition element
             foreach (VisualElement element in _conditionElements.Values)
             {
                 if (element == _draggedElement) continue;
 
-                if (element.worldBound.Contains(mousePosition))
-                {
-                    foundTarget = true;
-                    ConditionData targetCondition = element.userData as ConditionData;
+                // Skip check if element has been detached from hierarchy
+                if (element.parent == null) continue;
 
-                    // Show drop indicator
-                    _dropIndicator.style.display = DisplayStyle.Flex;
+                // Check hit testing with a slightly expanded area for better interaction
+                Rect expandedBounds = element.worldBound;
+                expandedBounds.yMin -= 5; // Expand top edge up
+                expandedBounds.yMax += 5; // Expand bottom edge down
+
+                if (expandedBounds.Contains(mousePosition))
+                {
+                    ConditionData targetCondition = element.userData as ConditionData;
+                    if (targetCondition == null) continue;
+
+                    // Prevent dropping onto self or illegal ancestors
+                    if (_draggedCondition == targetCondition || IsParentOf(_draggedCondition, targetCondition))
+                        continue;
 
                     // Determine drop position relative to the target element
                     float relativeY = mousePosition.y - element.worldBound.y;
                     float elementHeight = element.worldBound.height;
 
-                    if (targetCondition.DataType == ConditionDataType.Composite &&
-                        relativeY > elementHeight * 0.3f && relativeY < elementHeight * 0.7f)
+                    if (targetCondition.DataType == ConditionDataType.Composite)
                     {
-                        // Dropping inside composite - highlight the entire composite
-                        element.style.backgroundColor = new Color(0.3f, 0.5f, 0.7f, 0.3f);
+                        // For composites, determine if dropping inside or above/below
+                        float centerAreaStart = elementHeight * 0.3f;
+                        float centerAreaEnd = elementHeight * 0.7f;
+
+                        if (relativeY > centerAreaStart && relativeY < centerAreaEnd)
+                        {
+                            // Dropping inside the composite - highlight it
+                            element.AddToClassList("drop-target-composite");
+                            return; // Exit early - we found our target
+                        }
+                    }
+
+                    // Position indicator for dropping above or below
+                    _dropIndicator.style.display = DisplayStyle.Flex;
+
+                    int targetIndex;
+                    if (relativeY <= elementHeight * 0.5f)
+                    {
+                        // Position above element
+                        targetIndex = _conditionsContainer.IndexOf(element);
                     }
                     else
                     {
-                        // Position indicator for dropping above or below
-                        _conditionsContainer.Remove(_dropIndicator);
-
-                        if (relativeY <= elementHeight * 0.5f)
-                        {
-                            // Position above element
-                            int index = _conditionsContainer.IndexOf(element);
-                            _conditionsContainer.Insert(index, _dropIndicator);
-                        }
-                        else
-                        {
-                            // Position below element
-                            int index = _conditionsContainer.IndexOf(element) + 1;
-                            if (index < _conditionsContainer.childCount)
-                                _conditionsContainer.Insert(index, _dropIndicator);
-                            else
-                                _conditionsContainer.Add(_dropIndicator);
-                        }
+                        // Position below element
+                        targetIndex = _conditionsContainer.IndexOf(element) + 1;
                     }
 
-                    break;
-                }
-            }
-
-            if (!foundTarget)
-            {
-                _dropIndicator.style.display = DisplayStyle.None;
-
-                // Reset any highlighted elements
-                foreach (VisualElement element in _conditionElements.Values)
-                {
-                    if (element.userData is ConditionData condition &&
-                        condition.DataType == ConditionDataType.Composite)
+                    if (targetIndex >= 0 && targetIndex <= _conditionsContainer.childCount)
                     {
-                        element.style.backgroundColor = new Color(0.2f, 0.3f, 0.4f, 0.4f);
+                        _conditionsContainer.Insert(targetIndex, _dropIndicator);
                     }
+                    else
+                    {
+                        _conditionsContainer.Add(_dropIndicator);
+                    }
+
+                    return; // Exit early - we found our target
                 }
             }
+        }
+
+        // Helper method to check if mouse is over any condition element
+        private bool IsOverAnyConditionElement(Vector2 mousePosition)
+        {
+            foreach (VisualElement element in _conditionElements.Values)
+            {
+                // Skip if element is no longer in hierarchy
+                if (element.parent == null) continue;
+
+                // Skip the dragged element itself
+                if (element == _draggedElement) continue;
+
+                // Create a slightly expanded rect for better hit detection
+                Rect expandedBound = element.worldBound;
+                expandedBound.xMin -= 5;
+                expandedBound.xMax += 5;
+                expandedBound.yMin -= 5;
+                expandedBound.yMax += 5;
+
+                if (expandedBound.Contains(mousePosition))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void OnResize(MouseMoveEvent evt)
@@ -276,6 +359,7 @@ namespace Animation.Flow.Editor
             _root.style.left = _position.x;
             _root.style.top = _position.y;
 
+            // When manually resizing, we use explicit dimensions
             _size = new Vector2(newWidth, newHeight);
             _root.style.width = _size.x;
             _root.style.height = _size.y;
@@ -283,9 +367,8 @@ namespace Animation.Flow.Editor
             // Adjust scroll view height to accommodate the conditions list
             if (_conditionsScrollView != null)
             {
-                // Calculate available height for scroll view by subtracting other elements' heights
-                float availableHeight = _size.y - 200; // Rough estimate for other UI elements
-                _conditionsScrollView.style.height = Mathf.Max(100, availableHeight);
+                // Set the scroll view to auto-adjust its height based on content
+                _conditionsScrollView.style.maxHeight = _size.y - 200; // Maximum height
             }
         }
 
@@ -319,6 +402,61 @@ namespace Animation.Flow.Editor
                 evt.StopPropagation();
             }
         }
+
+        private void OnContainerMouseUp(MouseUpEvent evt)
+        {
+            // Handle panel dragging and resizing
+            _isDragging = false;
+            _isResizing = false;
+
+            // Handle condition dragging separately, ensuring the drop operation is processed
+            if (_isDraggingCondition && _draggedElement != null)
+            {
+                _isDraggingCondition = false;
+
+                // Process the drop
+                HandleElementDrop(evt.mousePosition);
+
+                // Reset visuals
+                if (_draggedElement != null)
+                {
+                    _draggedElement.style.opacity = 1.0f;
+                    _draggedElement.RemoveFromClassList("dragging");
+                    _draggedElement = null;
+                    _draggedCondition = null;
+                }
+
+                // Clean up visual elements
+                if (_draggedElementClone != null)
+                {
+                    _parentContainer.Remove(_draggedElementClone);
+                    _draggedElementClone = null;
+                }
+
+                if (_dropIndicator != null)
+                {
+                    _dropIndicator.style.display = DisplayStyle.None;
+
+                    // Make sure to remove the indicator from any current parent
+                    if (_dropIndicator.parent != null)
+                    {
+                        _dropIndicator.parent.Remove(_dropIndicator);
+                    }
+                }
+
+                // Reset composite highlighting
+                foreach (VisualElement element in _conditionElements.Values)
+                {
+                    if (element.userData is ConditionData condition &&
+                        condition.DataType == ConditionDataType.Composite)
+                    {
+                        element.RemoveFromClassList("drop-target-composite");
+                    }
+                }
+            }
+
+            evt.StopPropagation();
+        }
         private void OnResizeHandleMouseDown(MouseDownEvent evt)
         {
             if (evt.button == 0) // Left mouse button
@@ -335,20 +473,62 @@ namespace Animation.Flow.Editor
         {
             Initialize(edge);
 
-            // If we need to reposition to the top right (e.g., when showing the first time)
-            if (!IsVisible)
+            // Set display style to flex before calculating position and size
+            _root.style.display = DisplayStyle.Flex;
+
+            // First set minimum size to ensure panel is visible while calculating proper size
+            _root.style.width = _minSize.x;
+            _root.style.height = _minSize.y;
+
+            // Position panel initially in top right corner
+            _position = new Vector2(_parentContainer.worldBound.width - _minSize.x - 20, 20);
+            _root.style.left = _position.x;
+            _root.style.top = _position.y;
+
+            // Schedule multiple layout passes to ensure correct sizing
+            _root.schedule.Execute(() =>
             {
-                // Update position to be in top right corner of the current container
-                _position = new Vector2(_parentContainer.worldBound.width - _size.x - 20, 20);
-                _root.style.left = _position.x;
-                _root.style.top = _position.y;
-            }
+                // First layout pass: Allow auto-sizing
+                _root.style.width = StyleKeyword.Auto;
+                _root.style.height = StyleKeyword.Auto;
+
+                // Schedule a second pass after layout is processed
+                _root.schedule.Execute(() =>
+                {
+                    // Get the auto-sized dimensions
+                    Vector2 computedSize = new(
+                        _root.resolvedStyle.width,
+                        _root.resolvedStyle.height
+                    );
+
+                    // Apply minimum size constraints
+                    computedSize.x = Mathf.Max(computedSize.x, _minSize.x);
+                    computedSize.y = Mathf.Max(computedSize.y, _minSize.y);
+
+                    // Update size tracking variable
+                    _size = computedSize;
+
+                    // Update position with the proper width
+                    _position = new Vector2(_parentContainer.worldBound.width - _size.x - 20, 20);
+                    _root.style.left = _position.x;
+                    _root.style.top = _position.y;
+
+                    // Set explicit width and height after auto-sizing
+                    _root.style.width = _size.x;
+                    _root.style.height = _size.y;
+
+                    // Force one more layout pass to ensure scrollview gets proper height
+                    _root.schedule.Execute(UpdatePanelSize);
+                });
+            });
 
             // Register panel-wide mouse events
             RegisterPanelEvents();
 
-            _root.style.display = DisplayStyle.Flex;
             IsVisible = true;
+
+            // Force Unity to repaint the editor window
+            EditorWindow.GetWindow<AnimationFlowEditorWindow>().Repaint();
         }
 
         public void Hide()
@@ -385,6 +565,30 @@ namespace Animation.Flow.Editor
 
         private void OnPanelMouseUp(MouseUpEvent evt)
         {
+            // Ensure dragging and resizing flags are cleared when mouse is released
+            _isDragging = false;
+            _isResizing = false;
+            _isDraggingCondition = false;
+
+            if (_draggedElement != null)
+            {
+                _draggedElement.style.opacity = 1.0f;
+                _draggedElement.RemoveFromClassList("dragging");
+                _draggedElement = null;
+            }
+
+            // Remove the clone if it exists
+            if (_draggedElementClone != null)
+            {
+                _parentContainer.Remove(_draggedElementClone);
+                _draggedElementClone = null;
+            }
+
+            if (_dropIndicator != null)
+            {
+                _dropIndicator.style.display = DisplayStyle.None;
+            }
+
             evt.StopPropagation();
         }
 
@@ -505,12 +709,12 @@ namespace Animation.Flow.Editor
             // Create a container for the conditions list
             VisualElement conditionsListContainer = new();
             conditionsListContainer.AddToClassList("droppable-area");
-            conditionsListContainer.style.minHeight = 100; // Minimum height
             content.Add(conditionsListContainer);
 
             // Scroll view for conditions
             _conditionsScrollView = new ScrollView();
             _conditionsScrollView.AddToClassList("flex-container");
+            _conditionsScrollView.AddToClassList("conditions-scroll-view");
             conditionsListContainer.Add(_conditionsScrollView);
 
             // Create container for draggable conditions
@@ -522,19 +726,17 @@ namespace Animation.Flow.Editor
             _dropIndicator = new VisualElement();
             _dropIndicator.AddToClassList("drop-indicator");
             _dropIndicator.style.display = DisplayStyle.None;
-            _conditionsContainer.Add(_dropIndicator);
+            // We don't add the drop indicator to the container here anymore
+            // It will be added dynamically when needed
 
             // Add New Condition Section
-            VisualElement addConditionSection = new(); // Create the missing container
+            VisualElement addConditionSection = new();
             addConditionSection.AddToClassList("add-condition-section");
             content.Add(addConditionSection);
 
             // Add New Condition Section
             Label newConditionLabel = new("Add New Condition");
-            newConditionLabel.style.fontSize = 14;
-            newConditionLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            newConditionLabel.style.marginTop = 15;
-            newConditionLabel.style.marginBottom = 5;
+            newConditionLabel.AddToClassList("transition-editor-panel-header");
             content.Add(newConditionLabel);
 
             // Condition Type Selector
@@ -621,34 +823,118 @@ namespace Animation.Flow.Editor
             // Clear the conditions dictionary and container
             _conditionElements.Clear();
             _conditionsContainer.Clear();
-            _conditionsContainer.Add(_dropIndicator); // Re-add the drop indicator (still hidden)
-
-            // Adjust panel height based on number of conditions (with min and max limits)
-            int conditionsCount = _conditions?.Count ?? 0;
-            float calculatedHeight = Math.Max(_minSize.y, 300 + conditionsCount * 40);
-            _size.y = Math.Min(calculatedHeight, _parentContainer.worldBound.height * 0.8f);
-            _root.style.height = _size.y;
+            // Don't add the drop indicator here anymore, it will be added dynamically
 
             if (_conditions == null || _conditions.Count == 0)
             {
                 Label noConditionsLabel = new("No conditions. This transition will always occur.");
                 noConditionsLabel.AddToClassList("empty-state-label");
                 _conditionsContainer.Add(noConditionsLabel);
-                return;
             }
-
-            // Sort conditions by nesting level and group index
-            var sortedConditions = _conditions
-                .OrderBy(c => c.NestingLevel)
-                .ThenBy(c => c.GroupIndex)
-                .ToList();
-
-            // Create UI for each condition
-            for (int i = 0; i < sortedConditions.Count; i++)
+            else
             {
-                ConditionData condition = sortedConditions[i];
-                CreateConditionElement(condition, i);
+                // Sort conditions by nesting level and group index
+                var sortedConditions = _conditions
+                    .OrderBy(c => c.NestingLevel)
+                    .ThenBy(c => c.GroupIndex)
+                    .ToList();
+
+                // Track parent composites to adjust their styling later
+                var compositeElements = new Dictionary<string, VisualElement>();
+
+                // Create a map of parent groups to their child conditions
+                var parentToChildren = new Dictionary<string, List<ConditionData>>();
+
+                // Populate the parent-to-children map
+                foreach (ConditionData condition in sortedConditions)
+                {
+                    string parentId = condition.ParentGroupId ?? "root";
+
+                    if (!parentToChildren.ContainsKey(parentId))
+                    {
+                        parentToChildren[parentId] = new List<ConditionData>();
+                    }
+
+                    parentToChildren[parentId].Add(condition);
+                }
+
+                // Create UI for each condition
+                for (int i = 0; i < sortedConditions.Count; i++)
+                {
+                    ConditionData condition = sortedConditions[i];
+                    VisualElement element = CreateConditionElement(condition, i);
+
+                    // Track composite elements for later styling
+                    if (condition.DataType == ConditionDataType.Composite)
+                    {
+                        compositeElements[condition.UniqueId] = element;
+                    }
+                }
+
+                // Apply additional styling to composite elements based on their children
+                foreach (var entry in compositeElements)
+                {
+                    string compositeId = entry.Key;
+                    VisualElement compositeElement = entry.Value;
+
+                    // Check if this composite has any children
+                    if (parentToChildren.TryGetValue(compositeId, out var children) && children.Count > 0)
+                    {
+                        // Add some additional bottom margin to the composite to visually group children
+                        compositeElement.style.marginBottom = 8;
+
+                        // Adjust the padding based on the number of children
+                        compositeElement.style.paddingBottom = 4 + (children.Count > 3 ? 4 : 0);
+                    }
+                }
             }
+
+            // Schedule a callback to measure and update the panel size after elements are rendered
+            _root.schedule.Execute(() =>
+            {
+                UpdatePanelSize();
+
+                // Force a repaint to ensure UI updates properly
+                EditorWindow.GetWindow<AnimationFlowEditorWindow>().Repaint();
+            });
+        }
+
+        private void UpdatePanelSize()
+        {
+            // Let the panel size itself based on content
+            _root.style.width = StyleKeyword.Auto;
+            _root.style.height = StyleKeyword.Auto;
+
+            // Force a repaint to ensure we get accurate measurements
+            EditorApplication.delayCall += () =>
+            {
+                // Get the actual size after layout
+                Vector2 computedSize = new(
+                    _root.resolvedStyle.width,
+                    _root.resolvedStyle.height
+                );
+
+                // Ensure minimum size
+                computedSize.x = Mathf.Max(computedSize.x, _minSize.x);
+                computedSize.y = Mathf.Max(computedSize.y, _minSize.y);
+
+                // Ensure maximum size (80% of parent container)
+                computedSize.x = Mathf.Min(computedSize.x, _parentContainer.worldBound.width * 0.8f);
+                computedSize.y = Mathf.Min(computedSize.y, _parentContainer.worldBound.height * 0.8f);
+
+                // Update size tracking variables
+                _size = computedSize;
+
+                // Update style with explicit size to avoid layout issues
+                _root.style.width = _size.x;
+                _root.style.height = _size.y;
+
+                // Update the scrollview height based on the new panel size
+                if (_conditionsScrollView != null)
+                {
+                    _conditionsScrollView.style.maxHeight = _size.y - 200; // Maximum height
+                }
+            };
         }
 
         private VisualElement CreateConditionElement(ConditionData condition, int index)
@@ -658,26 +944,35 @@ namespace Animation.Flow.Editor
             string conditionId = condition.UniqueId;
             conditionElement.userData = condition; // Store the condition data in the element
 
+            // Add class for base styling
+            conditionElement.AddToClassList("condition-item");
+
             // Set styles based on condition type and nesting
             SetupConditionStyles(conditionElement, condition, index);
 
-            // Make element draggable
-            MakeElementDraggable(conditionElement);
+            // Create drag handle first (required for MakeElementDraggable to work properly)
+            VisualElement dragHandle = CreateDragHandle();
+            conditionElement.Add(dragHandle);
 
-            // Add to dictionary for easy reference
+            // Add to dictionary for easy reference BEFORE making it draggable
             _conditionElements[conditionId] = conditionElement;
 
-            // Add to container
+            // Add to container BEFORE creating content
             _conditionsContainer.Add(conditionElement);
+
+            // Make element draggable (needs to be called after adding the drag handle)
+            MakeElementDraggable(conditionElement);
 
             // Create the content based on condition type
             if (condition.DataType == ConditionDataType.Composite)
             {
-                CreateCompositeConditionContent(conditionElement, condition);
+                // The drag handle was already added, so we skip it in the composite content creation
+                CreateCompositeConditionContentWithoutDragHandle(conditionElement, condition);
             }
             else
             {
-                CreateStandardConditionContent(conditionElement, condition);
+                // The drag handle was already added, so we skip it in the standard content creation
+                CreateStandardConditionContentWithoutDragHandle(conditionElement, condition);
             }
 
             return conditionElement;
@@ -702,12 +997,12 @@ namespace Animation.Flow.Editor
 
             // Alternating row colors
             if (index % 2 == 0)
-                element.style.backgroundColor = new Color(0.25f, 0.25f, 0.25f, 0.3f);
+                element.AddToClassList("alternating-row");
 
             // Special style for composite conditions
             if (condition.DataType == ConditionDataType.Composite)
             {
-                element.style.backgroundColor = new Color(0.2f, 0.3f, 0.4f, 0.4f);
+                element.AddToClassList("composite-condition");
             }
         }
 
@@ -717,6 +1012,30 @@ namespace Animation.Flow.Editor
             VisualElement dragHandle = CreateDragHandle();
             container.Add(dragHandle);
 
+            // Parameter name field (editable)
+            TextField paramNameField = new();
+            paramNameField.AddToClassList("parameter-field");
+            paramNameField.value = condition.ParameterName;
+            paramNameField.RegisterValueChangedCallback(evt =>
+            {
+                condition.ParameterName = evt.newValue;
+                SaveConditions();
+            });
+
+            container.Add(paramNameField);
+
+            // Value and comparison type - type-specific UI
+            VisualElement valueContainer = CreateValueEditor(condition);
+            container.Add(valueContainer);
+
+            // Remove button
+            Button removeButton = new(() => RemoveCondition(condition)) { text = "×" };
+            removeButton.AddToClassList("remove-button");
+            container.Add(removeButton);
+        }
+
+        private void CreateStandardConditionContentWithoutDragHandle(VisualElement container, ConditionData condition)
+        {
             // Parameter name field (editable)
             TextField paramNameField = new();
             paramNameField.AddToClassList("parameter-field");
@@ -753,6 +1072,49 @@ namespace Animation.Flow.Editor
             compositeLabel.AddToClassList(typeName.ToLower());
             container.Add(compositeLabel);
 
+            // Add a visual hint that this is a container
+            Label containerHint = new("(drag conditions here)");
+            containerHint.style.color = new Color(0.7f, 0.7f, 0.7f, 0.7f);
+            containerHint.style.fontSize = 10;
+            containerHint.style.marginLeft = 5;
+            containerHint.style.unityFontStyleAndWeight = FontStyle.Italic;
+            container.Add(containerHint);
+
+            // Toggle between AND/OR
+            Button toggleTypeButton = new(() => ToggleCompositeType(condition)) { text = "Toggle" };
+            toggleTypeButton.AddToClassList("quick-add-button");
+            toggleTypeButton.style.minWidth = 60;
+            container.Add(toggleTypeButton);
+
+            // Spacer
+            VisualElement spacer = new();
+            spacer.AddToClassList("flex-container");
+            container.Add(spacer);
+
+            // Remove button
+            Button removeButton = new(() => RemoveCondition(condition)) { text = "×" };
+            removeButton.AddToClassList("condition-action-button");
+            container.Add(removeButton);
+        }
+
+        private void CreateCompositeConditionContentWithoutDragHandle(VisualElement container, ConditionData condition)
+        {
+            // Composite type indicator
+            string compositeType = condition.StringValue;
+            string typeName = string.IsNullOrEmpty(compositeType) ? "AND" : compositeType.ToUpper();
+            Label compositeLabel = new(typeName);
+            compositeLabel.AddToClassList("condition-type-tag");
+            compositeLabel.AddToClassList(typeName.ToLower());
+            container.Add(compositeLabel);
+
+            // Add a visual hint that this is a container
+            Label containerHint = new("(drag conditions here)");
+            containerHint.style.color = new Color(0.7f, 0.7f, 0.7f, 0.7f);
+            containerHint.style.fontSize = 10;
+            containerHint.style.marginLeft = 5;
+            containerHint.style.unityFontStyleAndWeight = FontStyle.Italic;
+            container.Add(containerHint);
+
             // Toggle between AND/OR
             Button toggleTypeButton = new(() => ToggleCompositeType(condition)) { text = "Toggle" };
             toggleTypeButton.AddToClassList("quick-add-button");
@@ -772,14 +1134,41 @@ namespace Animation.Flow.Editor
 
         private VisualElement CreateDragHandle()
         {
-            VisualElement dragHandle = new();
-            dragHandle.style.width = 12;
-            dragHandle.style.height = 20;
-            dragHandle.style.marginRight = 5;
-            dragHandle.style.backgroundImage =
-                EditorGUIUtility.IconContent("d_VerticalLayoutGroup Icon").image as Texture2D;
+            VisualElement dragHandle = new()
+            {
+                name = "drag-handle", // Name for easier selection
+                style =
+                {
+                    width = 16,
+                    height = 22,
+                    marginRight = 5,
+                    backgroundImage = EditorGUIUtility.IconContent("d_VerticalLayoutGroup Icon").image as Texture2D,
+                    opacity = 0.6f,
+                    alignSelf = Align.Center,
+                    alignItems = Align.Center,
+                    justifyContent = Justify.Center
+                }
+            };
 
-            dragHandle.style.opacity = 0.6f;
+            // Add class for easier styling
+            dragHandle.AddToClassList("drag-handle");
+
+            // Add hover effect
+            dragHandle.RegisterCallback<MouseEnterEvent>(evt =>
+            {
+                dragHandle.style.opacity = 1.0f;
+                dragHandle.style.backgroundColor = new Color(1, 1, 1, 0.1f);
+            });
+
+            dragHandle.RegisterCallback<MouseLeaveEvent>(evt =>
+            {
+                if (!_isDraggingCondition)
+                {
+                    dragHandle.style.opacity = 0.6f;
+                    dragHandle.style.backgroundColor = Color.clear;
+                }
+            });
+
             return dragHandle;
         }
 
@@ -1210,8 +1599,12 @@ namespace Animation.Flow.Editor
 
         private void MakeElementDraggable(VisualElement element)
         {
-            // MouseDown - start drag
-            element.RegisterCallback<MouseDownEvent>(evt =>
+            // Get the drag handle which is the first child of the condition element
+            VisualElement dragHandle = element.Children().FirstOrDefault();
+            if (dragHandle == null) return;
+
+            // MouseDown - start drag only when clicking on the drag handle
+            dragHandle.RegisterCallback<MouseDownEvent>(evt =>
             {
                 if (evt.button == 0 && !_isDraggingCondition) // Left button
                 {
@@ -1219,54 +1612,65 @@ namespace Animation.Flow.Editor
                     _draggedCondition = element.userData as ConditionData;
                     _draggedStartIndex = _conditions.IndexOf(_draggedCondition);
                     _isDraggingCondition = true;
+                    _dragStartPosition = evt.mousePosition;
 
-                    // Visual feedback
-                    element.style.opacity = 0.6f;
+                    // Create a clone for visual feedback during dragging
+                    CreateDraggedElementClone(element, evt.mousePosition);
+
+                    // Visual feedback - semi-transparent but still visible
+                    element.style.opacity = 0.7f;
+                    element.AddToClassList("dragging");
+
+                    // Capture the mouse to ensure we get all events even if cursor moves outside the element
+                    dragHandle.CaptureMouse();
+
+                    // Initialize the drop indicator position
+                    UpdateDropTarget(evt.mousePosition);
+
                     evt.StopPropagation();
                 }
             });
 
-            // MouseMove - update drop indicator
-            element.RegisterCallback<MouseMoveEvent>(evt =>
+            // MouseUp - drop (register on parent container to catch events outside the element)
+            _parentContainer.RegisterCallback<MouseUpEvent>(evt =>
             {
                 if (_isDraggingCondition && _draggedElement != null)
                 {
-                    evt.StopPropagation();
-                }
-            });
+                    // Release pointer capture
+                    if (dragHandle.HasMouseCapture())
+                    {
+                        dragHandle.ReleaseMouse();
+                    }
 
-            // MouseUp - drop
-            element.RegisterCallback<MouseUpEvent>(evt =>
-            {
-                if (_isDraggingCondition && _draggedElement != null)
-                {
                     _isDraggingCondition = false;
                     _draggedElement.style.opacity = 1.0f;
+                    _draggedElement.RemoveFromClassList("dragging");
+
+                    // Process the drop
+                    HandleElementDrop(evt.mousePosition);
+
+                    // Clean up
                     _draggedElement = null;
+                    _draggedCondition = null;
                     _dropIndicator.style.display = DisplayStyle.None;
-                    evt.StopPropagation();
-                }
-            });
 
-            // DragEnter - show drop indicator
-            element.RegisterCallback<MouseOverEvent>(evt =>
-            {
-                if (_isDraggingCondition && _draggedElement != null && _draggedElement != element)
-                {
-                    // Get target condition
-                    ConditionData targetCondition = element.userData as ConditionData;
-                    if (targetCondition == null) return;
+                    // Remove the clone
+                    if (_draggedElementClone != null)
+                    {
+                        _parentContainer.Remove(_draggedElementClone);
+                        _draggedElementClone = null;
+                    }
 
-                    // Show drop indicator
-                    _dropIndicator.style.display = DisplayStyle.Flex;
-
-                    // Position drop indicator
-                    int targetIndex = _conditionsContainer.IndexOf(element);
-                    _conditionsContainer.Remove(_dropIndicator);
-                    _conditionsContainer.Insert(targetIndex, _dropIndicator);
-
-                    // Handle drop logic
-                    HandleDropOperation(targetCondition, evt.mousePosition);
+                    // Reset highlight on composite elements
+                    foreach (VisualElement conditionElement in _conditionElements.Values)
+                    {
+                        if (conditionElement.userData is ConditionData condition &&
+                            condition.DataType == ConditionDataType.Composite)
+                        {
+                            conditionElement.RemoveFromClassList("drop-target-composite");
+                            conditionElement.AddToClassList("composite-condition");
+                        }
+                    }
 
                     evt.StopPropagation();
                 }
@@ -1324,9 +1728,16 @@ namespace Animation.Flow.Editor
             RefreshConditionsList();
         }
 
-        private bool IsParentOf(ConditionData potentialParent, ConditionData potentialChild)
+        private bool IsParentOf(ConditionData potentialParent, ConditionData potentialChild) =>
+            IsParentOf(potentialParent, potentialChild, new HashSet<string>());
+
+        private bool IsParentOf(ConditionData potentialParent, ConditionData potentialChild, HashSet<string> visitedIds)
         {
             if (potentialParent.DataType != ConditionDataType.Composite) return false;
+
+            // Prevent infinite recursion by tracking visited nodes
+            if (visitedIds.Contains(potentialParent.UniqueId)) return false;
+            visitedIds.Add(potentialParent.UniqueId);
 
             // Check if the child has this parent directly
             if (potentialChild.ParentGroupId == potentialParent.UniqueId) return true;
@@ -1336,7 +1747,7 @@ namespace Animation.Flow.Editor
             {
                 if (condition.ParentGroupId == potentialParent.UniqueId)
                 {
-                    if (IsParentOf(condition, potentialChild)) return true;
+                    if (IsParentOf(condition, potentialChild, visitedIds)) return true;
                 }
             }
 
@@ -1405,6 +1816,180 @@ namespace Animation.Flow.Editor
 
             // Set the index of the moved condition
             conditionToMove.GroupIndex = targetCondition.GroupIndex + 1;
+        }
+
+        private void CreateDraggedElementClone(VisualElement sourceElement, Vector2 mousePosition)
+        {
+            // Remove any existing clone
+            if (_draggedElementClone != null)
+            {
+                if (_draggedElementClone.parent == _parentContainer)
+                {
+                    _parentContainer.Remove(_draggedElementClone);
+                }
+
+                _draggedElementClone = null;
+            }
+
+            // Create a clone of the dragged element
+            _draggedElementClone = new VisualElement();
+            _draggedElementClone.AddToClassList("dragging-clone");
+
+            // Match source size with a bit extra padding for better visibility
+            _draggedElementClone.style.width = sourceElement.resolvedStyle.width;
+            _draggedElementClone.style.height = sourceElement.resolvedStyle.height;
+
+            // Add position styling
+            _draggedElementClone.style.position = Position.Absolute;
+            _draggedElementClone.style.left = mousePosition.x - sourceElement.resolvedStyle.width / 2;
+            _draggedElementClone.style.top = mousePosition.y - 15; // Offset to position slightly above cursor
+
+            // Set z-index to appear above other elements
+            _draggedElementClone.style.zIndex = 999;
+
+            // Add visual styling
+            _draggedElementClone.style.backgroundColor = new Color(0.3f, 0.4f, 0.5f, 0.9f);
+            _draggedElementClone.style.paddingLeft = 8;
+            _draggedElementClone.style.paddingRight = 8;
+            _draggedElementClone.style.paddingTop = 4;
+            _draggedElementClone.style.paddingBottom = 4;
+
+            // Copy some visual properties from source
+            ConditionData condition = sourceElement.userData as ConditionData;
+            if (condition != null)
+            {
+                Label cloneLabel = new(condition.DataType == ConditionDataType.Composite
+                    ? $"{condition.StringValue} Group"
+                    : condition.ParameterName);
+
+                cloneLabel.style.color = Color.white;
+                cloneLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
+                cloneLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                _draggedElementClone.Add(cloneLabel);
+            }
+
+            // Initially hidden
+            _draggedElementClone.style.display = DisplayStyle.None;
+
+            // Add to parent container which contains the entire graph
+            _parentContainer.Add(_draggedElementClone);
+        }
+
+        private void HandleElementDrop(Vector2 mousePosition)
+        {
+            if (_draggedCondition == null) return;
+
+            // Check if dropping at the end of the list
+            if (_conditionsContainer.worldBound.Contains(mousePosition) &&
+                !IsOverAnyConditionElement(mousePosition) &&
+                _conditionElements.Count > 0)
+            {
+                // Move to the end of the root list
+                _draggedCondition.ParentGroupId = null;
+                _draggedCondition.NestingLevel = 0;
+
+                // Find highest root index
+                int maxRootIndex = -1;
+                foreach (ConditionData condition in _conditions)
+                {
+                    if (string.IsNullOrEmpty(condition.ParentGroupId) && condition.GroupIndex > maxRootIndex)
+                    {
+                        maxRootIndex = condition.GroupIndex;
+                    }
+                }
+
+                _draggedCondition.GroupIndex = maxRootIndex + 1;
+                SaveConditions();
+                RefreshConditionsList();
+                return;
+            }
+
+            // Find what condition element is under the mouse position
+            ConditionData targetCondition = null;
+            VisualElement targetElement = null;
+
+            // First check all composite elements for "drop inside" operation
+            foreach (VisualElement element in _conditionElements.Values)
+            {
+                if (element == _draggedElement || element.parent == null) continue;
+
+                if (element.ClassListContains("drop-target-composite"))
+                {
+                    targetElement = element;
+                    targetCondition = element.userData as ConditionData;
+
+                    // Move the condition inside this composite
+                    MoveConditionToComposite(_draggedCondition, targetCondition);
+                    SaveConditions();
+                    RefreshConditionsList();
+                    return;
+                }
+            }
+
+            // Next check for position relative to the drop indicator
+            if (_dropIndicator != null && _dropIndicator.style.display == DisplayStyle.Flex &&
+                _dropIndicator.parent == _conditionsContainer)
+            {
+                int dropIndex = _conditionsContainer.IndexOf(_dropIndicator);
+                if (dropIndex >= 0)
+                {
+                    // Find the target condition by index
+                    if (dropIndex > 0 && dropIndex <= _conditionElements.Count)
+                    {
+                        // Find the condition before the drop indicator
+                        int targetIndex = -1;
+                        ConditionData beforeCondition = null;
+
+                        int currentElementIndex = 0;
+                        foreach (VisualElement element in _conditionsContainer.Children())
+                        {
+                            if (element == _dropIndicator) break;
+                            if (element.userData is ConditionData condition)
+                            {
+                                beforeCondition = condition;
+                                targetIndex = currentElementIndex;
+                            }
+
+                            currentElementIndex++;
+                        }
+
+                        if (beforeCondition != null)
+                        {
+                            // Move after this condition
+                            MoveConditionBelow(_draggedCondition, beforeCondition);
+                            SaveConditions();
+                            RefreshConditionsList();
+                            return;
+                        }
+                    }
+                    else if (dropIndex == 0)
+                    {
+                        // Moving to the very top
+                        _draggedCondition.ParentGroupId = null;
+                        _draggedCondition.NestingLevel = 0;
+                        _draggedCondition.GroupIndex = 0;
+
+                        // Shift all other root conditions down
+                        foreach (ConditionData condition in _conditions)
+                        {
+                            if (string.IsNullOrEmpty(condition.ParentGroupId) &&
+                                condition != _draggedCondition &&
+                                condition.GroupIndex >= 0)
+                            {
+                                condition.GroupIndex++;
+                            }
+                        }
+
+                        SaveConditions();
+                        RefreshConditionsList();
+                        return;
+                    }
+                }
+            }
+
+            // If we get here, no valid target was found or processed
+            // Just refresh to restore original positions
+            RefreshConditionsList();
         }
 
         private void SaveConditions()
