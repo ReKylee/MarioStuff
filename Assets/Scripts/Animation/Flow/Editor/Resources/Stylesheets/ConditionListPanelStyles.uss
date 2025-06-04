@@ -43,11 +43,20 @@
 /* Scroll Area */
 .conditions-scroll-view {
     flex-grow: 1;
+    flex-shrink: 1;
     padding: 8px;
     background-color: var(--background-dark);
     border-radius: var(--border-radius-small);
-    width: 100%;
     min-width: 0;
+    overflow: hidden;
+    align-self: stretch;
+    flex-direction: column;
+}
+
+/* Drop indicator */
+.drop-indicator {
+    height: 4px;
+    background-color: var(--drop-indicator-color);
 }
 
 /* Make sure ScrollView contentContainer fills available width */
@@ -55,6 +64,9 @@
     width: 100%;
     min-width: 0;
     max-width: 100%;
+    flex-grow: 1;
+    flex-shrink: 1;
+    align-self: stretch;
 }
 
 /* Condition Element */
@@ -70,11 +82,13 @@
     transition: var(--transition-standard);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     flex-wrap: nowrap;
-    width: 100%;
     min-width: 0;
+    max-width: 100%;
+    flex-basis: auto;
     justify-content: space-between;
     overflow: hidden;
     box-sizing: border-box;
+    align-self: stretch;
 }
 
 .condition-element:hover {
@@ -87,7 +101,6 @@
 .parameter-name-label {
     min-width: 80px;
     max-width: 200px;
-    width: 30%;
     -unity-font-style: bold;
     color: var(--text-light);
     margin: 0;
@@ -98,6 +111,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     -unity-text-align: middle-left;
+    flex: 1 1 auto;
 }
 
 /* Comparison Button */
@@ -135,7 +149,6 @@
 /* Value Field */
 .value-field {
     min-width: 80px;
-    width: 30%;
     max-width: 200px;
     margin: 0;
     border-radius: 3px;
@@ -145,6 +158,22 @@
     justify-content: center;
     background-color: rgba(0, 0, 0, 0.15);
     box-sizing: border-box;
+    overflow: hidden;
+    flex: 1 1 auto;
+}
+
+/* Middle Container */
+.middle-container {
+    flex-direction: row;
+    flex-grow: 1;
+    flex-shrink: 1;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: 5px;
+    margin-right: 5px;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
     overflow: hidden;
 }
 
@@ -171,7 +200,7 @@
     min-width: 24px;
     max-width: 24px;
     font-size: 18px;
-    color: rgb(150, 150, 150);
+    color: var(--drag-handle-color);
     cursor: move-arrow;
     -unity-text-align: middle-center;
     margin-right: 5px;
@@ -190,7 +219,7 @@
     min-width: 40px;
     max-width: 40px;
     height: 24px;
-    background-color: rgba(150, 40, 40, 0.8);
+    background-color: var(--remove-button-color);
     color: white;
     border-radius: 3px;
     font-size: 16px;
@@ -352,6 +381,9 @@
 .not-toggle.disabled {
     background-color: var(--composite-not-disabled);
     color: var(--composite-not-disabled-text);
+    --drag-handle-color: rgb(150, 150, 150);
+    --drop-indicator-color: rgba(77, 180, 255, 0.8);
+    --remove-button-color: rgba(150, 40, 40, 0.8);
 }
 
 .not-toggle.disabled:hover {

@@ -1,5 +1,6 @@
 using Animation.Flow.Conditions;
 using Animation.Flow.Interfaces;
+using Animation.Flow.States;
 
 namespace Animation.Flow.Core
 {
@@ -8,6 +9,7 @@ namespace Animation.Flow.Core
     /// </summary>
     public class AnimationTransition
     {
+
         /// <summary>
         ///     Root condition for this transition (usually a composite)
         /// </summary>
@@ -23,9 +25,29 @@ namespace Animation.Flow.Core
         }
 
         /// <summary>
+        ///     Create a new transition to the specified target state with type information
+        /// </summary>
+        public AnimationTransition(string targetStateId, AnimationStateType targetStateType)
+        {
+            TargetStateId = targetStateId;
+            TargetStateType = targetStateType;
+            _rootCondition = new CompositeCondition(CompositeType.And);
+        }
+
+        /// <summary>
         ///     ID of the destination state for this transition
         /// </summary>
-        public string TargetStateId { get; private set; }
+        public string TargetStateId { get; }
+
+        /// <summary>
+        ///     Get the target state type if available
+        /// </summary>
+        public AnimationStateType? TargetStateType { get; }
+
+        /// <summary>
+        ///     Get the target state instance
+        /// </summary>
+        public IAnimationState TargetState => StateRegistry.GetState(TargetStateId);
 
         /// <summary>
         ///     Root condition for this transition
@@ -96,9 +118,18 @@ namespace Animation.Flow.Core
             if (_rootCondition == null)
                 return true;
 
+            // If the target state doesn't exist in the registry, this transition is invalid
+            if (!StateRegistry.StateExists(TargetStateId))
+                return false;
+
             // Evaluate the root condition
             return _rootCondition.Evaluate(context);
         }
+
+        /// <summary>
+        ///     Get the target state as a strongly-typed reference
+        /// </summary>
+        public T GetTargetState<T>() where T : class, IAnimationState => StateRegistry.GetState<T>(TargetStateId);
     }
 
 }

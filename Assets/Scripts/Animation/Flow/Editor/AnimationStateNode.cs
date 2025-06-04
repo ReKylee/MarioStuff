@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Animation.Flow.Interfaces;
+using Animation.Flow.States;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace Animation.Flow.Editor
         private Toggle _initialStateToggle;
         private bool _isCollapsed;
 
-        public AnimationStateNode(string stateType, string animationName)
+        public AnimationStateNode(AnimationStateType stateType, string animationName)
         {
             StateType = stateType;
             AnimationName = animationName;
@@ -30,7 +31,7 @@ namespace Animation.Flow.Editor
             BuildNodeUI();
         }
 
-        public string StateType { get; }
+        public AnimationStateType StateType { get; }
         public string AnimationName { get; set; }
         public bool IsInitialState { get; set; }
         public string ID { get; set; }
@@ -247,7 +248,7 @@ namespace Animation.Flow.Editor
             typeLabel.style.color = new Color(0.9f, 0.9f, 0.9f);
             typeContainer.Add(typeLabel);
 
-            Label typeValueLabel = new(StateType);
+            Label typeValueLabel = new(StateType.ToString());
             typeValueLabel.style.color = new Color(0.9f, 0.9f, 0.9f);
             typeContainer.Add(typeValueLabel);
 
@@ -337,11 +338,11 @@ namespace Animation.Flow.Editor
 
             switch (StateType)
             {
-                case "HoldFrame":
+                case AnimationStateType.HoldFrame:
                     return new Color(0.2f, 0.2f, 0.6f); // Blue for hold frame
-                case "OneTime":
+                case AnimationStateType.OneTime:
                     return new Color(0.6f, 0.3f, 0.1f); // Orange for one-time
-                case "Looping":
+                case AnimationStateType.Looping:
                     return new Color(0.4f, 0.1f, 0.5f); // Purple for looping
                 default:
                     return new Color(0.3f, 0.3f, 0.3f); // Gray for unknown

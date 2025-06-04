@@ -13,8 +13,8 @@ namespace Animation.Flow.Core
         [Tooltip("Unique identifier for this state")]
         public string Id;
 
-        [Tooltip("Type of state (Looping, OneTime, HoldFrame)")]
-        public string StateType;
+        [Tooltip("Type of state (Looping, OneTime, HoldFrame)")] [SerializeField]
+        private AnimationStateType _stateType = AnimationStateType.OneTime;
 
         [Tooltip("Name of the animation to play")]
         public string AnimationName;
@@ -25,35 +25,59 @@ namespace Animation.Flow.Core
         [Tooltip("Editor position of the state node")]
         public Vector2 Position;
 
-        [Tooltip("Frame to hold for HoldFrame states")]
-        public int FrameToHold;
+        [Tooltip("Frame to hold (only used by HoldFrame state type)")] [SerializeField]
+        private int _frameToHold;
 
         /// <summary>
-        ///     Create a new animation state data instance
+        ///     Create a new animation state data with specific type
         /// </summary>
+        public AnimationStateData(string id, string animationName, AnimationStateType stateType, int frameToHold = 0)
+        {
+            Id = id;
+            AnimationName = animationName;
+            _frameToHold = frameToHold;
+            _stateType = stateType;
+        }
+
         public AnimationStateData()
         {
         }
 
         /// <summary>
-        ///     Create a new animation state data with specific type
+        ///     Frame index to hold for HoldFrame states
         /// </summary>
-        public AnimationStateData(string id, string animationName, AnimationStateType stateType)
+        public int FrameToHold
         {
-            Id = id;
-            AnimationName = animationName;
-            StateType = stateType.ToString();
+            get => _frameToHold;
+            set => _frameToHold = value;
         }
 
         /// <summary>
-        ///     Get the state type as an enum
+        ///     Type of this animation state
         /// </summary>
-        public AnimationStateType GetStateType()
+        public AnimationStateType StateType
         {
-            if (Enum.TryParse(StateType, out AnimationStateType stateType))
-                return stateType;
-
-            return AnimationStateType.OneTime; // Default fallback
+            get => _stateType;
+            set => _stateType = value;
         }
+
+        /// <summary>
+        ///     Get the state type (for backward compatibility)
+        /// </summary>
+        public AnimationStateType GetStateType() => _stateType;
+
+        /// <summary>
+        ///     Clone this state data
+        /// </summary>
+        public AnimationStateData Clone() =>
+            new()
+            {
+                Id = Id,
+                _stateType = _stateType,
+                AnimationName = AnimationName,
+                IsInitialState = IsInitialState,
+                Position = Position,
+                _frameToHold = _frameToHold
+            };
     }
 }

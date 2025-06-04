@@ -22,9 +22,9 @@ namespace Animation.Flow.Editor.Panels.Parameters
         {
             // Default is already bottom-right
             // Set resize handle to bottom right
-            _resizeHandlePosition = ResizeHandlePosition.BottomRight;
+            ResizeHandlePos = ResizeHandlePosition.BottomRight;
             // Set resize handle to bottom right
-            _resizeHandlePosition = ResizeHandlePosition.BottomRight;
+            ResizeHandlePos = ResizeHandlePosition.BottomRight;
             // Add class for specific styling
             AddToClassList("parameter-panel");
 

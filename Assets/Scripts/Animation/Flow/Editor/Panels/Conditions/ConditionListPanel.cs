@@ -21,21 +21,21 @@ namespace Animation.Flow.Editor.Panels.Conditions
         public ConditionListPanel(VisualElement parentContainer)
         {
             // Set resize handle position before base constructor
-            _resizeHandlePosition = ResizeHandlePosition.BottomLeft;
+            ResizeHandlePos = ResizeHandlePosition.BottomLeft;
 
             // Call base constructor which will use our handle position
             Initialize(parentContainer, "Conditions", new Vector2(320, 10));
             // Set resize handle position before creating UI
-            _resizeHandlePosition = ResizeHandlePosition.BottomLeft;
+            ResizeHandlePos = ResizeHandlePosition.BottomLeft;
             // Force refresh resize handle
             VisualElement oldHandle = this.Q(null, "panel-resize-handle-bottom-right");
             if (oldHandle != null) oldHandle.RemoveFromHierarchy();
             CreateResizeHandle();
             // Set resize handle to bottom left
-            _resizeHandlePosition = ResizeHandlePosition.BottomLeft;
+            ResizeHandlePos = ResizeHandlePosition.BottomLeft;
 
             // Set resize handle to bottom left
-            _resizeHandlePosition = ResizeHandlePosition.BottomLeft;
+            ResizeHandlePos = ResizeHandlePosition.BottomLeft;
             // Initialize view factory and drag handler
             _viewFactory = new ConditionViewFactory(this);
 
@@ -53,9 +53,6 @@ namespace Animation.Flow.Editor.Panels.Conditions
             // Create drop indicator element
             _dropIndicator = new VisualElement();
             _dropIndicator.AddToClassList("drop-indicator");
-            _dropIndicator.style.height = 4;
-            _dropIndicator.style.backgroundColor =
-                new StyleColor(new Color(0.3f, 0.7f, 1f, 0.8f)); // Make it more visible
 
 
             RegisterDropEvents();
@@ -84,14 +81,10 @@ namespace Animation.Flow.Editor.Panels.Conditions
             // Add name for CSS debugging
             scrollView.name = "ConditionScrollView";
 
-            // Configure the scrollview to auto-resize based on content
-            scrollView.style.flexGrow = 1;
-            scrollView.style.width = new StyleLength(StyleKeyword.Auto);
+            // Configure the content container
             scrollView.contentContainer.style.flexGrow = 1;
-            scrollView.contentContainer.style.width = new StyleLength(StyleKeyword.Auto);
-
-            // Apply explicit background color programmatically
-            scrollView.style.backgroundColor = new Color(0.176f, 0.176f, 0.176f, 1f);
+            scrollView.contentContainer.style.flexShrink = 1;
+            scrollView.contentContainer.style.width = new StyleLength(Length.Percent(100));
 
             return scrollView;
         }
@@ -99,8 +92,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
         protected override void OnContentCreated(ScrollView content)
         {
             ContentContainer.Add(content);
-
-            ContentContainer.style.flexGrow = 1;
+            // All styles are now in DraggablePanel.uss stylesheet
         }
 
         #endregion

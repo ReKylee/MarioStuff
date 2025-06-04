@@ -3,7 +3,7 @@
     --panel-background: rgb(51, 51, 51);
     --panel-border: rgb(26, 26, 26);
     --panel-title-background: rgb(77, 77, 77);
-    --panel-content-background: rgb(45, 45, 45);
+    --panel-content-background: rgb(45, 45, 45); /* #2D2D2D */
     --text-color-light: rgb(255, 255, 255);
     --handle-color: rgba(255, 255, 255, 0.5);
     --panel-border-radius: 4px;
@@ -18,8 +18,11 @@
     box-shadow: var(--panel-shadow);
     min-width: 200px;
     min-height: 250px;
-    flex-grow: 1;
     overflow: hidden; /* Prevent content from spilling out */
+    flex-direction: column;
+    align-items: stretch;
+    box-sizing: border-box;
+    /* Remove width: 100% and flex-grow: 1 that were causing the panel to expand */
 }
 
 .panel-title-bar {
@@ -42,11 +45,14 @@
 .panel-content {
     padding: 10px;
     flex-grow: 1;
+    flex-shrink: 1;
     background-color: var(--panel-content-background);
-    overflow: visible;
-    width: auto;
+    overflow: hidden;
+    align-self: stretch;
     border-bottom-left-radius: var(--panel-border-radius);
     border-bottom-right-radius: var(--panel-border-radius);
+    flex-direction: column;
+    min-width: 0;
 }
 
 /* Bottom left resize handle */

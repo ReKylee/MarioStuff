@@ -131,8 +131,8 @@ namespace Animation.Flow.Core
             // Create and add states
             foreach (AnimationStateData stateData in states)
             {
-                // Create state based on its type
-                IAnimationState state = CreateStateFromData(stateData);
+                // Create state based on its type using the factory
+                IAnimationState state = StateFactory.CreateFromData(stateData);
 
                 // Add to controller
                 controller.AddState(state);
@@ -183,17 +183,24 @@ namespace Animation.Flow.Core
         {
             AnimationStateType stateType = stateData.GetStateType();
 
-            switch (stateType)
+            try
             {
-                case AnimationStateType.HoldFrame:
-                    return new HoldFrameState(stateData.Id, stateData.AnimationName, stateData.FrameToHold);
-                case AnimationStateType.OneTime:
-                    return new OneTimeState(stateData.Id, stateData.AnimationName);
-                case AnimationStateType.Looping:
-                    return new LoopingState(stateData.Id, stateData.AnimationName);
-                default:
-                    Debug.LogWarning($"Unknown state type: {stateType}, creating default OneTime state");
-                    return new OneTimeState(stateData.Id, stateData.AnimationName);
+                // Special case for HoldFrameState which needs additional parameters
+                if (stateType == AnimationStateType.HoldFrame)
+                {
+                    return StateTypeRegistry.CreateSpecializedState<HoldFrameState>(
+                        stateData.Id, stateData.AnimationName, stateData.FrameToHold);
+                }
+
+                // Use registry for standard state types
+                return StateTypeRegistry.CreateState(stateType, stateData.Id, stateData.AnimationName);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning(
+                    $"Failed to create state of type {stateType}: {ex.Message}. Creating default OneTime state.");
+
+                return new OneTimeState(stateData.Id, stateData.AnimationName);
             }
         }
 

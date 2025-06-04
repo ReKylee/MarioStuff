@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Animation.Flow.Conditions;
@@ -20,6 +21,10 @@ namespace Animation.Flow.Editor
         // Static field to remember the last opened asset between domain reloads
         // Now marked with [SerializeField] to persist between editor sessions
         private static string _lastOpenedAssetPath;
+
+        // Auto-save feature
+        [SerializeField] private bool autoSaveEnabled;
+        private Button _autoSaveButton;
         private AnimationFlowAsset _currentAsset;
 
         private AnimationFlowGraphView _graphView;
@@ -72,6 +77,8 @@ namespace Animation.Flow.Editor
 
             // Listen for selection changes to update target GameObject
             Selection.selectionChanged += OnSelectionChanged;
+
+            // No timer needed for auto-save as it now happens on graph changes
         }
 
         private void OnDisable()
@@ -155,6 +162,10 @@ namespace Animation.Flow.Editor
             };
 
             _graphView.StretchToParentSize();
+
+            // Also listen for changes to node values, not just structure
+            _graphView.RegisterCallback<GeometryChangedEvent>(_ => OnGraphElementChanged());
+            _graphView.nodeCreationRequest += _ => OnGraphElementChanged();
             parent.Add(_graphView);
 
             // Mark graph as modified when changes occur
@@ -165,6 +176,19 @@ namespace Animation.Flow.Editor
                     change.elementsToRemove is { Count: > 0 })
                 {
                     _hasUnsavedChanges = true;
+
+                    // Auto-save immediately if enabled
+                    if (autoSaveEnabled && _currentAsset != null)
+                    {
+                        // Wait a frame to ensure graph changes are applied
+                        EditorApplication.delayCall += () =>
+                        {
+                            SaveToAsset(_currentAsset);
+                            ShowNotification(new GUIContent("Auto-saved"));
+                            Debug.Log(
+                                $"[Auto-Save] Graph change detected - Saved {_currentAsset.name} at {DateTime.Now}");
+                        };
+                    }
                 }
 
                 return change;
@@ -195,6 +219,51 @@ namespace Animation.Flow.Editor
             };
 
             toolbar.Add(loadButton);
+
+            // Add spacer element
+            VisualElement spacer = new();
+            spacer.style.flexGrow = 1;
+            toolbar.Add(spacer);
+
+            // Auto-save toggle button
+            Button autoSaveButton = new(ToggleAutoSave)
+            {
+                text = autoSaveEnabled ? "Auto-Save: ON" : "Auto-Save: OFF",
+                name = "AutoSaveButton" // Set a name for the button for easier querying if needed
+            };
+
+            // Style the auto-save button
+            autoSaveButton.style.marginRight = 10;
+            if (autoSaveEnabled)
+            {
+                autoSaveButton.style.backgroundColor = new Color(0.2f, 0.8f, 0.2f, 0.8f);
+            }
+            else
+            {
+                autoSaveButton.style.backgroundColor = new Color(0.8f, 0.2f, 0.2f, 0.6f);
+            }
+
+            // Add a manual save button
+            Button manualSaveButton = new(() =>
+            {
+                if (_currentAsset != null)
+                {
+                    SaveToAsset(_currentAsset);
+                    // We can do a full save here since it's explicitly requested
+                    AssetDatabase.SaveAssetIfDirty(_currentAsset);
+                    ShowNotification(new GUIContent("Saved"));
+                }
+            })
+            {
+                text = "Save Now"
+            };
+
+            manualSaveButton.style.backgroundColor = new Color(0.2f, 0.2f, 0.8f, 0.6f);
+
+            toolbar.Add(autoSaveButton);
+
+            // Add manual save button to toolbar
+            toolbar.Add(manualSaveButton);
 
             toolbar.style.height = 30;
 
@@ -318,6 +387,13 @@ namespace Animation.Flow.Editor
             // Use a less aggressive save method that doesn't cause domain reloads
             AssetDatabase.SaveAssetIfDirty(flowAsset);
 
+            // For auto-save, ensure the asset is actually written to disk
+            if (autoSaveEnabled)
+            {
+                EditorUtility.SetDirty(_currentAsset);
+                AssetDatabase.Refresh();
+            }
+
             // Reset unsaved changes flag
             _hasUnsavedChanges = false;
 
@@ -437,8 +513,7 @@ namespace Animation.Flow.Editor
                     stateData.AnimationName,
                     new Rect(stateData.Position, new Vector2(150, 200)), // Update size to match node creation
                     stateData.Id,
-                    stateData.IsInitialState,
-                    stateData.FrameToHold
+                    stateData.IsInitialState
                 );
 
                 graphNodes[stateData.Id] = node;
@@ -575,5 +650,84 @@ namespace Animation.Flow.Editor
         // Getter methods for target info
         public GameObject GetTargetGameObject() => _targetGameObject;
         public IAnimator GetTargetAnimator() => _targetAnimator;
+
+
+        private void ToggleAutoSave()
+        {
+            autoSaveEnabled = !autoSaveEnabled;
+
+            // Update button visual state
+            Button autoSaveButton =
+                rootVisualElement.Q<Toolbar>().Q<Button>("AutoSaveButton");
+
+            if (autoSaveButton != null)
+            {
+                autoSaveButton.text = autoSaveEnabled ? "Auto-Save: ON" : "Auto-Save: OFF";
+
+                if (autoSaveEnabled)
+                {
+                    autoSaveButton.style.backgroundColor = new Color(0.2f, 0.8f, 0.2f, 0.8f);
+                    // Initialize last save time when turning on
+                }
+                else
+                {
+                    autoSaveButton.style.backgroundColor = new Color(0.8f, 0.2f, 0.2f, 0.6f);
+                }
+            }
+
+            // Show notification
+            ShowNotification(new GUIContent(autoSaveEnabled ? "Auto-Save Enabled" : "Auto-Save Disabled"));
+
+            // If enabling, do an immediate save if there are unsaved changes
+            if (autoSaveEnabled && _currentAsset && _hasUnsavedChanges)
+            {
+                // Save to asset without forcing database operations
+                SaveToAsset(_currentAsset);
+
+                // Just mark the asset as dirty without full reimport
+                EditorUtility.SetDirty(_currentAsset);
+
+                _hasUnsavedChanges = false;
+
+                // Update window title to remove asterisk if it was there
+                UpdateWindowTitle();
+            }
+        }
+
+        // Method to handle when graph elements change (including property edits)
+        private void OnGraphElementChanged()
+        {
+            if (_hasUnsavedChanges)
+                return;
+
+            _hasUnsavedChanges = true;
+
+            // Auto-save if enabled
+            if (autoSaveEnabled && _currentAsset)
+            {
+                // Slight delay to ensure all changes are processed
+                EditorApplication.delayCall += () =>
+                {
+                    try
+                    {
+                        // Use more gentle save approach
+                        SaveToAsset(_currentAsset);
+
+                        // Don't force an asset database refresh
+                        EditorUtility.SetDirty(_currentAsset);
+
+                        // Only mark as saved after successful save
+                        _hasUnsavedChanges = false;
+
+                        // Only show notification for significant changes
+                        ShowNotification(new GUIContent("Auto-saved"));
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"Error during auto-save: {ex.Message}");
+                    }
+                };
+            }
+        }
     }
 }

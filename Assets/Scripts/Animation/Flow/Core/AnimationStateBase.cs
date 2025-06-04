@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Animation.Flow.Interfaces;
+using Animation.Flow.States;
 
 namespace Animation.Flow.Core
 {
@@ -74,13 +75,17 @@ namespace Animation.Flow.Core
             {
                 if (transition.CanTransition(context))
                 {
-                    return transition.TargetStateId;
+                    // Verify state exists before returning it
+                    if (StateRegistry.StateExists(transition.TargetStateId))
+                    {
+                        return transition.TargetStateId;
+                    }
                 }
             }
 
-            // No valid transitions
             return null;
         }
+
 
         /// <summary>
         ///     Add a transition to this state
@@ -99,6 +104,33 @@ namespace Animation.Flow.Core
             AnimationTransition transition = new(targetStateId);
             _transitions.Add(transition);
             return transition; // Return for adding conditions
+        }
+
+        /// <summary>
+        ///     Create and add a transition to a strongly-typed state
+        /// </summary>
+        public AnimationTransition TransitionTo<T>(string targetStateId) where T : class, IAnimationState
+        {
+            // Get the state type
+            AnimationStateType stateType = AnimationStateType.OneTime;
+
+            // Try to determine the actual type based on registered types
+            if (typeof(T) == typeof(LoopingState))
+            {
+                stateType = AnimationStateType.Looping;
+            }
+            else if (typeof(T) == typeof(HoldFrameState))
+            {
+                stateType = AnimationStateType.HoldFrame;
+            }
+            else if (typeof(T) == typeof(OneTimeState))
+            {
+                stateType = AnimationStateType.OneTime;
+            }
+
+            AnimationTransition transition = new(targetStateId, stateType);
+            _transitions.Add(transition);
+            return transition;
         }
     }
 }

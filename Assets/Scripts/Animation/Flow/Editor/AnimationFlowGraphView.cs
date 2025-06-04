@@ -1,7 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Animation.Flow.Conditions;
+using Animation.Flow.Core;
 using Animation.Flow.Editor.Managers;
 using Animation.Flow.Editor.Panels;
 using Animation.Flow.Interfaces;
@@ -15,6 +15,10 @@ namespace Animation.Flow.Editor
 {
     public class AnimationFlowGraphView : GraphView
     {
+
+        // Transition editor panel (embedded in the graph view)
+        private readonly TransitionEditorPanel _transitionEditorPanel;
+
         // Store the available animation names
         private List<string> _availableAnimations;
 
@@ -27,9 +31,6 @@ namespace Animation.Flow.Editor
 
         // Store references to the target GameObject and animator
         private GameObject _targetGameObject;
-
-        // Transition editor panel (embedded in the graph view)
-        private TransitionEditorPanel _transitionEditorPanel;
 
         public AnimationFlowGraphView()
         {
@@ -145,8 +146,8 @@ namespace Animation.Flow.Editor
         /// <summary>
         ///     Create a new animation state node
         /// </summary>
-        public AnimationStateNode CreateStateNode(string stateType, string animationName, Rect position,
-            string customId = null, bool isInitialState = false, int frameToHold = 0)
+        public AnimationStateNode CreateStateNode(AnimationStateType stateType, string animationName, Rect position,
+            string customId = null, bool isInitialState = false)
         {
             // Create a new animation state node
             AnimationStateNode node = new(stateType, animationName);
@@ -277,13 +278,7 @@ namespace Animation.Flow.Editor
 
         private void SetupNodeCreation()
         {
-            // Define node types with their corresponding classes for more type safety
-            var nodeTypes = new Dictionary<string, Type>
-            {
-                { "Looping State", typeof(LoopingState) },
-                { "One Time State", typeof(OneTimeState) },
-                { "Hold Frame State", typeof(HoldFrameState) }
-            };
+
 
             // Add right-click context menu for node creation
             this.AddManipulator(new ContextualMenuManipulator(menuEvent =>
@@ -291,28 +286,19 @@ namespace Animation.Flow.Editor
                 // Convert screen position to graph position
                 Vector2 localMousePosition = contentViewContainer.WorldToLocal(menuEvent.mousePosition);
 
-                // Add animation state options at the top level 
-                // Add each node type directly to it
-                foreach (var nodeType in nodeTypes)
+                // Add "Create Animation State" as a submenu with all node types
+                foreach (AnimationStateType nodeType in StateTypeRegistry.GetRegisteredStateTypes())
                 {
-                    menuEvent.menu.AppendAction($"✨ Create Animation State/{nodeType.Key}",
-                        _ => CreateStateNode(nodeType.Value.Name.Replace("State", ""), "NewAnimation",
+                    menuEvent.menu.AppendAction($"✨ Create Animation State/{nodeType.ToString()}",
+                        _ => CreateStateNode(nodeType, "NewAnimation",
                             new Rect(localMousePosition, new Vector2(150, 200))));
                 }
 
-                // Add separator
+                // Add separator between create and edit actions
                 menuEvent.menu.AppendSeparator();
 
-                // Add selection and navigation options
-                menuEvent.menu.AppendAction("🔍 Frame Selection", _ => FrameSelection(),
-                    selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
-
-                menuEvent.menu.AppendAction("🔍 Frame All", _ => FrameAll());
-
-                // Add separator
-                menuEvent.menu.AppendSeparator();
-
-                // Add edit options
+                // EDIT SECTION
+                // Add edit options in the requested order
                 menuEvent.menu.AppendAction("✂️ Cut", _ =>
                 {
                     // Store selected nodes for cutting
@@ -331,8 +317,30 @@ namespace Animation.Flow.Editor
                     _ => { DeleteElements(selection.OfType<GraphElement>().ToList()); },
                     selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-                // Add separator and select options
+                // Add separator before duplicate
                 menuEvent.menu.AppendSeparator();
+
+                // Duplicate option
+                menuEvent.menu.AppendAction("🔄 Duplicate", _ =>
+                {
+                    _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
+                    PasteElements(20);
+                }, selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+                // Add separator before view options
+                menuEvent.menu.AppendSeparator();
+
+                // VIEW SECTION
+                // Add selection and navigation options
+                menuEvent.menu.AppendAction("🔍 Frame Selection", _ => FrameSelection(),
+                    selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+
+                menuEvent.menu.AppendAction("🔍 Frame All", _ => FrameAll());
+
+                // Add separator before select all
+                menuEvent.menu.AppendSeparator();
+
+                // SELECT SECTION
                 menuEvent.menu.AppendAction("📌 Select All Nodes", _ =>
                 {
                     foreach (Node node in nodes)
@@ -342,29 +350,7 @@ namespace Animation.Flow.Editor
                 });
             }));
 
-            // Set up the "+" button functionality
-            nodeCreationRequest = context =>
-            {
-                // Convert screen position to graph position
-                Vector2 graphPosition = contentViewContainer.WorldToLocal(context.screenMousePosition);
 
-                // Create context menu
-                GenericMenu menu = new();
-
-                // Add a heading as the first item
-                menu.AddDisabledItem(new GUIContent("✨ Create Animation State"));
-                menu.AddSeparator("");
-
-                // Add each node type from our dictionary
-                foreach (var nodeType in nodeTypes)
-                {
-                    menu.AddItem(new GUIContent(nodeType.Key), false,
-                        () => CreateStateNode(nodeType.Value.Name.Replace("State", ""), "NewAnimation",
-                            new Rect(graphPosition, new Vector2(150, 200))));
-                }
-
-                menu.ShowAsContext();
-            };
         }
 
         private void RegisterKeyboardShortcuts()
@@ -466,6 +452,83 @@ namespace Animation.Flow.Editor
             AddElement(edge);
 
             return edge;
+        }
+
+        public new void DeleteElements(IEnumerable<GraphElement> elementsToDelete)
+        {
+            // First, collect all edges that need to be deleted
+            // This includes edges explicitly selected for deletion and edges connected to nodes being deleted
+            var edgesToDelete = new HashSet<Edge>();
+
+            // Process all elements that are directly selected for deletion
+            foreach (GraphElement element in elementsToDelete)
+            {
+                // If it's a node, collect its connected edges
+                if (element is AnimationStateNode node)
+                {
+
+                    // Get all connected edges (both input and output)
+                    Port inputPort = node.inputContainer.Q<Port>();
+                    Port outputPort = node.outputContainer.Q<Port>();
+
+                    if (inputPort != null)
+                    {
+                        foreach (Edge edge in inputPort.connections)
+                        {
+                            edgesToDelete.Add(edge);
+                        }
+                    }
+
+                    if (outputPort != null)
+                    {
+                        foreach (Edge edge in outputPort.connections)
+                        {
+                            edgesToDelete.Add(edge);
+                        }
+                    }
+                }
+                // If it's already an edge, add it directly
+                else if (element is Edge edge)
+                {
+                    edgesToDelete.Add(edge);
+                }
+            }
+
+            // Remove edge conditions from the EdgeConditionManager
+            foreach (Edge edge in edgesToDelete)
+            {
+                string edgeId = EdgeConditionManager.GetEdgeId(edge);
+                if (!string.IsNullOrEmpty(edgeId))
+                {
+                    EdgeConditionManager.Instance.RemoveConditions(edgeId);
+                }
+            }
+
+            // Delete all edges that need to be removed
+            foreach (Edge edge in edgesToDelete)
+            {
+                // Remove from ports
+                edge.input?.Disconnect(edge);
+                edge.output?.Disconnect(edge);
+
+                // Remove from graph
+                RemoveElement(edge);
+            }
+
+            // Delete all nodes last
+            foreach (GraphElement element in elementsToDelete)
+            {
+                // Skip edges as we've already handled them
+                if (element is Edge) continue;
+
+                RemoveElement(element);
+            }
+
+            // Hide transition editor panel if needed
+            if (_transitionEditorPanel != null && !_transitionEditorPanel.IsBeingInteracted())
+            {
+                _transitionEditorPanel.Hide();
+            }
         }
 
         private void PasteElements(float offset = 0)

@@ -49,6 +49,15 @@ namespace Animation.Flow.Editor.Managers
             _edgeConditions[edgeId] = conditions ?? new List<ConditionData>();
         }
 
+        // Remove all conditions associated with an edge
+        public void RemoveConditions(string edgeId)
+        {
+            if (!string.IsNullOrEmpty(edgeId) && _edgeConditions.ContainsKey(edgeId))
+            {
+                _edgeConditions.Remove(edgeId);
+            }
+        }
+
         // Clear all conditions (used when loading a new graph)
         public void Clear()
         {

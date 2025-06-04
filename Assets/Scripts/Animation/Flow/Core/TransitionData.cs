@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Animation.Flow.Conditions;
+using Animation.Flow.States;
 using UnityEngine;
 
 namespace Animation.Flow.Core
@@ -15,6 +16,12 @@ namespace Animation.Flow.Core
 
         [Tooltip("ID of the destination state")]
         public string ToStateId;
+
+        [Tooltip("Type of source state (for validation)")] [SerializeField]
+        private AnimationStateType _fromStateType = AnimationStateType.OneTime;
+
+        [Tooltip("Type of destination state (for validation)")] [SerializeField]
+        private AnimationStateType _toStateType = AnimationStateType.OneTime;
 
         [Tooltip("Conditions that must be met for this transition")]
         public List<ConditionData> Conditions = new();
@@ -36,6 +43,36 @@ namespace Animation.Flow.Core
         {
             FromStateId = fromStateId;
             ToStateId = toStateId;
+        }
+
+        /// <summary>
+        ///     Create a fully qualified transition data object
+        /// </summary>
+        public TransitionData(string fromStateId, AnimationStateType fromStateType,
+            string toStateId, AnimationStateType toStateType)
+        {
+            FromStateId = fromStateId;
+            ToStateId = toStateId;
+            _fromStateType = fromStateType;
+            _toStateType = toStateType;
+        }
+
+        /// <summary>
+        ///     Type of source state
+        /// </summary>
+        public AnimationStateType FromStateType
+        {
+            get => _fromStateType;
+            set => _fromStateType = value;
+        }
+
+        /// <summary>
+        ///     Type of destination state
+        /// </summary>
+        public AnimationStateType ToStateType
+        {
+            get => _toStateType;
+            set => _toStateType = value;
         }
 
         /// <summary>

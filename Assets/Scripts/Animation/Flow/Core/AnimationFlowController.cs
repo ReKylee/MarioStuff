@@ -345,6 +345,9 @@ namespace Animation.Flow.Core
         {
             if (state is null) return;
             _states[state.Id] = state;
+
+            // Register state with the global registry
+            StateRegistry.RegisterState(state, this);
         }
 
         /// <summary>
@@ -355,6 +358,9 @@ namespace Animation.Flow.Core
             _states.Clear();
             _currentState = null;
             _timeInCurrentState = 0f;
+
+            // Unregister all states owned by this controller from the registry
+            StateRegistry.UnregisterStatesForOwner(this);
         }
 
         /// <summary>
@@ -370,8 +376,19 @@ namespace Animation.Flow.Core
         /// </summary>
         public bool ForceTransition(string stateId)
         {
+            // First check local state cache
             if (_states.TryGetValue(stateId, out IAnimationState state))
             {
+                TransitionToState(state);
+                return true;
+            }
+
+            // Then check global registry
+            state = StateRegistry.GetState(stateId);
+            if (state != null)
+            {
+                // Add to local cache
+                _states[stateId] = state;
                 TransitionToState(state);
                 return true;
             }
@@ -380,14 +397,42 @@ namespace Animation.Flow.Core
         }
 
         /// <summary>
+        ///     Force a transition to a specific state type
+        /// </summary>
+        public bool ForceTransition<T>(string stateId) where T : class, IAnimationState
+        {
+            // Check in registry for the specific type
+            T typedState = StateRegistry.GetState<T>(stateId);
+            if (typedState != null)
+            {
+                // Add to local cache if not already there
+                if (!_states.ContainsKey(stateId))
+                {
+                    _states[stateId] = typedState;
+                }
+
+                TransitionToState(typedState);
+                return true;
+            }
+
+            // Fall back to regular transition
+            return ForceTransition(stateId);
+        }
+
+        /// <summary>
         ///     Get the current state ID
         /// </summary>
         public string GetCurrentStateId() => _currentState?.Id;
 
         /// <summary>
+        ///     Get the current state as a specific type
+        /// </summary>
+        public T GetCurrentState<T>() where T : class, IAnimationState => _currentState as T;
+
+        /// <summary>
         ///     Check if a state with the given ID exists
         /// </summary>
-        public bool HasState(string stateId) => _states.ContainsKey(stateId);
+        public bool HasState(string stateId) => _states.ContainsKey(stateId) || StateRegistry.StateExists(stateId);
 
         /// <summary>
         ///     Get all state IDs

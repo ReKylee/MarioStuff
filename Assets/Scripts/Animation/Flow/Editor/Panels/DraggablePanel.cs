@@ -46,6 +46,8 @@ namespace Animation.Flow.Editor.Panels
             // Set initial size with minimum values
             style.minWidth = _minSize.x;
             style.minHeight = _minSize.y;
+            style.width = _minSize.x;
+            style.height = _minSize.y;
 
 
             // Ensure the panel stays within bounds of the parent container
@@ -130,7 +132,7 @@ namespace Animation.Flow.Editor.Panels
         }
 
         // Default to bottom right
-        protected ResizeHandlePosition _resizeHandlePosition = ResizeHandlePosition.BottomRight;
+        protected ResizeHandlePosition ResizeHandlePos = ResizeHandlePosition.BottomRight;
 
         #endregion
 
@@ -160,12 +162,6 @@ namespace Animation.Flow.Editor.Panels
         {
             ContentContainer = new VisualElement();
             ContentContainer.AddToClassList("panel-content");
-            ContentContainer.style.flexGrow = 1;
-            ContentContainer.style.flexDirection = FlexDirection.Column;
-            ContentContainer.style.width = new StyleLength(StyleKeyword.Auto);
-
-            // Ensure background color is applied directly
-            ContentContainer.style.backgroundColor = new Color(0.176f, 0.176f, 0.176f, 1f); // #2D2D2D
 
             Add(ContentContainer);
 
@@ -180,7 +176,7 @@ namespace Animation.Flow.Editor.Panels
             resizeHandle.RegisterCallback<MouseDownEvent>(OnResizeHandleMouseDown);
 
             // Set the handle position and style based on the panel type
-            if (_resizeHandlePosition == ResizeHandlePosition.BottomRight)
+            if (ResizeHandlePos == ResizeHandlePosition.BottomRight)
             {
                 resizeHandle.AddToClassList("panel-resize-handle-bottom-right");
             }
@@ -255,7 +251,7 @@ namespace Animation.Flow.Editor.Panels
                 Vector2 newSize;
 
                 // Handle resize direction based on handle position
-                if (_resizeHandlePosition == ResizeHandlePosition.BottomRight)
+                if (ResizeHandlePos == ResizeHandlePosition.BottomRight)
                 {
                     // Bottom right - Just add the delta
                     newSize = _resizeStartSize + delta;
@@ -296,7 +292,7 @@ namespace Animation.Flow.Editor.Panels
 
                 // Make sure panel doesn't resize outside the graph view's bounds
                 Rect parentBounds = ParentContainer.worldBound;
-                float maxWidth = _resizeHandlePosition == ResizeHandlePosition.BottomRight
+                float maxWidth = ResizeHandlePos == ResizeHandlePosition.BottomRight
                     ? parentBounds.width - _position.x
                     : _position.x + _size.x; // For BottomLeft, max width depends on right edge
 
@@ -307,8 +303,9 @@ namespace Animation.Flow.Editor.Panels
 
                 _size = newSize;
 
-                // For manual resizing, set explicit min-width/height instead of fixed width/height
-                // This allows content to expand the panel if needed
+                // Set both explicit width/height and min-width/height 
+                style.width = _size.x;
+                style.height = _size.y;
                 style.minWidth = _size.x;
                 style.minHeight = _size.y;
             }

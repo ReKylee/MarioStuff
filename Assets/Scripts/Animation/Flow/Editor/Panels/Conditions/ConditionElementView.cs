@@ -26,15 +26,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
 
             // Create a middle container to hold the parameter name, comparison button, and value field
             VisualElement middleContainer = new();
-            middleContainer.style.flexDirection = FlexDirection.Row;
-            middleContainer.style.flexGrow = 1;
-            middleContainer.style.flexShrink = 1;
-            middleContainer.style.justifyContent = Justify.SpaceBetween;
-            middleContainer.style.alignItems = Align.Center;
-            middleContainer.style.marginLeft = 5;
-            middleContainer.style.marginRight = 5;
-            middleContainer.style.minWidth = 0;
-            middleContainer.style.overflow = Overflow.Hidden;
+            middleContainer.AddToClassList("middle-container");
             Add(middleContainer);
 
             // Parameter name - show as label instead of editable field
@@ -178,14 +170,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
             userData = condition;
 
             AddToClassList("condition-element");
-            style.flexDirection = FlexDirection.Row;
-            style.marginLeft = condition.NestingLevel * 20;
-            style.justifyContent = Justify.SpaceBetween;
-            style.alignItems = Align.Center;
-            style.flexWrap = Wrap.NoWrap;
-            style.width = Length.Percent(100);
-            style.minWidth = 0;
-            style.overflow = Overflow.Hidden;
+            style.marginLeft = condition.NestingLevel * 20; // Keep this dynamic based on nesting level
 
             _comparisonSelector = new ComparisonTypeSelector(condition.DataType);
             CreateUI();
