@@ -1,19 +1,15 @@
-﻿/* Transition Editor Panel Styles */
-
-.transition-editor-panel {
+﻿/* Base Panel Styles */
+.draggable-panel {
     background-color: rgb(51, 51, 51);
     border-width: 1px;
     border-color: rgb(26, 26, 26);
-    border-radius: 3px;
+    border-radius: 4px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    min-width: 250px;
-    min-height: 300px;
-    width: 300px; /* Initial width */
-    height: 400px; /* Initial height */
-}
-
-.alternating-row {
-    background-color: rgba(64, 64, 64, 0.3);
+    min-width: 200px;
+    min-height: 250px;
+    opacity: 1;
+    display: none;
+    overflow: hidden;
 }
 
 .panel-title-bar {
@@ -21,12 +17,14 @@
     justify-content: space-between;
     align-items: center;
     background-color: rgb(77, 77, 77);
-    height: 24px;
-    padding-left: 8px;
-    padding-right: 8px;
+    height: 30px;
+    padding: 0 8px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
 }
 
 .panel-title-text {
+    font-size: 14px;
     -unity-font-style: bold;
     color: white;
 }
@@ -35,8 +33,9 @@
     width: 20px;
     height: 20px;
     font-size: 16px;
-    background-color: rgba(0, 0, 0, 0);
+    background-color: transparent;
     color: rgb(204, 204, 204);
+    border-width: 0;
 }
 
 .panel-content {
@@ -46,187 +45,158 @@
 
 .panel-resize-handle {
     position: absolute;
-    left: 0;
+    right: 0;
     bottom: 0;
     width: 16px;
     height: 16px;
-    cursor: resize-bottom-left;
+    background-image: resource("d_winbtn_win_restore");
+    cursor: resize-up-right;
 }
 
-.transition-editor-panel-header {
-    font-size: 14px;
-    -unity-font-style: bold;
-    color: white;
-    border-bottom-width: 1px;
-    border-color: rgba(255, 255, 255, 0.2);
-    padding-bottom: 5px;
-    margin-bottom: 8px;
+/* Parameter Panel Styles */
+.parameter-scroll-view {
+    flex-grow: 1;
 }
 
-.conditions-scroll-view {
-    max-height: 300px;
-    min-height: 100px;
-}
-
-.droppable-area {
-    border-width: 1px;
+.parameter-item {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px;
+    margin: 2px 0;
+    background-color: rgb(60, 60, 60);
     border-radius: 3px;
-    border-color: rgba(77, 77, 77, 0.5);
-    min-height: 30px;
+    cursor: pan;
+}
+
+.parameter-item:hover {
+    background-color: rgb(70, 70, 70);
+}
+
+.parameter-type-icon {
+    font-size: 16px;
+    margin-right: 8px;
+    color: rgb(150, 150, 150);
+}
+
+.parameter-name {
+    flex-grow: 1;
+    font-size: 14px;
+    color: white;
+}
+
+.parameter-type-label {
+    font-size: 12px;
+    color: rgb(150, 150, 150);
+}
+
+/* Condition Panel Styles */
+.conditions-scroll-view {
+    flex-grow: 1;
+    padding: 5px;
+}
+
+.condition-element {
+    flex-direction: row;
+    align-items: center;
+    padding: 5px;
+    margin: 2px 0;
+    background-color: rgb(45, 45, 45);
+    border-radius: 3px;
+    border-width: 1px;
+    border-color: rgb(60, 60, 60);
+}
+
+.condition-element:hover {
+    border-color: rgb(80, 80, 80);
+}
+
+.composite-condition {
+    background-color: rgb(40, 45, 50);
+    border-left-width: 3px;
+    margin: 4px 0;
+    padding: 0;
+}
+
+.composite-and {
+    border-left-color: rgb(50, 150, 50);
+}
+
+.composite-or {
+    border-left-color: rgb(150, 100, 50);
+}
+
+.composite-header {
+    padding: 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.composite-type-button {
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 2px 8px;
+    margin: 0 8px;
+    border-radius: 10px;
+    background-color: rgb(60, 60, 60);
+    color: white;
+}
+
+.composite-children {
+    padding: 5px;
+    margin-left: 20px;
+}
+
+.drag-handle {
+    width: 20px;
+    font-size: 14px;
+    color: rgb(150, 150, 150);
+    cursor: move-arrow;
+    -unity-text-align: middle-center;
+}
+
+.drag-handle:hover {
+    color: white;
 }
 
 .parameter-field {
     flex-grow: 1;
-    margin-right: 5px;
+    margin: 0 5px;
+}
+
+.comparison-dropdown {
+    width: 80px;
+    margin: 0 5px;
 }
 
 .remove-button {
     width: 20px;
     height: 20px;
-    background-color: rgba(128, 26, 26, 153);
+    background-color: rgb(128, 26, 26);
     color: white;
-    border-bottom-left-radius: 3px;
-}
-
-.condition-content {
-    margin-top: 4px;
-}
-
-.add-condition-section {
-    background-color: rgb(50, 50, 50);
-    border-radius: 4px;
-    padding: 10px;
-    margin-top: 10px;
-}
-
-.quick-add-container {
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin-top: 8px;
-    margin-bottom: 4px;
-}
-
-.quick-add-button {
-    height: 28px;
-    margin: 3px;
-    background-color: rgb(70, 70, 70);
     border-radius: 3px;
-    flex-grow: 1;
-    min-width: 100px;
+    font-size: 16px;
+    padding: 0;
+    margin-left: 5px;
 }
 
-.quick-add-button:hover {
-    background-color: rgb(80, 80, 80);
-}
-
-.quick-add-button.group-button {
-    background-color: rgb(60, 70, 90);
-}
-
-.quick-add-button.group-button:hover {
-    background-color: rgb(70, 80, 100);
+.remove-button:hover {
+    background-color: rgb(150, 40, 40);
 }
 
 .drop-indicator {
     height: 2px;
-    background-color: rgba(77, 179, 255, 0.8);
+    background-color: rgb(77, 179, 255);
     margin: 2px 0;
 }
 
+.drop-target {
+    background-color: rgba(77, 179, 255, 0.1);
+    border-color: rgb(77, 179, 255);
+}
+
 .empty-state-label {
-    padding: 10px;
+    padding: 20px;
     -unity-text-align: middle-center;
-    color: rgb(179, 179, 179);
-    font-size: 14px;
-}
+    color: rgb(150, 150, 150);
+    -unity-font-style: italic;
 
-.condition-type-tag {
-    font-size: 11px;
-    -unity-font-style: bold;
-    color: white;
-    background-color: rgb(60, 60, 60);
-    border-radius: 10px;
-    padding: 2px 8px;
-    align-self: flex-start;
-}
-
-.condition-type-tag.and {
-    background-color: rgb(40, 100, 40);
-}
-
-.condition-type-tag.or {
-    background-color: rgb(100, 70, 40);
-}
-
-.flex-container {
-    flex-grow: 1;
-}
-
-.top-margin {
-    margin-top: 8px;
-}
-
-.composite-condition {
-    background-color: rgba(51, 77, 102, 0.4);
-    margin-top: 4px;
-    margin-bottom: 4px;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-color: rgba(102, 179, 230, 0.3);
-    border-radius: 3px;
-    border-left-width: 2px;
-}
-
-.drop-target-composite {
-    background-color: rgba(77, 128, 179, 0.3);
-    border-color: rgba(102, 179, 255, 0.8);
-    border-top-width: 2px;
-    border-right-width: 2px;
-    border-bottom-width: 2px;
-    border-left-width: 3px;
-}
-
-/* Style for the dragged element */
-.condition-item.dragging {
-    background-color: rgba(77, 128, 179, 0.4);
-    border-color: rgba(102, 179, 255, 0.8);
-    border-width: 1px;
-    opacity: 0.7;
-}
-
-/* Style for the dragged element clone that follows cursor */
-.dragging-clone {
-    background-color: rgba(77, 128, 179, 0.6);
-    border-color: rgba(102, 179, 255, 0.9);
-    border-width: 1px;
-    border-radius: 3px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    pointer-events: none;
-    z-index: 999;
-    opacity: 0.9;
-    position: absolute;
-}
-
-/* Style for the drop indicator to make it more visible */
-.drop-indicator {
-    height: 4px;
-    background-color: rgb(77, 179, 255);
-    border-radius: 2px;
-    margin: 3px 0;
-    transition: all 0.1s ease-out;
-}
-
-/* Highlight when hovering over draggable elements */
-.condition-item:hover > .drag-handle {
-    opacity: 1.0;
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Composite highlight during drag */
-.drop-target-composite {
-    background-color: rgba(77, 128, 179, 0.3);
-    border-color: rgb(102, 179, 255);
-    border-width: 2px;
-    transition: all 0.1s ease-out;
 }

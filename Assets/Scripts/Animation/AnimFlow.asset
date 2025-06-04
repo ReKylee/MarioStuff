@@ -13,27 +13,27 @@ MonoBehaviour:
   m_Name: AnimFlow
   m_EditorClassIdentifier: 
   states:
-  - Id: 77297342-7441-4fe6-83fe-07b8087b0402
-    StateType: Looping
-    AnimationName: Idle
-    IsInitialState: 0
-    Position: {x: 773, y: 277}
-    FrameToHold: 0
   - Id: db6423ad-9799-457e-bec4-2fa51fd69034
     StateType: Looping
-    AnimationName: Idle
+    AnimationName: Run
     IsInitialState: 1
     Position: {x: 369, y: 261}
     FrameToHold: 0
+  - Id: 5c03a5d0-4611-4346-bf1f-ae521cf6bfb3
+    StateType: Looping
+    AnimationName: Idle
+    IsInitialState: 0
+    Position: {x: 751, y: 284}
+    FrameToHold: 0
   transitions:
-  - rid: 8340308152248172629
+  - rid: 8340308173500710992
   references:
     version: 2
     RefIds:
-    - rid: 8340308152248172629
+    - rid: 8340308173500710992
       type: {class: TransitionData, ns: Animation.Flow.Core, asm: AnimFlow}
       data:
         FromStateId: db6423ad-9799-457e-bec4-2fa51fd69034
-        ToStateId: 77297342-7441-4fe6-83fe-07b8087b0402
+        ToStateId: 5c03a5d0-4611-4346-bf1f-ae521cf6bfb3
         Conditions: []
         ConnectionPoints: []
