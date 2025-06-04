@@ -26,11 +26,11 @@ MonoBehaviour:
     Position: {x: 751, y: 284}
     FrameToHold: 0
   transitions:
-  - rid: 8340308173500710992
+  - rid: 8340308173500711009
   references:
     version: 2
     RefIds:
-    - rid: 8340308173500710992
+    - rid: 8340308173500711009
       type: {class: TransitionData, ns: Animation.Flow.Core, asm: AnimFlow}
       data:
         FromStateId: db6423ad-9799-457e-bec4-2fa51fd69034

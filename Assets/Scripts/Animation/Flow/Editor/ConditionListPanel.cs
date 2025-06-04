@@ -17,13 +17,10 @@ namespace Animation.Flow.Editor
         #region Constructor
 
         public ConditionListPanel(VisualElement parentContainer)
-            : base(parentContainer, "Conditions", new Vector2(parentContainer.resolvedStyle.width - 320, 100))
+            : base(parentContainer, "Conditions", new Vector2(320, 10))
         {
-            _viewFactory = new ConditionViewFactory(this);
 
-            _dropIndicator = new VisualElement();
-            _dropIndicator.AddToClassList("drop-indicator");
-            _dropIndicator.style.display = DisplayStyle.None;
+            _viewFactory = new ConditionViewFactory(this);
 
             _dragHandler = new DragHandler<ConditionData>(_content, "ConditionData", "drag-handle");
             _dragHandler.OnItemsReordered += OnConditionsReordered;
