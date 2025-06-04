@@ -1,145 +1,145 @@
 ﻿using System;
 using Animation.Flow.Conditions;
+using Animation.Flow.Editor;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Animation.Flow.Editor
+namespace Editor
 {
+
     /// <summary>
-    ///     Visual element for a composite condition
+    ///     Visual element for a composite condition (AND/OR group)
     /// </summary>
     public class CompositeConditionView : VisualElement
     {
 
         #region Constructor
 
-        public CompositeConditionView(ConditionData composite, ConditionListPanel panel)
+        public CompositeConditionView(ConditionData condition, ConditionListPanel panel)
         {
-            _composite = composite;
+            _condition = condition;
             _panel = panel;
-            userData = composite;
+            userData = condition;
 
+            AddToClassList("condition-element");
             AddToClassList("composite-condition");
-            style.marginLeft = composite.NestingLevel * 20;
+            style.marginLeft = condition.NestingLevel * 20;
 
-            CreateUI();
-            UpdateStyle();
+            // Determine composite type (stored in StringValue)
+            CompositeType compositeType = Enum.TryParse(_condition.StringValue, out CompositeType result)
+                ? result
+                : CompositeType.And;
+
+            // Add appropriate class for styling
+            AddToClassList(compositeType == CompositeType.And ? "composite-and" : "composite-or");
+
+            CreateUI(compositeType);
+
+            // Make element droppable
+            RegisterCallback<MouseDownEvent>(OnMouseDown);
+        }
+
+        #endregion
+
+        #region Event Handling
+
+        private void OnMouseDown(MouseDownEvent evt)
+        {
+            if (evt.button != 0) return;
+
+            // Ignore if clicking inside a field or button
+            if (evt.target is TextField || evt.target is Button) return;
+
+            // Start drag only when clicking on drag handle or the composite header
+            if (evt.target is VisualElement target && (target == this || target.ClassListContains("drag-handle")))
+            {
+                DragAndDrop.PrepareStartDrag();
+                DragAndDrop.SetGenericData("ConditionData", _condition);
+                DragAndDrop.StartDrag("Composite Condition");
+                evt.StopPropagation();
+            }
         }
 
         #endregion
 
         #region Fields
 
-        private readonly ConditionData _composite;
+        private readonly ConditionData _condition;
         private readonly ConditionListPanel _panel;
-        private Button _typeButton;
+        private Button _compositeTypeButton;
         public VisualElement ChildContainer { get; private set; }
 
         #endregion
 
         #region UI Creation
 
-        private void CreateUI()
+        private void CreateUI(CompositeType compositeType)
         {
-            // Header
-            VisualElement header = new();
-            header.AddToClassList("composite-header");
-            header.style.flexDirection = FlexDirection.Row;
-            Add(header);
+            // Create header section
+            VisualElement headerSection = new();
+            headerSection.AddToClassList("composite-header");
+            Add(headerSection);
 
             // Drag handle
             Label dragHandle = new("≡");
             dragHandle.AddToClassList("drag-handle");
-            dragHandle.RegisterCallback<MouseDownEvent>(OnDragHandleMouseDown);
-            header.Add(dragHandle);
+            headerSection.Add(dragHandle);
 
-            // Type button
-            _typeButton = new Button(ToggleType);
-            _typeButton.AddToClassList("composite-type-button");
-            header.Add(_typeButton);
+            // Composite type button - clicking cycles through available types
+            _compositeTypeButton = new Button(CycleCompositeType);
+            _compositeTypeButton.text = compositeType.ToString();
+            _compositeTypeButton.AddToClassList("composite-type-button");
+
+            // Set a fixed width to make it shorter
+            _compositeTypeButton.style.width = 70;
+            _compositeTypeButton.style.minWidth = 70;
+
+            // Add color class based on type
+            _compositeTypeButton.EnableInClassList("and-type", compositeType == CompositeType.And);
+            _compositeTypeButton.EnableInClassList("or-type", compositeType == CompositeType.Or);
+
+            headerSection.Add(_compositeTypeButton);
 
             // Remove button
-            Button removeButton = new(() => _panel.RemoveCondition(_composite)) { text = "×" };
+            Button removeButton = new(() => _panel.RemoveCondition(_condition)) { text = "×" };
             removeButton.AddToClassList("remove-button");
-            header.Add(removeButton);
+            headerSection.Add(removeButton);
 
-            // Child container
+            // Container for child conditions
             ChildContainer = new VisualElement();
-            ChildContainer.AddToClassList("composite-children");
+            ChildContainer.AddToClassList("group-conditions-container");
             Add(ChildContainer);
 
-            // Register drop events
-            RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
-            RegisterCallback<DragPerformEvent>(OnDragPerform);
+            // Empty message for when container has no children
+            Label emptyMessage = new("Drag conditions here");
+            emptyMessage.AddToClassList("empty-group-message");
+            ChildContainer.Add(emptyMessage);
         }
 
-        private void ToggleType()
+        private void CycleCompositeType()
         {
-            CompositeType currentType = Enum.Parse<CompositeType>(_composite.StringValue);
+            // Parse current type from condition's StringValue
+            CompositeType currentType = Enum.TryParse(_condition.StringValue, out CompositeType result)
+                ? result
+                : CompositeType.And;
+
+            // Toggle between And and Or
             CompositeType newType = currentType == CompositeType.And ? CompositeType.Or : CompositeType.And;
-            _composite.StringValue = newType.ToString();
 
-            UpdateStyle();
-            _panel.UpdateCondition(_composite);
-        }
+            // Update condition
+            _condition.StringValue = newType.ToString();
+            _panel.UpdateCondition(_condition);
 
-        private void UpdateStyle()
-        {
-            string type = _composite.StringValue ?? "And";
-            _typeButton.text = type.ToUpper();
+            // Update button
+            _compositeTypeButton.text = newType.ToString();
 
+            // Update CSS classes
             RemoveFromClassList("composite-and");
             RemoveFromClassList("composite-or");
-            AddToClassList($"composite-{type.ToLower()}");
-        }
+            AddToClassList(newType == CompositeType.And ? "composite-and" : "composite-or");
 
-        #endregion
-
-        #region Drop Handling
-
-        private void OnDragUpdated(DragUpdatedEvent evt)
-        {
-            if (DragAndDrop.GetGenericData("ConditionData") is ConditionData condition)
-            {
-                // Don't allow dropping onto itself or one of its children
-                if (condition == _composite || condition.ParentGroupId == _composite.UniqueId)
-                {
-                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
-                }
-                else
-                {
-                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-                    AddToClassList("drop-target");
-                }
-
-                evt.StopPropagation();
-            }
-        }
-
-        private void OnDragPerform(DragPerformEvent evt)
-        {
-            if (DragAndDrop.GetGenericData("ConditionData") is ConditionData condition)
-            {
-                // Don't allow dropping onto itself or one of its children
-                if (condition != _composite && condition.ParentGroupId != _composite.UniqueId)
-                {
-                    DragAndDrop.AcceptDrag();
-                    _panel.MoveConditionToComposite(condition, _composite);
-                    evt.StopPropagation();
-                }
-            }
-
-            RemoveFromClassList("drop-target");
-        }
-
-        private void OnDragHandleMouseDown(MouseDownEvent evt)
-        {
-            if (evt.button != 0) return;
-
-            DragAndDrop.PrepareStartDrag();
-            DragAndDrop.SetGenericData("ConditionData", _composite);
-            DragAndDrop.StartDrag(_composite.DataType.ToString());
-            evt.StopPropagation();
+            _compositeTypeButton.EnableInClassList("and-type", newType == CompositeType.And);
+            _compositeTypeButton.EnableInClassList("or-type", newType == CompositeType.Or);
         }
 
         #endregion

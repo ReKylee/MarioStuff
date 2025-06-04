@@ -65,6 +65,7 @@ namespace Animation.Flow.Editor
                 }
             }
 
+
             // Subscribe to editor closing to show save prompt if needed
             EditorApplication.wantsToQuit += WantsToQuit;
 

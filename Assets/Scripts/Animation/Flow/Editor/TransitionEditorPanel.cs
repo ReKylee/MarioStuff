@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Animation.Flow.Conditions;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Animation.Flow.Editor
@@ -16,6 +17,35 @@ namespace Animation.Flow.Editor
         public TransitionEditorPanel(VisualElement parentContainer)
         {
             _parentContainer = parentContainer;
+
+            // Load and apply stylesheets from Editor Resources
+            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
+                "Assets/Scripts/Animation/Flow/Editor/Resources/Stylesheets/TransitionEditorPanel.uss");
+
+            if (styleSheet != null)
+            {
+                styleSheets.Add(styleSheet);
+            }
+            else
+            {
+                Debug.LogError(
+                    "[TransitionEditorPanel] Could not load TransitionEditorPanel.uss stylesheet from Editor Resources");
+            }
+
+            // Also load the DraggablePanel stylesheet (for inheriting panels)
+            StyleSheet draggablePanelStylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
+                "Assets/Scripts/Animation/Flow/Editor/Resources/Stylesheets/DraggablePanel.uss");
+
+            if (draggablePanelStylesheet != null)
+            {
+                styleSheets.Add(draggablePanelStylesheet);
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "[TransitionEditorPanel] Could not load DraggablePanel.uss stylesheet from Editor Resources");
+            }
+
             Initialize();
         }
 
@@ -25,12 +55,26 @@ namespace Animation.Flow.Editor
 
         private void Initialize()
         {
-            // Load stylesheet
-            StyleSheet stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
-                "Assets/Scripts/Animation/Flow/Editor/TransitionEditorPanel.uss");
+            // We already loaded the stylesheets in the constructor, no need to load them again
 
-            if (stylesheet)
-                styleSheets.Add(stylesheet);
+            // Clear any duplicate stylesheets if they exist
+            var loadedStylesheetPaths = new HashSet<string>();
+            for (int i = styleSheets.count - 1; i >= 0; i--)
+            {
+                StyleSheet sheet = styleSheets[i];
+                string path = AssetDatabase.GetAssetPath(sheet);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    if (loadedStylesheetPaths.Contains(path))
+                    {
+                        styleSheets.Remove(sheet);
+                    }
+                    else
+                    {
+                        loadedStylesheetPaths.Add(path);
+                    }
+                }
+            }
 
             // Create parameter panel (left side)
             _parameterPanel = new ParameterPanel(_parentContainer);

@@ -1,0 +1,105 @@
+﻿/* Parameter Panel Styles */
+
+/* Base Container */
+.parameter-panel {
+    min-width: 250px;
+    min-height: 300px;
+}
+
+/* Scroll Area */
+.parameter-scroll-view {
+    flex-grow: 1;
+    background-color: rgb(45, 45, 45);
+    border-radius: 3px;
+    padding: 6px;
+}
+
+/* Parameter Item */
+.parameter-item {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 12px;
+    margin: 6px;
+    background-color: rgb(65, 65, 65);
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.05);
+    cursor: grab;
+    transition: all 0.15s ease-out;
+}
+
+.parameter-item:hover {
+    background-color: rgb(75, 75, 75);
+    border-color: rgba(255, 255, 255, 0.1);
+    translate: 0 -2px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.parameter-item:active {
+    cursor: grabbing;
+    background-color: rgb(85, 85, 85);
+}
+
+/* Parameter Type Icon */
+.parameter-type-icon {
+    font-size: 18px;
+    margin-right: 10px;
+    color: rgb(170, 170, 170);
+    width: 20px;
+    -unity-text-align: middle-center;
+}
+
+.parameter-type-icon.boolean {
+    color: rgb(100, 180, 255);
+}
+
+.parameter-type-icon.float {
+    color: rgb(120, 200, 120);
+}
+
+.parameter-type-icon.integer {
+    color: rgb(200, 120, 120);
+}
+
+.parameter-type-icon.string {
+    color: rgb(180, 140, 220);
+}
+
+/* Parameter Name */
+.parameter-name {
+    flex-grow: 1;
+    font-size: 14px;
+    color: rgb(220, 220, 220);
+    -unity-font-style: bold;
+}
+
+/* Parameter Type Label */
+.parameter-type-label {
+    font-size: 12px;
+    color: rgb(150, 150, 150);
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 2px 8px;
+    margin-left: 8px;
+}
+
+/* Parameter Type-Specific Styling */
+.parameter-type-label.boolean {
+    background-color: rgba(100, 180, 255, 0.2);
+    color: rgb(120, 200, 255);
+}
+
+.parameter-type-label.float {
+    background-color: rgba(120, 200, 120, 0.2);
+    color: rgb(140, 220, 140);
+}
+
+.parameter-type-label.integer {
+    background-color: rgba(200, 120, 120, 0.2);
+    color: rgb(220, 140, 140);
+}
+
+.parameter-type-label.string {
+    background-color: rgba(180, 140, 220, 0.2);
+    color: rgb(200, 160, 240);
+}

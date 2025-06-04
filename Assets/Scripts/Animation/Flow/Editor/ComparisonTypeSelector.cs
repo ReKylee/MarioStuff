@@ -1,93 +1,101 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Animation.Flow.Conditions;
 using UnityEngine.UIElements;
 
 namespace Animation.Flow.Editor
 {
+
     /// <summary>
-    ///     Handles comparison type selection based on data type
+    ///     Utility for selecting comparison types based on data type
     /// </summary>
     public class ComparisonTypeSelector
     {
-
         private readonly ConditionDataType _dataType;
-
-        private readonly Dictionary<ConditionDataType, ComparisonType[]> _validComparisons = new()
-        {
-            { ConditionDataType.Boolean, new[] { ComparisonType.IsTrue, ComparisonType.IsFalse } },
-            {
-                ConditionDataType.Float,
-                new[]
-                {
-                    ComparisonType.Equals, ComparisonType.NotEquals, ComparisonType.GreaterThan,
-                    ComparisonType.LessThan, ComparisonType.GreaterThanOrEqual, ComparisonType.LessThanOrEqual
-                }
-            },
-            {
-                ConditionDataType.Integer,
-                new[]
-                {
-                    ComparisonType.Equals, ComparisonType.NotEquals, ComparisonType.GreaterThan,
-                    ComparisonType.LessThan, ComparisonType.GreaterThanOrEqual, ComparisonType.LessThanOrEqual
-                }
-            },
-            {
-                ConditionDataType.String,
-                new[]
-                {
-                    ComparisonType.Equals, ComparisonType.NotEquals, ComparisonType.Contains, ComparisonType.StartsWith,
-                    ComparisonType.EndsWith
-                }
-            }
-        };
 
         public ComparisonTypeSelector(ConditionDataType dataType)
         {
             _dataType = dataType;
         }
 
-        public PopupField<ComparisonType> CreateDropdown(ComparisonType current, Action<ComparisonType> onChanged)
+        /// <summary>
+        ///     Get available comparison types for the current data type
+        /// </summary>
+        public List<ComparisonType> GetAvailableComparisonTypes()
         {
-            var validTypes = GetValidComparisons();
+            return _dataType switch
+            {
+                ConditionDataType.Boolean => new List<ComparisonType>
+                    { ComparisonType.IsTrue, ComparisonType.IsFalse },
+                ConditionDataType.Integer => new List<ComparisonType>
+                {
+                    ComparisonType.Equals,
+                    ComparisonType.NotEquals,
+                    ComparisonType.GreaterThan,
+                    ComparisonType.GreaterThanOrEqual,
+                    ComparisonType.LessThan,
+                    ComparisonType.LessThanOrEqual
+                },
+                ConditionDataType.Float => new List<ComparisonType>
+                {
+                    ComparisonType.Equals,
+                    ComparisonType.NotEquals,
+                    ComparisonType.GreaterThan,
+                    ComparisonType.GreaterThanOrEqual,
+                    ComparisonType.LessThan,
+                    ComparisonType.LessThanOrEqual
+                },
+                ConditionDataType.String => new List<ComparisonType>
+                {
+                    ComparisonType.Equals,
+                    ComparisonType.NotEquals,
+                    ComparisonType.Contains,
+                    ComparisonType.StartsWith,
+                    ComparisonType.EndsWith
+                },
+                ConditionDataType.Time => new List<ComparisonType>
+                {
+                    ComparisonType.GreaterThan,
+                    ComparisonType.GreaterThanOrEqual,
+                    ComparisonType.LessThan,
+                    ComparisonType.LessThanOrEqual
+                },
+                ConditionDataType.Animation => new List<ComparisonType>
+                {
+                    ComparisonType.Completed
+                },
+                ConditionDataType.Composite => new List<ComparisonType>
+                {
+                    ComparisonType.IsTrue
+                },
+                _ => new List<ComparisonType> { ComparisonType.Equals }
+            };
+        }
+
+        /// <summary>
+        ///     Create a dropdown for selecting comparison types
+        /// </summary>
+        public VisualElement CreateDropdown(ComparisonType current, Action<ComparisonType> onValueChanged)
+        {
+            // Use a PopupField for a proper dropdown
+            var availableTypes = GetAvailableComparisonTypes();
+
+            // Make sure the current type is in the available types list
+            if (!availableTypes.Contains(current))
+                current = availableTypes[0];
+
             var dropdown = new PopupField<ComparisonType>(
-                validTypes.ToList(),
-                current,
-                FormatComparison,
-                FormatComparison
+                "Comparison", // Label
+                availableTypes, // Choices
+                current, // Default value
+                value => value.ToString(),
+                value => value.ToString()
             );
 
             dropdown.AddToClassList("comparison-dropdown");
-            dropdown.RegisterValueChangedCallback(evt => onChanged(evt.newValue));
+            dropdown.RegisterValueChangedCallback(evt => onValueChanged?.Invoke(evt.newValue));
 
             return dropdown;
-        }
-
-        private ComparisonType[] GetValidComparisons()
-        {
-            return _validComparisons.TryGetValue(_dataType, out var types)
-                ? types
-                : new[] { ComparisonType.Equals };
-        }
-
-        private string FormatComparison(ComparisonType type)
-        {
-            return type switch
-            {
-                ComparisonType.Equals => "==",
-                ComparisonType.NotEquals => "!=",
-                ComparisonType.GreaterThan => ">",
-                ComparisonType.LessThan => "<",
-                ComparisonType.GreaterThanOrEqual => ">=",
-                ComparisonType.LessThanOrEqual => "<=",
-                ComparisonType.IsTrue => "is true",
-                ComparisonType.IsFalse => "is false",
-                ComparisonType.Contains => "contains",
-                ComparisonType.StartsWith => "starts with",
-                ComparisonType.EndsWith => "ends with",
-                _ => type.ToString()
-            };
         }
     }
 }

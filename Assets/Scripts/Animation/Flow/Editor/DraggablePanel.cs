@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Animation.Flow.Editor
@@ -13,14 +14,42 @@ namespace Animation.Flow.Editor
 
         protected DraggablePanel(VisualElement parentContainer, string title, Vector2 defaultPosition)
         {
-            _parentContainer = parentContainer;
+            ParentContainer = parentContainer;
             _position = defaultPosition;
             _size = _minSize;
+
+            // Load the dedicated stylesheet for DraggablePanel
+            StyleSheet stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
+                "Assets/Scripts/Animation/Flow/Editor/DraggablePanel.uss");
+
+            if (stylesheet != null)
+            {
+
+                styleSheets.Add(stylesheet);
+            }
+            else
+            {
+                Debug.LogWarning("[DraggablePanel] Could not load DraggablePanel.uss stylesheet");
+            }
 
             AddToClassList("draggable-panel");
             style.position = Position.Absolute;
             style.left = _position.x;
             style.top = _position.y;
+
+            // Set initial size with minimum values
+            style.minWidth = _minSize.x;
+            style.minHeight = _minSize.y;
+
+            // Use flex layout for content-based sizing
+            style.flexDirection = FlexDirection.Column;
+            style.flexGrow = 0; // Don't grow beyond content
+
+            // Ensure background color is visible
+            style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 1f); // Explicit fallback color
+
+            // Ensure the panel stays within bounds of the parent container
+            ParentContainer.RegisterCallback<GeometryChangedEvent>(_ => EnsureWithinBounds());
 
             CreateTitleBar(title);
             CreateContentArea();
@@ -28,11 +57,58 @@ namespace Animation.Flow.Editor
             RegisterEvents();
         }
 
+        /// <summary>
+        ///     Ensures the panel stays within the bounds of the parent container
+        /// </summary>
+        protected void EnsureWithinBounds()
+        {
+            if (ParentContainer == null) return;
+
+            Rect parentRect = ParentContainer.worldBound;
+            Rect selfRect = worldBound;
+
+            // Calculate available space
+            float maxX = parentRect.width - selfRect.width;
+            float maxY = parentRect.height - selfRect.height;
+
+            // Adjust position if needed
+            bool changed = false;
+
+            if (_position.x < 0)
+            {
+                _position.x = 0;
+                changed = true;
+            }
+            else if (_position.x > maxX)
+            {
+                _position.x = Mathf.Max(0, maxX);
+                changed = true;
+            }
+
+            if (_position.y < 0)
+            {
+                _position.y = 0;
+                changed = true;
+            }
+            else if (_position.y > maxY)
+            {
+                _position.y = Mathf.Max(0, maxY);
+                changed = true;
+            }
+
+            // Apply changes if needed
+            if (changed)
+            {
+                style.left = _position.x;
+                style.top = _position.y;
+            }
+        }
+
         #endregion
 
         #region Fields
 
-        private readonly VisualElement _parentContainer;
+        protected readonly VisualElement ParentContainer;
         protected VisualElement ContentContainer;
         protected TContent Content;
         private bool _isDragging;
@@ -74,6 +150,12 @@ namespace Animation.Flow.Editor
             ContentContainer = new VisualElement();
             ContentContainer.AddToClassList("panel-content");
             ContentContainer.style.flexGrow = 1;
+            ContentContainer.style.flexDirection = FlexDirection.Column;
+            ContentContainer.style.width = new StyleLength(StyleKeyword.Auto);
+
+            // Ensure background color is applied directly
+            ContentContainer.style.backgroundColor = new Color(0.176f, 0.176f, 0.176f, 1f); // #2D2D2D
+
             Add(ContentContainer);
 
             Content = CreateContent();
@@ -85,6 +167,7 @@ namespace Animation.Flow.Editor
             VisualElement resizeHandle = new();
             resizeHandle.AddToClassList("panel-resize-handle");
             resizeHandle.RegisterCallback<MouseDownEvent>(OnResizeHandleMouseDown);
+
             Add(resizeHandle);
         }
 
@@ -94,15 +177,15 @@ namespace Animation.Flow.Editor
 
         private void RegisterEvents()
         {
-            RegisterCallback<MouseDownEvent>(evt => _isInteracting = true);
-            RegisterCallback<MouseUpEvent>(evt => _isInteracting = false);
-            RegisterCallback<MouseLeaveEvent>(evt =>
+            RegisterCallback<MouseDownEvent>(_ => _isInteracting = true);
+            RegisterCallback<MouseUpEvent>(_ => _isInteracting = false);
+            RegisterCallback<MouseLeaveEvent>(_ =>
             {
                 if (!_isDragging && !_isResizing) _isInteracting = false;
             });
 
-            _parentContainer.RegisterCallback<MouseMoveEvent>(OnMouseMove);
-            _parentContainer.RegisterCallback<MouseUpEvent>(OnMouseUp);
+            ParentContainer.RegisterCallback<MouseMoveEvent>(OnMouseMove);
+            ParentContainer.RegisterCallback<MouseUpEvent>(OnMouseUp);
         }
 
         private void OnTitleBarMouseDown(MouseDownEvent evt)
@@ -131,8 +214,13 @@ namespace Animation.Flow.Editor
             if (_isDragging)
             {
                 Vector2 newPosition = evt.mousePosition - _dragStartPosition;
-                newPosition.x = Mathf.Clamp(newPosition.x, 0, _parentContainer.worldBound.width - _size.x);
-                newPosition.y = Mathf.Clamp(newPosition.y, 0, _parentContainer.worldBound.height - _size.y);
+
+                // Calculate parent bounds
+                Rect parentBounds = ParentContainer.worldBound;
+
+                // Make sure panel doesn't go outside the graph view's bounds
+                newPosition.x = Mathf.Clamp(newPosition.x, 0, Mathf.Max(0, parentBounds.width - _size.x));
+                newPosition.y = Mathf.Clamp(newPosition.y, 0, Mathf.Max(0, parentBounds.height - _size.y));
 
                 _position = newPosition;
                 style.left = _position.x;
@@ -144,9 +232,19 @@ namespace Animation.Flow.Editor
                 Vector2 newSize = _resizeStartSize + delta;
                 newSize = Vector2.Max(newSize, _minSize);
 
+                // Make sure panel doesn't resize outside the graph view's bounds
+                Rect parentBounds = ParentContainer.worldBound;
+                float maxWidth = parentBounds.width - _position.x;
+                float maxHeight = parentBounds.height - _position.y;
+                newSize.x = Mathf.Min(newSize.x, maxWidth);
+                newSize.y = Mathf.Min(newSize.y, maxHeight);
+
                 _size = newSize;
-                style.width = _size.x;
-                style.height = _size.y;
+
+                // For manual resizing, set explicit min-width/height instead of fixed width/height
+                // This allows content to expand the panel if needed
+                style.minWidth = _size.x;
+                style.minHeight = _size.y;
             }
         }
 

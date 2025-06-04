@@ -1,0 +1,225 @@
+﻿/* Condition List Panel Styles */
+
+/* Base Container */
+.conditions-panel {
+    min-width: 350px;
+    min-height: 300px;
+}
+
+/* Scroll Area */
+.conditions-scroll-view {
+    flex-grow: 1;
+    padding: 8px;
+    background-color: rgb(45, 45, 45);
+    border-radius: 3px;
+}
+
+/* Condition Element */
+.condition-element {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px;
+    margin: 6px 0;
+    background-color: rgb(55, 55, 55);
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.05);
+    transition: all 0.1s ease-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.condition-element:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: rgb(60, 60, 60);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Parameter Name Label */
+.parameter-name-label {
+    min-width: 100px;
+    -unity-font-style: bold;
+    color: rgb(220, 220, 220);
+    margin-right: 10px;
+    background-color: rgba(0, 0, 0, 0.15);
+    padding: 4px 8px;
+    border-radius: 3px;
+}
+
+/* Comparison Button */
+.comparison-button {
+    min-width: 100px;
+    height: 26px;
+    margin-right: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background-color: rgb(77, 117, 179);
+    -unity-text-align: middle-center;
+    color: white;
+    border-width: 0;
+    transition: all 0.1s ease-out;
+}
+
+.comparison-button:hover {
+    background-color: rgb(97, 137, 199);
+    translate: 0 -1px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Value Field */
+.value-field {
+    min-width: 80px;
+    flex-grow: 1;
+    margin-right: 10px;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 3px;
+    padding: 2px;
+}
+
+/* Drag Handle */
+.drag-handle {
+    width: 24px;
+    font-size: 18px;
+    color: rgb(150, 150, 150);
+    cursor: move-arrow;
+    -unity-text-align: middle-center;
+    margin-right: 5px;
+    transition: all 0.1s ease;
+}
+
+.drag-handle:hover {
+    color: white;
+    scale: 1.1;
+}
+
+/* Remove Button */
+.remove-button {
+    width: 24px;
+    height: 24px;
+    background-color: rgba(150, 40, 40, 0.8);
+    color: white;
+    border-radius: 3px;
+    font-size: 16px;
+    padding: 0;
+    margin-left: 5px;
+    transition: all 0.1s ease-out;
+    border-width: 0;
+}
+
+.remove-button:hover {
+    background-color: rgb(180, 50, 50);
+    scale: 1.1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Composite Condition Styles */
+.composite-condition {
+    background-color: rgb(40, 45, 55);
+    border-left-width: 4px;
+    margin: 8px 0;
+    padding: 0;
+    flex-direction: column;
+    border-radius: 4px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.composite-and {
+    border-left-color: rgb(50, 150, 50);
+}
+
+.composite-or {
+    border-left-color: rgb(150, 100, 50);
+}
+
+.composite-header {
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    flex-direction: row;
+    align-items: center;
+}
+
+.composite-type-button {
+    min-width: 70px;
+    height: 26px;
+    margin-right: 10px;
+    padding: 2px 12px;
+    border-radius: 13px;
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    color: white;
+    border-width: 0;
+    transition: all 0.15s ease-out;
+}
+
+.and-type {
+    background-color: rgb(50, 150, 50);
+}
+
+.and-type:hover {
+    background-color: rgb(60, 170, 60);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.or-type {
+    background-color: rgb(150, 100, 50);
+}
+
+.or-type:hover {
+    background-color: rgb(170, 110, 60);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.group-conditions-container {
+    padding: 10px;
+    margin: 0;
+    border-width: 0;
+    min-height: 40px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+/* Drop Indicator */
+.drop-indicator {
+    height: 4px;
+    background-color: rgb(77, 179, 255);
+    margin: 4px 0;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+}
+
+.drop-target {
+    background-color: rgba(77, 179, 255, 0.1);
+    border-color: rgb(77, 179, 255);
+    box-shadow: 0 0 8px rgba(77, 179, 255, 0.3);
+}
+
+.empty-state-label {
+    padding: 20px;
+    -unity-text-align: middle-center;
+    color: rgb(150, 150, 150);
+    -unity-font-style: italic;
+    font-size: 14px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    margin: 10px;
+}
+
+/* Toggle Styles for Boolean Conditions */
+Toggle {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+Toggle > .unity-toggle__input:checked > .unity-toggle__checkmark {
+    background-color: rgb(77, 117, 179);
+    border-color: rgb(77, 117, 179);
+    border-width: 1px;
+    border-radius: 2px;
+}
+
+Toggle:hover > .unity-toggle__input > .unity-toggle__checkmark {
+    border-color: rgb(97, 137, 199);
+    border-width: 1px;
+}

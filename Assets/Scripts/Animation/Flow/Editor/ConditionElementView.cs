@@ -1,5 +1,6 @@
 ﻿using Animation.Flow.Conditions;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Animation.Flow.Editor
@@ -19,40 +20,109 @@ namespace Animation.Flow.Editor
             dragHandle.AddToClassList("drag-handle");
             Add(dragHandle);
 
-            // Parameter name
-            TextField paramField = new();
-            paramField.AddToClassList("parameter-field");
-            paramField.value = _condition.ParameterName;
-            paramField.RegisterValueChangedCallback(evt =>
+            // Parameter name - show as label instead of editable field
+            Label paramLabel = new(_condition.ParameterName);
+            paramLabel.AddToClassList("parameter-name-label");
+            Add(paramLabel);
+
+            // Comparison type dropdown as a button that opens a menu
+            Button comparisonButton = new();
+            comparisonButton.text = _condition.ComparisonType.ToString();
+            comparisonButton.AddToClassList("comparison-button");
+            comparisonButton.clicked += () =>
             {
-                _condition.ParameterName = evt.newValue;
-                _panel.UpdateCondition(_condition);
-            });
-
-            Add(paramField);
-
-            // Comparison type dropdown
-            var comparisonDropdown = _comparisonSelector.CreateDropdown(
-                _condition.ComparisonType,
-                newValue =>
+                GenericMenu menu = new();
+                foreach (ComparisonType compType in _comparisonSelector.GetAvailableComparisonTypes())
                 {
-                    _condition.ComparisonType = newValue;
-                    _panel.UpdateCondition(_condition);
+                    menu.AddItem(new GUIContent(compType.ToString()),
+                        _condition.ComparisonType == compType,
+                        () =>
+                        {
+                            _condition.ComparisonType = compType;
+                            comparisonButton.text = compType.ToString();
+                            _panel.UpdateCondition(_condition);
+                        });
                 }
-            );
 
-            Add(comparisonDropdown);
+                menu.DropDown(comparisonButton.worldBound);
+            };
 
-            // Value field
-            VisualElement valueField =
-                ValueEditorFactory.CreateEditor(_condition, () => _panel.UpdateCondition(_condition));
+            Add(comparisonButton);
 
+            // Value field based on parameter type
+            VisualElement valueField = CreateTypeSpecificValueField(_condition);
             Add(valueField);
 
             // Remove button
             Button removeButton = new(() => _panel.RemoveCondition(_condition)) { text = "×" };
             removeButton.AddToClassList("remove-button");
             Add(removeButton);
+        }
+
+        private VisualElement CreateTypeSpecificValueField(ConditionData condition)
+        {
+            VisualElement field = new();
+            field.AddToClassList("value-field");
+
+            switch (condition.DataType)
+            {
+                case ConditionDataType.Boolean:
+                    Toggle toggle = new();
+                    toggle.value = condition.BoolValue;
+                    toggle.style.marginLeft = 10;
+                    toggle.style.marginRight = 10;
+                    toggle.RegisterValueChangedCallback(evt =>
+                    {
+                        condition.BoolValue = evt.newValue;
+                        _panel.UpdateCondition(condition);
+                    });
+
+                    field.Add(toggle);
+                    break;
+
+                case ConditionDataType.Integer:
+                    IntegerField intField = new();
+                    intField.value = condition.IntValue;
+                    intField.RegisterValueChangedCallback(evt =>
+                    {
+                        condition.IntValue = evt.newValue;
+                        _panel.UpdateCondition(condition);
+                    });
+
+                    field.Add(intField);
+                    break;
+
+                case ConditionDataType.Float:
+                case ConditionDataType.Time:
+                    FloatField floatField = new();
+                    floatField.value = condition.FloatValue;
+                    floatField.RegisterValueChangedCallback(evt =>
+                    {
+                        condition.FloatValue = evt.newValue;
+                        _panel.UpdateCondition(condition);
+                    });
+
+                    field.Add(floatField);
+                    break;
+
+                case ConditionDataType.String:
+                    TextField textField = new();
+                    textField.value = condition.StringValue;
+                    textField.RegisterValueChangedCallback(evt =>
+                    {
+                        condition.StringValue = evt.newValue;
+                        _panel.UpdateCondition(condition);
+                    });
+
+                    field.Add(textField);
+                    break;
+
+                default:
+                    field.Add(new Label("Unsupported type"));
+                    break;
+            }
+
+            return field;
         }
 
         #endregion
@@ -81,7 +151,7 @@ namespace Animation.Flow.Editor
             if (evt.button != 0) return;
 
             // Ignore if clicking inside a field
-            if (evt.target is TextField || evt.target is Button) return;
+            if (evt.target is TextField or Button) return;
 
             // Start drag only when clicking on drag handle or the condition itself
             if (evt.target is VisualElement target && (target == this || target.ClassListContains("drag-handle")))

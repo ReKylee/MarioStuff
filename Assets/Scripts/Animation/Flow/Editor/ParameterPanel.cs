@@ -19,6 +19,18 @@ namespace Animation.Flow.Editor
         public ParameterPanel(VisualElement parentContainer)
             : base(parentContainer, "Parameters", new Vector2(20, 100))
         {
+            // Add class for specific styling
+            AddToClassList("parameter-panel");
+
+            // Load the parameter panel stylesheet
+            StyleSheet parameterPanelStylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
+                "Assets/Scripts/Animation/Flow/Editor/ParameterPanelStyles.uss");
+
+            if (parameterPanelStylesheet)
+            {
+                styleSheets.Add(parameterPanelStylesheet);
+            }
+
             LoadDefaultParameters();
             RefreshParameterList();
         }
@@ -38,12 +50,22 @@ namespace Animation.Flow.Editor
         {
             ScrollView scrollView = new();
             scrollView.AddToClassList("parameter-scroll-view");
+            scrollView.name = "ParameterScrollView";
+            scrollView.style.flexGrow = 1;
+            scrollView.style.width = new StyleLength(StyleKeyword.Auto);
+            scrollView.contentContainer.style.width = new StyleLength(StyleKeyword.Auto);
+
+            // Apply explicit background color programmatically
+            scrollView.style.backgroundColor = new Color(0.176f, 0.176f, 0.176f, 1f);
+
             return scrollView;
         }
 
         protected override void OnContentCreated(ScrollView content)
         {
             ContentContainer.Add(content);
+            ContentContainer.style.flexGrow = 1;
+            ContentContainer.style.width = new StyleLength(StyleKeyword.Auto);
         }
 
         #endregion
@@ -81,8 +103,14 @@ namespace Animation.Flow.Editor
             element.AddToClassList("parameter-item");
             element.userData = parameter;
 
+            // Create type icon with appropriate type-specific class
             Label typeIcon = new(GetTypeIcon(parameter.Type));
             typeIcon.AddToClassList("parameter-type-icon");
+
+            // Add type-specific class
+            string typeName = parameter.Type.ToString().ToLower();
+            typeIcon.AddToClassList(typeName);
+
             element.Add(typeIcon);
 
             Label nameLabel = new(parameter.Name);
@@ -91,6 +119,8 @@ namespace Animation.Flow.Editor
 
             Label typeLabel = new(parameter.Type.ToString());
             typeLabel.AddToClassList("parameter-type-label");
+            // Add type-specific class
+            typeLabel.AddToClassList(typeName);
             element.Add(typeLabel);
 
             // Make draggable

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Animation.Flow.Conditions;
+using Editor;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -25,9 +26,21 @@ namespace Animation.Flow.Editor
             _dragHandler = new DragHandler<ConditionData>(Content, "ConditionData", "drag-handle");
             _dragHandler.OnItemsReordered += OnConditionsReordered;
 
+            // Load the condition list panel stylesheet
+            StyleSheet conditionListStylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
+                "Assets/Scripts/Animation/Flow/Editor/ConditionListPanelStyles.uss");
+
+            if (conditionListStylesheet)
+            {
+                styleSheets.Add(conditionListStylesheet);
+            }
+
             // Create drop indicator element
             _dropIndicator = new VisualElement();
             _dropIndicator.AddToClassList("drop-indicator");
+            _dropIndicator.style.height = 4;
+            _dropIndicator.style.backgroundColor =
+                new StyleColor(new Color(0.3f, 0.7f, 1f, 0.8f)); // Make it more visible
 
 
             RegisterDropEvents();
@@ -52,12 +65,27 @@ namespace Animation.Flow.Editor
         {
             ScrollView scrollView = new();
             scrollView.AddToClassList("conditions-scroll-view");
+
+            // Add name for CSS debugging
+            scrollView.name = "ConditionScrollView";
+
+            // Configure the scrollview to auto-resize based on content
+            scrollView.style.flexGrow = 1;
+            scrollView.style.width = new StyleLength(StyleKeyword.Auto);
+            scrollView.contentContainer.style.flexGrow = 1;
+            scrollView.contentContainer.style.width = new StyleLength(StyleKeyword.Auto);
+
+            // Apply explicit background color programmatically
+            scrollView.style.backgroundColor = new Color(0.176f, 0.176f, 0.176f, 1f);
+
             return scrollView;
         }
 
         protected override void OnContentCreated(ScrollView content)
         {
             ContentContainer.Add(content);
+
+            ContentContainer.style.flexGrow = 1;
         }
 
         #endregion
@@ -133,6 +161,10 @@ namespace Animation.Flow.Editor
             Content.RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
             Content.RegisterCallback<DragPerformEvent>(OnDragPerform);
             Content.RegisterCallback<DragLeaveEvent>(OnDragLeave);
+            Content.RegisterCallback<DragExitedEvent>(OnDragLeave); // Additional handler for when drag exits
+
+            // Register to parent container as well to ensure we catch drag events
+            ParentContainer.RegisterCallback<DragExitedEvent>(OnDragLeave);
         }
 
         private void OnDragEnter(DragEnterEvent evt)
@@ -145,10 +177,23 @@ namespace Animation.Flow.Editor
             }
         }
 
+        private float _lastDragUpdateTime;
+        private Vector2 _lastDragPosition;
+
         private void OnDragUpdated(DragUpdatedEvent evt)
         {
             DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-            UpdateDropIndicator(evt.localMousePosition);
+
+            // Throttle updates to prevent flickering
+            float currentTime = (float)EditorApplication.timeSinceStartup;
+            if (currentTime - _lastDragUpdateTime > 0.05f ||
+                Vector2.Distance(_lastDragPosition, evt.localMousePosition) > 5f)
+            {
+                _lastDragUpdateTime = currentTime;
+                _lastDragPosition = evt.localMousePosition;
+                UpdateDropIndicator(evt.localMousePosition);
+            }
+
             evt.StopPropagation();
         }
 
@@ -162,6 +207,9 @@ namespace Animation.Flow.Editor
                 ConditionData newCondition = CreateConditionFromParameter(parameter);
                 int dropIndex = GetDropIndex(evt.localMousePosition);
 
+                // Validate drop index to prevent out of range exceptions
+                dropIndex = Mathf.Clamp(dropIndex, 0, _conditions.Count);
+
                 _conditions.Insert(dropIndex, newCondition);
                 OnConditionsChanged?.Invoke(_conditions);
                 RefreshConditionsList();
@@ -171,7 +219,7 @@ namespace Animation.Flow.Editor
             {
                 // Find the drop target condition - this is for dropping onto a specific item
                 VisualElement targetElement = evt.target as VisualElement;
-                while (targetElement != null && targetElement.userData is not ConditionData)
+                while (targetElement is { userData: not ConditionData })
                 {
                     targetElement = targetElement.parent;
                 }
@@ -214,7 +262,13 @@ namespace Animation.Flow.Editor
                             {
                                 draggedCondition.ParentGroupId = composite.UniqueId;
                                 draggedCondition.NestingLevel = composite.NestingLevel + 1;
-                                _conditions.Insert(targetIndex + 1, draggedCondition);
+
+                                // Re-evaluate target index after removal
+                                targetIndex = _conditions.IndexOf(composite);
+                                if (targetIndex >= 0) // Make sure our composite is still in the list
+                                    _conditions.Insert(targetIndex + 1, draggedCondition);
+                                else
+                                    _conditions.Add(draggedCondition); // Fallback if composite not found
                             }
 
                             OnConditionsChanged?.Invoke(_conditions);
@@ -233,6 +287,8 @@ namespace Animation.Flow.Editor
                         draggedCondition.ParentGroupId = string.Empty;
                         draggedCondition.NestingLevel = 0;
 
+                        // Revalidate drop index after removal
+                        dropIndex = Mathf.Clamp(dropIndex, 0, _conditions.Count);
                         _conditions.Insert(dropIndex, draggedCondition);
                         OnConditionsChanged?.Invoke(_conditions);
                         RefreshConditionsList();
@@ -246,32 +302,80 @@ namespace Animation.Flow.Editor
 
         private void OnDragLeave(DragLeaveEvent evt)
         {
-            _dropIndicator.style.display = DisplayStyle.None;
+            if (_dropIndicator != null)
+            {
+                // First remove it from hierarchy if it's there
+                if (_dropIndicator.parent != null)
+                    _dropIndicator.parent.Remove(_dropIndicator);
+
+                _dropIndicator.style.display = DisplayStyle.None;
+            }
+        }
+
+        // Handle DragExitedEvent the same way as DragLeaveEvent
+        private void OnDragLeave(DragExitedEvent evt)
+        {
+            if (_dropIndicator != null)
+            {
+                // First remove it from hierarchy if it's there
+                if (_dropIndicator.parent != null)
+                    _dropIndicator.parent.Remove(_dropIndicator);
+
+                _dropIndicator.style.display = DisplayStyle.None;
+            }
         }
 
         private void UpdateDropIndicator(Vector2 localPosition)
         {
+            // First remove the indicator if it's already in the hierarchy
+            if (_dropIndicator.parent != null)
+                _dropIndicator.parent.Remove(_dropIndicator);
+
             int dropIndex = GetDropIndex(localPosition);
             _dropIndicator.style.display = DisplayStyle.Flex;
 
-            if (dropIndex >= Content.childCount)
-                Content.Add(_dropIndicator);
-            else
+            var contentChildren = Content.Children().ToList();
+            int actualChildCount = contentChildren.Count;
+
+            // Insert at the appropriate position
+            if (dropIndex >= 0 && dropIndex < actualChildCount)
                 Content.Insert(dropIndex, _dropIndicator);
+            else
+                Content.Add(_dropIndicator);
         }
 
         private int GetDropIndex(Vector2 localPosition)
         {
-            var children = Content.Children().ToList();
-            for (int i = 0; i < children.Count; i++)
-            {
-                if (children[i] == _dropIndicator) continue;
+            var children = Content.Children().Where(c => c != _dropIndicator).ToList();
 
-                Rect bounds = children[i].worldBound;
-                if (localPosition.y < bounds.center.y)
-                    return i;
+            // If list is empty, return 0
+            if (children.Count == 0)
+                return 0;
+
+            // Convert local position to world position for comparison with worldBound
+            Vector2 worldPosition = Content.LocalToWorld(localPosition);
+
+            // First check if we're above the first element
+            if (worldPosition.y < children[0].worldBound.yMin + 5)
+                return 0;
+
+            // Then check if we're below the last element
+            if (worldPosition.y > children[children.Count - 1].worldBound.yMax - 5)
+                return children.Count;
+
+            // Then check between elements
+            for (int i = 0; i < children.Count - 1; i++)
+            {
+                Rect currentBounds = children[i].worldBound;
+                Rect nextBounds = children[i + 1].worldBound;
+
+                // Check if mouse is between these two elements
+                float midpoint = (currentBounds.yMax + nextBounds.yMin) / 2;
+                if (worldPosition.y < midpoint)
+                    return i + 1;
             }
 
+            // Default to end of list if nothing else matched
             return children.Count;
         }
 
@@ -305,7 +409,7 @@ namespace Animation.Flow.Editor
         {
             UniqueId = Guid.NewGuid().ToString(),
             DataType = ConditionDataType.Composite,
-            StringValue = CompositeType.And.ToString() // Default to AND logic
+            StringValue = nameof(CompositeType.And)
         };
 
         private void RefreshConditionsList()
