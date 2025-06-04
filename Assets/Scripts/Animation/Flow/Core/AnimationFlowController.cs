@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Animation.Flow.Editor.Managers;
 using Animation.Flow.Interfaces;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -251,6 +252,11 @@ namespace Animation.Flow.Core
 
                 // Create animation context with the animator
                 _animationContext = new AnimationContext(_animator, gameObject);
+
+                // Register with AnimationContextAccessor
+#if UNITY_EDITOR
+                AnimationContextAccessor.SetActiveContext(_animationContext);
+#endif
             }
             catch (Exception ex)
             {

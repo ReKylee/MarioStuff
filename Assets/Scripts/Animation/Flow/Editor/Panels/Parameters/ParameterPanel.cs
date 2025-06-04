@@ -1,10 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using Animation.Flow.Conditions;
+using Animation.Flow.Editor.Managers;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
+using PopupWindow = UnityEditor.PopupWindow;
 
 namespace Animation.Flow.Editor.Panels.Parameters
 {
@@ -43,7 +44,6 @@ namespace Animation.Flow.Editor.Panels.Parameters
 
         #region Fields
 
-        private readonly List<ParameterData> _parameters = new();
         public event Action<ParameterData> OnParameterDragStart;
 
         #endregion
@@ -67,6 +67,20 @@ namespace Animation.Flow.Editor.Panels.Parameters
 
         protected override void OnContentCreated(ScrollView content)
         {
+            // Add 'Add Parameter' button at the top
+            Button addParameterButton = new(ShowAddParameterMenu)
+            {
+                text = "+ Add Parameter"
+            };
+
+            addParameterButton.AddToClassList("add-parameter-button");
+
+            // Create a header container to hold the button
+            VisualElement headerContainer = new();
+            headerContainer.AddToClassList("parameter-panel-header");
+            headerContainer.Add(addParameterButton);
+
+            ContentContainer.Add(headerContainer);
             ContentContainer.Add(content);
             ContentContainer.style.flexGrow = 1;
             ContentContainer.style.width = new StyleLength(StyleKeyword.Auto);
@@ -78,23 +92,18 @@ namespace Animation.Flow.Editor.Panels.Parameters
 
         private void LoadDefaultParameters()
         {
-            _parameters.Clear();
-            _parameters.Add(new ParameterData
-                { Name = "IsGrounded", Type = ConditionDataType.Boolean, DefaultValue = false });
-
-            _parameters.Add(new ParameterData { Name = "Speed", Type = ConditionDataType.Float, DefaultValue = 0f });
-            _parameters.Add(new ParameterData
-                { Name = "Health", Type = ConditionDataType.Integer, DefaultValue = 100 });
-
-            _parameters.Add(
-                new ParameterData { Name = "State", Type = ConditionDataType.String, DefaultValue = "Idle" });
+            // Parameters are now loaded from AnimationContextAccessor, which has its own default parameter set
+            AnimationContextAccessor.Instance.Parameters.ForEach(p =>
+            {
+                /* Just access to initialize */
+            });
         }
 
         private void RefreshParameterList()
         {
             Content.Clear();
 
-            foreach (ParameterData parameter in _parameters)
+            foreach (ParameterData parameter in AnimationContextAccessor.Instance.Parameters)
             {
                 VisualElement element = CreateParameterElement(parameter);
                 Content.Add(element);
@@ -130,6 +139,9 @@ namespace Animation.Flow.Editor.Panels.Parameters
             // Make draggable
             element.RegisterCallback<MouseDownEvent>(evt => OnParameterMouseDown(evt, parameter));
 
+            // Add context menu for right-click options
+            element.RegisterCallback<ContextClickEvent>(evt => ShowParameterContextMenu(evt, parameter));
+
             return element;
         }
 
@@ -156,6 +168,112 @@ namespace Animation.Flow.Editor.Panels.Parameters
                 DragAndDrop.StartDrag(parameter.Name);
                 evt.StopPropagation();
             }
+        }
+
+        private void ShowAddParameterMenu()
+        {
+            GenericMenu menu = new();
+
+            menu.AddItem(new GUIContent("Boolean"), false,
+                () => AddNewParameter("New Bool", ConditionDataType.Boolean, false));
+
+            menu.AddItem(new GUIContent("Float"), false,
+                () => AddNewParameter("New Float", ConditionDataType.Float, 0f));
+
+            menu.AddItem(new GUIContent("Integer"), false,
+                () => AddNewParameter("New Int", ConditionDataType.Integer, 0));
+
+            menu.AddItem(new GUIContent("String"), false,
+                () => AddNewParameter("New String", ConditionDataType.String, ""));
+
+            menu.ShowAsContext();
+        }
+
+        private void ShowParameterContextMenu(ContextClickEvent evt, ParameterData parameter)
+        {
+            GenericMenu menu = new();
+
+            menu.AddItem(new GUIContent("Rename"), false, () => ShowRenameDialog(parameter));
+            menu.AddItem(new GUIContent("Delete"), false, () => DeleteParameter(parameter));
+
+            menu.ShowAsContext();
+            evt.StopPropagation();
+        }
+
+        private void DeleteParameter(ParameterData parameter)
+        {
+            if (EditorUtility.DisplayDialog("Confirm Delete",
+                    $"Are you sure you want to delete the parameter '{parameter.Name}'?", "Delete", "Cancel"))
+            {
+                AnimationContextAccessor.Instance.RemoveParameter(parameter.Name);
+                RefreshParameterList();
+            }
+        }
+
+        private void AddNewParameter(string defaultName, ConditionDataType type, object defaultValue)
+        {
+            // Generate a unique name
+            string name = GenerateUniqueName(defaultName);
+
+            // Create the parameter
+            ParameterData newParameter = new()
+            {
+                Name = name,
+                Type = type,
+                DefaultValue = defaultValue
+            };
+
+            // Add to parameter manager and refresh UI
+            AnimationContextAccessor.Instance.AddParameter(newParameter);
+            RefreshParameterList();
+
+            // Show rename dialog after short delay to allow UI to update
+            EditorApplication.delayCall += () => ShowRenameDialog(newParameter);
+        }
+
+        private string GenerateUniqueName(string baseName)
+        {
+            string name = baseName;
+            int counter = 1;
+
+            // Check if name already exists
+            while (AnimationContextAccessor.Instance.Parameters.Exists(p => p.Name == name))
+            {
+                name = $"{baseName}_{counter}";
+                counter++;
+            }
+
+            return name;
+        }
+
+        private void ShowRenameDialog(ParameterData parameter)
+        {
+            // Position near the window center
+            Vector2 position = EditorWindow.GetWindow<EditorWindow>().position.center;
+
+            // Create and show rename popup
+            PopupWindow.Show(
+                new Rect(position.x - 100, position.y - 50, 0, 0),
+                new ParameterRenamePopup(parameter.Name, newName =>
+                {
+                    // Validate name is unique
+                    if (string.IsNullOrWhiteSpace(newName) ||
+                        AnimationContextAccessor.Instance.Parameters.Exists(p => p != parameter && p.Name == newName))
+                    {
+                        EditorUtility.DisplayDialog("Invalid Name", "Parameter name must be unique and not empty.",
+                            "OK");
+
+                        return false;
+                    }
+
+                    // Update name and refresh
+                    string oldName = parameter.Name;
+                    parameter.Name = newName;
+                    AnimationContextAccessor.Instance.UpdateParameter(parameter);
+                    RefreshParameterList();
+                    return true;
+                })
+            );
         }
 
         #endregion

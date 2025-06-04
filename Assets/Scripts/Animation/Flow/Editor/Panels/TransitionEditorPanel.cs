@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Animation.Flow.Conditions;
+using Animation.Flow.Core;
 using Animation.Flow.Editor.Managers;
 using Animation.Flow.Editor.Panels.Conditions;
 using Animation.Flow.Editor.Panels.Parameters;
@@ -137,6 +138,15 @@ namespace Animation.Flow.Editor.Panels
             if (!string.IsNullOrEmpty(_edgeId))
             {
                 EdgeConditionManager.Instance.SetConditions(_edgeId, conditions);
+
+                // Apply to active AnimationContext if possible
+                AnimationContext activeContext = AnimationContextAccessor.GetActiveContext();
+                if (activeContext != null)
+                {
+                    // Apply conditions to the active context
+                    AnimationContextAccessor.Instance.ApplyConditionsToContext(conditions);
+                }
+
                 EditorUtility.SetDirty(EditorWindow.GetWindow<AnimationFlowEditorWindow>());
             }
         }

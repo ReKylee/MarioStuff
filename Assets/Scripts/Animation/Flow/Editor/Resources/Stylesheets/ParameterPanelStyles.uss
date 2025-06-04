@@ -28,6 +28,31 @@
     min-height: 300px;
 }
 
+/* Header with Add Parameter button */
+.parameter-panel-header {
+    padding: 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.add-parameter-button {
+    background-color: rgb(48, 128, 68);
+    color: white;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    border-width: 0;
+    margin: 4px 0;
+    align-self: flex-end;
+    transition: all 0.1s ease;
+}
+
+.add-parameter-button:hover {
+    background-color: rgb(58, 148, 78);
+    translate: 0 -1px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
 /* Scroll Area */
 .parameter-scroll-view {
     flex-grow: 1;
