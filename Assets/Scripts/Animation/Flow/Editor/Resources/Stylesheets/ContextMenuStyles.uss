@@ -1,0 +1,120 @@
+﻿/* Context Menu Styles */
+:root {
+    /* Primary colors */
+    --menu-background-color: rgb(50, 50, 50);
+    --menu-border-color: rgb(70, 70, 70);
+    --menu-text-color: rgb(230, 230, 230);
+    --menu-hover-color: rgb(77, 117, 179);
+    --menu-disabled-text-color: rgb(130, 130, 130);
+
+    /* Item colors */
+    --item-create-color: rgb(51, 153, 51); /* Green for create actions */
+    --item-edit-color: rgb(77, 117, 179);   /* Blue for edit actions */
+    --item-delete-color: rgb(150, 40, 40);   /* Red for delete actions */
+    --item-view-color: rgb(102, 26, 128);    /* Purple for view actions */
+    --item-select-color: rgb(153, 77, 26);   /* Orange for select actions */
+}
+
+/* Main context menu container */
+.context-menu {
+    background-color: var(--menu-background-color);
+    border-width: 1px;
+    border-color: var(--menu-border-color);
+    border-radius: 4px;
+    padding: 6px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Menu item */
+.context-menu-item {
+    padding: 6px 20px 6px 10px;
+    transition: background-color 0.1s ease-out;
+    cursor: link;
+}
+
+.context-menu-item:hover {
+    background-color: var(--menu-hover-color);
+}
+
+.context-menu-item__content {
+    flex-direction: row;
+    align-items: center;
+}
+
+/* Menu item icon */
+.context-menu-item__icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    -unity-text-align: middle-center;
+    font-size: 16px;
+}
+
+/* Menu item text */
+.context-menu-item__text {
+    color: var(--menu-text-color);
+    font-size: 13px;
+    flex-grow: 1;
+    -unity-text-align: middle-left;
+}
+
+/* Separator */
+.context-menu-separator {
+    height: 1px;
+    background-color: var(--menu-border-color);
+    margin: 5px 0;
+}
+
+/* Disabled menu items */
+.context-menu-item.disabled {
+    opacity: 0.5;
+    background-color: transparent;
+    pointer-events: none;
+}
+
+.context-menu-item.disabled .context-menu-item__text {
+    color: var(--menu-disabled-text-color);
+}
+
+/* Category styling */
+.context-menu-item.category-create .context-menu-item__icon {
+    color: var(--item-create-color);
+}
+
+.context-menu-item.category-edit .context-menu-item__icon {
+    color: var(--item-edit-color);
+}
+
+.context-menu-item.category-delete .context-menu-item__icon {
+    color: var(--item-delete-color);
+}
+
+.context-menu-item.category-view .context-menu-item__icon {
+    color: var(--item-view-color);
+}
+
+.context-menu-item.category-select .context-menu-item__icon {
+    color: var(--item-select-color);
+}
+
+/* Submenu arrow */
+.context-menu-item__submenu-arrow {
+    font-size: 14px;
+    width: 20px;
+    -unity-text-align: middle-center;
+    margin-left: 5px;
+    color: var(--menu-text-color);
+}
+
+/* Submenu container */
+.context-menu-submenu {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background-color: var(--menu-background-color);
+    border-width: 1px;
+    border-color: var(--menu-border-color);
+    border-radius: 4px;
+    padding: 6px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

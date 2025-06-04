@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Animation.Flow.Conditions;
@@ -53,6 +54,12 @@ namespace Animation.Flow.Editor
 
             if (styleSheet is not null)
                 styleSheets.Add(styleSheet);
+
+            // Add context menu style sheet
+            StyleSheet contextMenuStyleSheet = Resources.Load<StyleSheet>("Stylesheets/ContextMenuStyles");
+
+            if (contextMenuStyleSheet is not null)
+                styleSheets.Add(contextMenuStyleSheet);
 
 
             _transitionEditorPanel = new TransitionEditorPanel(this);
@@ -273,59 +280,96 @@ namespace Animation.Flow.Editor
 
             return change;
         }
+
         public override void BuildContextualMenu(ContextualMenuPopulateEvent menuEvent)
         {
+            if (menuEvent?.menu == null) return;
+
+
             // Convert screen position to graph position
             Vector2 localMousePosition = contentViewContainer.WorldToLocal(menuEvent.mousePosition);
 
+            // Cache selection for performance
+            var selectedElements = selection?.ToList() ?? new List<ISelectable>();
+            var selectedNodes = selectedElements.OfType<AnimationStateNode>().ToList();
+            var selectedGraphElements = selectedElements.OfType<GraphElement>().ToList();
+            bool hasSelection = selectedElements.Count > 0;
+            bool hasCopiedElements = _copiedElements?.Count > 0;
+
             // Add "Create Animation State" as a submenu with all node types
-            foreach (AnimationStateType nodeType in StateTypeRegistry.GetRegisteredStateTypes())
+            try
             {
-                menuEvent.menu.AppendAction($"✨ Create Animation State/{nodeType.ToString()}",
-                    _ => CreateStateNode(nodeType, "NewAnimation",
-                        new Rect(localMousePosition, new Vector2(150, 200))));
+                var stateTypes = StateTypeRegistry.GetRegisteredStateTypes();
+                if (stateTypes != null)
+                {
+                    foreach (AnimationStateType nodeType in stateTypes)
+                    {
+                        menuEvent.menu.AppendAction($"✨ Create Animation State/{nodeType}",
+                            _ => CreateStateNode(nodeType, "NewAnimation",
+                                new Rect(localMousePosition, new Vector2(150, 200))));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Failed to load state types: {ex.Message}");
             }
 
             // Add separator between create and edit actions
             menuEvent.menu.AppendSeparator();
 
             // EDIT SECTION
-            // Add edit options in the requested order
             menuEvent.menu.AppendAction("✂️ Cut", _ =>
-            {
-                // Store selected nodes for cutting
-                _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
-                DeleteElements(selection.OfType<GraphElement>().ToList());
-            }, selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                {
+                    if (selectedNodes.Count > 0)
+                    {
+                        _copiedElements = new List<ISelectable>(selectedNodes);
+                        DeleteElements(selectedGraphElements);
+                    }
+                },
+                hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-            menuEvent.menu.AppendAction("📝 Copy",
-                _ => { _copiedElements = selection.Where(e => e is AnimationStateNode).ToList(); },
-                selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            menuEvent.menu.AppendAction("📝 Copy", _ =>
+                {
+                    if (selectedNodes.Count > 0)
+                    {
+                        _copiedElements = new List<ISelectable>(selectedNodes);
+                    }
+                },
+                hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             menuEvent.menu.AppendAction("📋 Paste", _ => PasteElements(),
-                _copiedElements.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                hasCopiedElements ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
-            menuEvent.menu.AppendAction("🗑️ Delete",
-                _ => { DeleteElements(selection.OfType<GraphElement>().ToList()); },
-                selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            menuEvent.menu.AppendAction("🗑️ Delete", _ =>
+                {
+                    if (selectedGraphElements.Count > 0)
+                    {
+                        DeleteElements(selectedGraphElements);
+                    }
+                },
+                hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             // Add separator before duplicate
             menuEvent.menu.AppendSeparator();
 
             // Duplicate option
-            menuEvent.menu.AppendAction("⿻ Duplicate", _ =>
-            {
-                _copiedElements = selection.Where(e => e is AnimationStateNode).ToList();
-                PasteElements(20);
-            }, selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+            menuEvent.menu.AppendAction("🔄 Duplicate", _ =>
+                {
+                    if (selectedNodes.Count > 0)
+                    {
+                        _copiedElements = new List<ISelectable>(selectedNodes);
+                        PasteElements(20);
+                    }
+                },
+                hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             // Add separator before view options
             menuEvent.menu.AppendSeparator();
 
             // VIEW SECTION
-            // Add selection and navigation options
             menuEvent.menu.AppendAction("🔍 Frame Selection", _ => FrameSelection(),
-                selection.Count > 0 ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
 
             menuEvent.menu.AppendAction("🔍 Frame All", _ => FrameAll());
 
@@ -335,14 +379,18 @@ namespace Animation.Flow.Editor
             // SELECT SECTION
             menuEvent.menu.AppendAction("📌 Select All Nodes", _ =>
             {
+                if (nodes == null)
+                    return;
+
                 foreach (Node node in nodes)
                 {
-                    AddToSelection(node);
+                    if (node != null)
+                    {
+                        AddToSelection(node);
+                    }
                 }
             });
         }
-
-
         private void RegisterKeyboardShortcuts()
         {
             // Delete - Remove selected elements
@@ -520,6 +568,7 @@ namespace Animation.Flow.Editor
                 _transitionEditorPanel.Hide();
             }
         }
+
 
         private void PasteElements(float offset = 0)
         {
