@@ -7,6 +7,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     min-width: 200px;
     min-height: 250px;
+    visibility: visible;
 }
 
 .panel-title-bar {
@@ -26,18 +27,12 @@
     color: white;
 }
 
-.panel-close-button {
-    width: 20px;
-    height: 20px;
-    font-size: 16px;
-    background-color: transparent;
-    color: rgb(204, 204, 204);
-    border-width: 0;
-}
 
 .panel-content {
     padding: 10px;
     flex-grow: 1;
+    background-color: rgba(51, 51, 51, 0.95);
+
 }
 
 .panel-resize-handle {

@@ -28,7 +28,6 @@ namespace Animation.Flow.Editor
         private readonly string _dataKey;
         private readonly string _dragHandleClass;
         private VisualElement _draggedElement;
-        private T _draggedData;
         public event Action OnItemsReordered;
 
         #endregion
@@ -55,7 +54,6 @@ namespace Animation.Flow.Editor
             if (target?.parent?.userData is T data)
             {
                 _draggedElement = target.parent;
-                _draggedData = data;
 
                 DragAndDrop.PrepareStartDrag();
                 DragAndDrop.SetGenericData(_dataKey, data);
@@ -77,7 +75,6 @@ namespace Animation.Flow.Editor
             {
                 _draggedElement.style.opacity = 1.0f;
                 _draggedElement = null;
-                _draggedData = null;
 
                 OnItemsReordered?.Invoke();
             }

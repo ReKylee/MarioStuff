@@ -1,4 +1,5 @@
 ﻿using Animation.Flow.Conditions;
+using UnityEditor;
 using UnityEngine.UIElements;
 
 namespace Animation.Flow.Editor
@@ -8,24 +9,6 @@ namespace Animation.Flow.Editor
     /// </summary>
     public class ConditionElementView : VisualElement
     {
-
-        #region Constructor
-
-        public ConditionElementView(ConditionData condition, ConditionListPanel panel)
-        {
-            _condition = condition;
-            _panel = panel;
-            userData = condition;
-
-            AddToClassList("condition-element");
-            style.flexDirection = FlexDirection.Row;
-            style.marginLeft = condition.NestingLevel * 20;
-
-            _comparisonSelector = new ComparisonTypeSelector(condition.DataType);
-            CreateUI();
-        }
-
-        #endregion
 
         #region UI Creation
 
@@ -70,6 +53,44 @@ namespace Animation.Flow.Editor
             Button removeButton = new(() => _panel.RemoveCondition(_condition)) { text = "×" };
             removeButton.AddToClassList("remove-button");
             Add(removeButton);
+        }
+
+        #endregion
+
+        #region Constructor
+
+        public ConditionElementView(ConditionData condition, ConditionListPanel panel)
+        {
+            _condition = condition;
+            _panel = panel;
+            userData = condition;
+
+            AddToClassList("condition-element");
+            style.flexDirection = FlexDirection.Row;
+            style.marginLeft = condition.NestingLevel * 20;
+
+            _comparisonSelector = new ComparisonTypeSelector(condition.DataType);
+            CreateUI();
+
+            // Make element droppable
+            RegisterCallback<MouseDownEvent>(OnMouseDown);
+        }
+
+        private void OnMouseDown(MouseDownEvent evt)
+        {
+            if (evt.button != 0) return;
+
+            // Ignore if clicking inside a field
+            if (evt.target is TextField || evt.target is Button) return;
+
+            // Start drag only when clicking on drag handle or the condition itself
+            if (evt.target is VisualElement target && (target == this || target.ClassListContains("drag-handle")))
+            {
+                DragAndDrop.PrepareStartDrag();
+                DragAndDrop.SetGenericData("ConditionData", _condition);
+                DragAndDrop.StartDrag(_condition.ParameterName);
+                evt.StopPropagation();
+            }
         }
 
         #endregion

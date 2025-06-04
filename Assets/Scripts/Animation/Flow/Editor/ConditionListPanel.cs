@@ -19,11 +19,16 @@ namespace Animation.Flow.Editor
         public ConditionListPanel(VisualElement parentContainer)
             : base(parentContainer, "Conditions", new Vector2(320, 10))
         {
-
+            // Initialize view factory and drag handler
             _viewFactory = new ConditionViewFactory(this);
 
-            _dragHandler = new DragHandler<ConditionData>(_content, "ConditionData", "drag-handle");
+            _dragHandler = new DragHandler<ConditionData>(Content, "ConditionData", "drag-handle");
             _dragHandler.OnItemsReordered += OnConditionsReordered;
+
+            // Create drop indicator element
+            _dropIndicator = new VisualElement();
+            _dropIndicator.AddToClassList("drop-indicator");
+
 
             RegisterDropEvents();
         }
@@ -52,7 +57,7 @@ namespace Animation.Flow.Editor
 
         protected override void OnContentCreated(ScrollView content)
         {
-            _contentContainer.Add(content);
+            ContentContainer.Add(content);
         }
 
         #endregion
@@ -62,7 +67,7 @@ namespace Animation.Flow.Editor
         public void Show(List<ConditionData> conditions, string title)
         {
             base.Show();
-            _conditions = conditions ?? new List<ConditionData>();
+            _conditions = conditions;
             if (_titleLabel != null)
                 _titleLabel.text = title;
 
@@ -71,6 +76,21 @@ namespace Animation.Flow.Editor
 
         public void PrepareForParameterDrop(ParameterData parameter)
         {
+            // Only prepare for drop if the panel is visible
+            if (style.display == DisplayStyle.None)
+                return;
+
+            // Make sure we're visible and in the DOM
+            Show();
+
+            // Store the parameter being dragged for later use in OnDragPerform
+            DragAndDrop.SetGenericData("ParameterData", parameter);
+
+            // Make sure the drop indicator is initialized
+            if (_dropIndicator != null)
+            {
+                _dropIndicator.style.display = DisplayStyle.None;
+            }
         }
 
         public void RemoveCondition(ConditionData condition)
@@ -109,9 +129,20 @@ namespace Animation.Flow.Editor
 
         private void RegisterDropEvents()
         {
-            _content.RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
-            _content.RegisterCallback<DragPerformEvent>(OnDragPerform);
-            _content.RegisterCallback<DragLeaveEvent>(OnDragLeave);
+            Content.RegisterCallback<DragEnterEvent>(OnDragEnter);
+            Content.RegisterCallback<DragUpdatedEvent>(OnDragUpdated);
+            Content.RegisterCallback<DragPerformEvent>(OnDragPerform);
+            Content.RegisterCallback<DragLeaveEvent>(OnDragLeave);
+        }
+
+        private void OnDragEnter(DragEnterEvent evt)
+        {
+            if (DragAndDrop.GetGenericData("ParameterData") is ParameterData ||
+                DragAndDrop.GetGenericData("ConditionData") is ConditionData)
+            {
+                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                evt.StopPropagation();
+            }
         }
 
         private void OnDragUpdated(DragUpdatedEvent evt)
@@ -125,6 +156,7 @@ namespace Animation.Flow.Editor
         {
             DragAndDrop.AcceptDrag();
 
+            // Handle parameter drop to create a new condition
             if (DragAndDrop.GetGenericData("ParameterData") is ParameterData parameter)
             {
                 ConditionData newCondition = CreateConditionFromParameter(parameter);
@@ -133,6 +165,79 @@ namespace Animation.Flow.Editor
                 _conditions.Insert(dropIndex, newCondition);
                 OnConditionsChanged?.Invoke(_conditions);
                 RefreshConditionsList();
+            }
+            // Handle condition drop to create a composite condition
+            else if (DragAndDrop.GetGenericData("ConditionData") is ConditionData draggedCondition)
+            {
+                // Find the drop target condition - this is for dropping onto a specific item
+                VisualElement targetElement = evt.target as VisualElement;
+                while (targetElement != null && targetElement.userData is not ConditionData)
+                {
+                    targetElement = targetElement.parent;
+                }
+
+                if (targetElement?.userData is ConditionData targetCondition)
+                {
+                    // Don't allow dropping onto itself
+                    if (targetCondition == draggedCondition)
+                    {
+                        evt.StopPropagation();
+                        _dropIndicator.style.display = DisplayStyle.None;
+                        return;
+                    }
+
+                    // Check if the target is already a composite - if so, just move the dragged condition inside it
+                    if (targetCondition.DataType == ConditionDataType.Composite)
+                    {
+                        MoveConditionToComposite(draggedCondition, targetCondition);
+                    }
+                    else
+                    {
+                        // Create a new composite condition to hold both
+                        ConditionData composite = CreateCompositeCondition();
+
+                        // Inherit parent and nesting from the target condition
+                        composite.ParentGroupId = targetCondition.ParentGroupId;
+                        composite.NestingLevel = targetCondition.NestingLevel;
+
+                        // Insert the composite in place of the target
+                        int targetIndex = _conditions.IndexOf(targetCondition);
+                        if (targetIndex >= 0)
+                        {
+                            _conditions.Insert(targetIndex, composite);
+
+                            // Move both conditions into the composite
+                            targetCondition.ParentGroupId = composite.UniqueId;
+                            targetCondition.NestingLevel = composite.NestingLevel + 1;
+
+                            if (_conditions.Remove(draggedCondition)) // If we're moving from the same list
+                            {
+                                draggedCondition.ParentGroupId = composite.UniqueId;
+                                draggedCondition.NestingLevel = composite.NestingLevel + 1;
+                                _conditions.Insert(targetIndex + 1, draggedCondition);
+                            }
+
+                            OnConditionsChanged?.Invoke(_conditions);
+                            RefreshConditionsList();
+                        }
+                    }
+                }
+                else
+                {
+                    // Handle dropping into empty space or non-condition areas
+                    int dropIndex = GetDropIndex(evt.localMousePosition);
+
+                    if (_conditions.Remove(draggedCondition)) // Only if it exists in our list already
+                    {
+                        // Reset parent group id when dropping into empty space
+                        draggedCondition.ParentGroupId = string.Empty;
+                        draggedCondition.NestingLevel = 0;
+
+                        _conditions.Insert(dropIndex, draggedCondition);
+                        OnConditionsChanged?.Invoke(_conditions);
+                        RefreshConditionsList();
+                    }
+                }
             }
 
             _dropIndicator.style.display = DisplayStyle.None;
@@ -149,15 +254,15 @@ namespace Animation.Flow.Editor
             int dropIndex = GetDropIndex(localPosition);
             _dropIndicator.style.display = DisplayStyle.Flex;
 
-            if (dropIndex >= _content.childCount)
-                _content.Add(_dropIndicator);
+            if (dropIndex >= Content.childCount)
+                Content.Add(_dropIndicator);
             else
-                _content.Insert(dropIndex, _dropIndicator);
+                Content.Insert(dropIndex, _dropIndicator);
         }
 
         private int GetDropIndex(Vector2 localPosition)
         {
-            var children = _content.Children().ToList();
+            var children = Content.Children().ToList();
             for (int i = 0; i < children.Count; i++)
             {
                 if (children[i] == _dropIndicator) continue;
@@ -193,19 +298,29 @@ namespace Animation.Flow.Editor
             };
         }
 
+        /// <summary>
+        ///     Creates a new composite condition (AND/OR group)
+        /// </summary>
+        private ConditionData CreateCompositeCondition() => new()
+        {
+            UniqueId = Guid.NewGuid().ToString(),
+            DataType = ConditionDataType.Composite,
+            StringValue = CompositeType.And.ToString() // Default to AND logic
+        };
+
         private void RefreshConditionsList()
         {
-            _content.Clear();
+            Content.Clear();
 
             if (_conditions == null || _conditions.Count == 0)
             {
                 Label emptyLabel = new("No conditions. Drag parameters here.");
                 emptyLabel.AddToClassList("empty-state-label");
-                _content.Add(emptyLabel);
+                Content.Add(emptyLabel);
                 return;
             }
 
-            RenderConditions(_conditions.Where(c => string.IsNullOrEmpty(c.ParentGroupId)), _content);
+            RenderConditions(_conditions.Where(c => string.IsNullOrEmpty(c.ParentGroupId)), Content);
         }
 
         private void RenderConditions(IEnumerable<ConditionData> conditions, VisualElement parentElement)

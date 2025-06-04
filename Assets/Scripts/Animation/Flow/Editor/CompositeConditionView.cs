@@ -50,6 +50,7 @@ namespace Animation.Flow.Editor
             // Drag handle
             Label dragHandle = new("≡");
             dragHandle.AddToClassList("drag-handle");
+            dragHandle.RegisterCallback<MouseDownEvent>(OnDragHandleMouseDown);
             header.Add(dragHandle);
 
             // Type button
@@ -100,8 +101,17 @@ namespace Animation.Flow.Editor
         {
             if (DragAndDrop.GetGenericData("ConditionData") is ConditionData condition)
             {
-                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-                AddToClassList("drop-target");
+                // Don't allow dropping onto itself or one of its children
+                if (condition == _composite || condition.ParentGroupId == _composite.UniqueId)
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Rejected;
+                }
+                else
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                    AddToClassList("drop-target");
+                }
+
                 evt.StopPropagation();
             }
         }
@@ -110,12 +120,26 @@ namespace Animation.Flow.Editor
         {
             if (DragAndDrop.GetGenericData("ConditionData") is ConditionData condition)
             {
-                DragAndDrop.AcceptDrag();
-                _panel.MoveConditionToComposite(condition, _composite);
-                evt.StopPropagation();
+                // Don't allow dropping onto itself or one of its children
+                if (condition != _composite && condition.ParentGroupId != _composite.UniqueId)
+                {
+                    DragAndDrop.AcceptDrag();
+                    _panel.MoveConditionToComposite(condition, _composite);
+                    evt.StopPropagation();
+                }
             }
 
             RemoveFromClassList("drop-target");
+        }
+
+        private void OnDragHandleMouseDown(MouseDownEvent evt)
+        {
+            if (evt.button != 0) return;
+
+            DragAndDrop.PrepareStartDrag();
+            DragAndDrop.SetGenericData("ConditionData", _composite);
+            DragAndDrop.StartDrag(_composite.DataType.ToString());
+            evt.StopPropagation();
         }
 
         #endregion

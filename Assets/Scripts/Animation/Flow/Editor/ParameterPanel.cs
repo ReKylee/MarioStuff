@@ -43,7 +43,7 @@ namespace Animation.Flow.Editor
 
         protected override void OnContentCreated(ScrollView content)
         {
-            _contentContainer.Add(content);
+            ContentContainer.Add(content);
         }
 
         #endregion
@@ -66,12 +66,12 @@ namespace Animation.Flow.Editor
 
         private void RefreshParameterList()
         {
-            _content.Clear();
+            Content.Clear();
 
             foreach (ParameterData parameter in _parameters)
             {
                 VisualElement element = CreateParameterElement(parameter);
-                _content.Add(element);
+                Content.Add(element);
             }
         }
 

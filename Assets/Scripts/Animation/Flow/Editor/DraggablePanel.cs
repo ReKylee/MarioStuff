@@ -32,18 +32,18 @@ namespace Animation.Flow.Editor
 
         #region Fields
 
-        protected readonly VisualElement _parentContainer;
-        protected VisualElement _contentContainer;
-        protected TContent _content;
-        protected bool _isDragging;
-        protected bool _isResizing;
-        protected bool _isInteracting;
-        protected Vector2 _dragStartPosition;
-        protected Vector2 _resizeStartPosition;
-        protected Vector2 _resizeStartSize;
-        protected Vector2 _position;
-        protected Vector2 _size;
-        protected readonly Vector2 _minSize = new(200, 250);
+        private readonly VisualElement _parentContainer;
+        protected VisualElement ContentContainer;
+        protected TContent Content;
+        private bool _isDragging;
+        private bool _isResizing;
+        private bool _isInteracting;
+        private Vector2 _dragStartPosition;
+        private Vector2 _resizeStartPosition;
+        private Vector2 _resizeStartSize;
+        private Vector2 _position;
+        private Vector2 _size;
+        private readonly Vector2 _minSize = new(200, 250);
 
         #endregion
 
@@ -66,22 +66,18 @@ namespace Animation.Flow.Editor
             titleLabel.AddToClassList("panel-title-text");
             titleBar.Add(titleLabel);
 
-            Button closeButton = new(Hide) { text = "×" };
-            closeButton.AddToClassList("panel-close-button");
-            titleBar.Add(closeButton);
-
             Add(titleBar);
         }
 
         private void CreateContentArea()
         {
-            _contentContainer = new VisualElement();
-            _contentContainer.AddToClassList("panel-content");
-            _contentContainer.style.flexGrow = 1;
-            Add(_contentContainer);
+            ContentContainer = new VisualElement();
+            ContentContainer.AddToClassList("panel-content");
+            ContentContainer.style.flexGrow = 1;
+            Add(ContentContainer);
 
-            _content = CreateContent();
-            OnContentCreated(_content);
+            Content = CreateContent();
+            OnContentCreated(Content);
         }
 
         private void CreateResizeHandle()

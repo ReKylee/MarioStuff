@@ -29,7 +29,7 @@ namespace Animation.Flow.Editor
             StyleSheet stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
                 "Assets/Scripts/Animation/Flow/Editor/TransitionEditorPanel.uss");
 
-            if (stylesheet != null)
+            if (stylesheet)
                 styleSheets.Add(stylesheet);
 
             // Create parameter panel (left side)
@@ -40,6 +40,7 @@ namespace Animation.Flow.Editor
             // Create condition panel (right side)
             _conditionPanel = new ConditionListPanel(_parentContainer);
             _conditionPanel.OnConditionsChanged += OnConditionsChanged;
+            _conditionPanel.Hide();
             _parentContainer.Add(_conditionPanel);
 
             // Register with EdgeInspector
@@ -69,18 +70,15 @@ namespace Animation.Flow.Editor
                 ? EdgeConditionManager.Instance.GetConditions(_edgeId)
                 : new List<ConditionData>();
 
-            // Update panels
-            _parameterPanel.Show();
             _conditionPanel.Show(conditions, GetTransitionTitle());
         }
 
         public void Hide()
         {
-            _parameterPanel.Hide();
             _conditionPanel.Hide();
         }
 
-        public bool IsBeingInteracted() => _parameterPanel.IsBeingInteracted() || _conditionPanel.IsBeingInteracted();
+        public bool IsBeingInteracted() => _conditionPanel.IsBeingInteracted();
 
         #endregion
 
@@ -99,7 +97,11 @@ namespace Animation.Flow.Editor
 
         private void OnParameterDragStart(ParameterData parameter)
         {
-            _conditionPanel.PrepareForParameterDrop(parameter);
+            // Only show the drop indicator if conditions panel is visible
+            if (_conditionPanel != null && _conditionPanel.style.display == DisplayStyle.Flex)
+            {
+                _conditionPanel.PrepareForParameterDrop(parameter);
+            }
         }
 
         private void OnConditionsChanged(List<ConditionData> conditions)
