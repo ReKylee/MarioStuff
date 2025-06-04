@@ -13,6 +13,8 @@ namespace Animation.Flow.Conditions
     {
         private readonly List<ICondition> _conditions = new();
         private readonly int _count;
+
+        private ComparisonType _comparisonType = ComparisonType.IsTrue;
         /// <summary>
         ///     Create a new composite condition
         /// </summary>
@@ -40,7 +42,18 @@ namespace Animation.Flow.Conditions
 
         public override ConditionDataType DataType => ConditionDataType.Composite;
 
-        public override ComparisonType ComparisonType => ComparisonType.IsTrue;
+        public override ComparisonType ComparisonType => _comparisonType;
+
+        /// <summary>
+        ///     Set the comparison type for this composite condition
+        /// </summary>
+        public void SetComparisonType(ComparisonType comparisonType)
+        {
+            if (comparisonType == ComparisonType.IsTrue || comparisonType == ComparisonType.IsFalse)
+            {
+                _comparisonType = comparisonType;
+            }
+        }
 
         /// <summary>
         ///     Add a condition to this composite
@@ -73,15 +86,20 @@ namespace Animation.Flow.Conditions
         {
             // Empty condition group is always true
             if (_conditions.Count == 0)
-                return true;
+            {
+                return _comparisonType == ComparisonType.IsTrue;
+            }
 
             // Evaluate based on logic type
-            return CompositeType switch
+            bool result = CompositeType switch
             {
                 CompositeType.And => _conditions.All(c => c.Evaluate(context)),
                 CompositeType.Or => _conditions.Any(c => c.Evaluate(context)),
                 _ => false
             };
+
+            // If comparison type is IsFalse, invert the result (NAND/NOR logic)
+            return _comparisonType == ComparisonType.IsTrue ? result : !result;
         }
         /// <summary>
         ///     Get a human-readable description of this condition
@@ -92,8 +110,14 @@ namespace Animation.Flow.Conditions
                 return "Empty Group";
 
             string logicOperator = CompositeType == CompositeType.And ? " AND " : " OR ";
+            bool isNegated = _comparisonType == ComparisonType.IsFalse;
 
             StringBuilder sb = new();
+
+            // Add NOT if using IsFalse comparison type
+            if (isNegated)
+                sb.Append("NOT ");
+
             sb.Append("(");
 
             for (int i = 0; i < _conditions.Count; i++)

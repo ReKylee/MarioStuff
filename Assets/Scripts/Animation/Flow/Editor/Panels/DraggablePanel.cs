@@ -1,5 +1,4 @@
-﻿using UnityEditor;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Animation.Flow.Editor.Panels
@@ -19,18 +18,15 @@ namespace Animation.Flow.Editor.Panels
             _size = _minSize;
 
             // Load the dedicated stylesheet for DraggablePanel
-            StyleSheet stylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
-                "Assets/Scripts/Animation/Flow/Editor/DraggablePanel.uss");
+            StyleSheet draggablePanelStylesheet = Resources.Load<StyleSheet>("Stylesheets/DraggablePanel");
 
-            if (stylesheet != null)
+
+            if (draggablePanelStylesheet)
             {
 
-                styleSheets.Add(stylesheet);
+                styleSheets.Add(draggablePanelStylesheet);
             }
-            else
-            {
-                Debug.LogWarning("[DraggablePanel] Could not load DraggablePanel.uss stylesheet");
-            }
+
 
             AddToClassList("draggable-panel");
             style.position = Position.Absolute;
@@ -41,12 +37,6 @@ namespace Animation.Flow.Editor.Panels
             style.minWidth = _minSize.x;
             style.minHeight = _minSize.y;
 
-            // Use flex layout for content-based sizing
-            style.flexDirection = FlexDirection.Column;
-            style.flexGrow = 0; // Don't grow beyond content
-
-            // Ensure background color is visible
-            style.backgroundColor = new Color(0.2f, 0.2f, 0.2f, 1f); // Explicit fallback color
 
             // Ensure the panel stays within bounds of the parent container
             ParentContainer.RegisterCallback<GeometryChangedEvent>(_ => EnsureWithinBounds());

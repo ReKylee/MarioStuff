@@ -26,7 +26,10 @@ namespace Animation.Flow.Conditions
                 if (Enum.TryParse(data.StringValue, out CompositeType compositeType))
                 {
                     // The 'count' for AtLeast, Exactly, AtMost comes from IntValue.
-                    return new CompositeCondition(compositeType, data.IntValue);
+                    CompositeCondition condition = new(compositeType, data.IntValue);
+                    // Set the comparison type for the composite (whether we want the group to be true or false)
+                    condition.SetComparisonType(data.ComparisonType);
+                    return condition;
                 }
 
                 Debug.LogWarning($"Invalid CompositeType string: {data.StringValue}. Defaulting to AND.");
@@ -40,14 +43,7 @@ namespace Animation.Flow.Conditions
             {
                 case ConditionDataType.Boolean:
                     // BoolCondition's constructor takes (parameterName, expectedValue)
-                    // ComparisonType helps interpret BoolValue or set expectedValue directly
-                    if (data.ComparisonType == ComparisonType.IsTrue)
-                        return new BoolCondition(parameterName, true);
-
-                    if (data.ComparisonType == ComparisonType.IsFalse)
-                        return new BoolCondition(parameterName, false);
-
-                    // For ComparisonType.Equals, BoolValue from ConditionData is the expected value.
+                    // For Boolean conditions, we always use Equals comparison type
                     return new BoolCondition(parameterName, data.BoolValue);
 
                 case ConditionDataType.Float:

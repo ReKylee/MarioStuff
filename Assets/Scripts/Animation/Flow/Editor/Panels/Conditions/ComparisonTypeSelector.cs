@@ -26,7 +26,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
             return _dataType switch
             {
                 ConditionDataType.Boolean => new List<ComparisonType>
-                    { ComparisonType.IsTrue, ComparisonType.IsFalse },
+                    { ComparisonType.Equals },
                 ConditionDataType.Integer => new List<ComparisonType>
                 {
                     ComparisonType.Equals,
@@ -66,7 +66,8 @@ namespace Animation.Flow.Editor.Panels.Conditions
                 },
                 ConditionDataType.Composite => new List<ComparisonType>
                 {
-                    ComparisonType.IsTrue
+                    ComparisonType.IsTrue,
+                    ComparisonType.IsFalse
                 },
                 _ => new List<ComparisonType> { ComparisonType.Equals }
             };

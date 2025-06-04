@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine.UIElements;
 
-namespace Animation.Flow.Editor
+namespace Animation.Flow.Editor.ValueEditors
 {
     public class BooleanValueEditor : IValueEditor<bool>
     {

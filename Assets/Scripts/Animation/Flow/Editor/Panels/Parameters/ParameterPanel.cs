@@ -23,8 +23,7 @@ namespace Animation.Flow.Editor.Panels.Parameters
             AddToClassList("parameter-panel");
 
             // Load the parameter panel stylesheet
-            StyleSheet parameterPanelStylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
-                "Assets/Scripts/Animation/Flow/Editor/ParameterPanelStyles.uss");
+            StyleSheet parameterPanelStylesheet = Resources.Load<StyleSheet>("Stylesheets/ParameterPanelStyles");
 
             if (parameterPanelStylesheet)
             {

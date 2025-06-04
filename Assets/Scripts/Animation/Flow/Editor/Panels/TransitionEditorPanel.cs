@@ -22,32 +22,13 @@ namespace Animation.Flow.Editor.Panels
             _parentContainer = parentContainer;
 
             // Load and apply stylesheets from Editor Resources
-            StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
-                "Assets/Scripts/Animation/Flow/Editor/Resources/Stylesheets/TransitionEditorPanel.uss");
+            StyleSheet styleSheet = Resources.Load<StyleSheet>("Stylesheets/TransitionEditorPanel");
 
-            if (styleSheet != null)
+            if (styleSheet)
             {
                 styleSheets.Add(styleSheet);
             }
-            else
-            {
-                Debug.LogError(
-                    "[TransitionEditorPanel] Could not load TransitionEditorPanel.uss stylesheet from Editor Resources");
-            }
 
-            // Also load the DraggablePanel stylesheet (for inheriting panels)
-            StyleSheet draggablePanelStylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
-                "Assets/Scripts/Animation/Flow/Editor/Resources/Stylesheets/DraggablePanel.uss");
-
-            if (draggablePanelStylesheet != null)
-            {
-                styleSheets.Add(draggablePanelStylesheet);
-            }
-            else
-            {
-                Debug.LogWarning(
-                    "[TransitionEditorPanel] Could not load DraggablePanel.uss stylesheet from Editor Resources");
-            }
 
             Initialize();
         }

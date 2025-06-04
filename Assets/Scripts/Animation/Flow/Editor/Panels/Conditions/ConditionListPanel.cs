@@ -28,8 +28,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
             _dragHandler.OnItemsReordered += OnConditionsReordered;
 
             // Load the condition list panel stylesheet
-            StyleSheet conditionListStylesheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
-                "Assets/Scripts/Animation/Flow/Editor/ConditionListPanelStyles.uss");
+            StyleSheet conditionListStylesheet = Resources.Load<StyleSheet>("Stylesheets/ConditionListPanelStyles");
 
             if (conditionListStylesheet)
             {
@@ -397,7 +396,6 @@ namespace Animation.Flow.Editor.Panels.Conditions
         {
             return type switch
             {
-                ConditionDataType.Boolean => ComparisonType.IsTrue,
                 ConditionDataType.Float => ComparisonType.GreaterThan,
                 _ => ComparisonType.Equals
             };
