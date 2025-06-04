@@ -172,6 +172,11 @@ namespace Animation.Flow.Editor.Panels.Conditions
                 targetComposite.DataType != ConditionDataType.Composite)
                 return;
 
+            // Prevent circular references
+            if (sourceComposite.UniqueId == targetComposite.UniqueId ||
+                IsConditionInsideComposite(targetComposite, sourceComposite))
+                return;
+
             // Get all children of the source composite
             var childConditions = GetAllChildrenOfComposite(sourceComposite);
 
@@ -336,6 +341,15 @@ namespace Animation.Flow.Editor.Panels.Conditions
                     // If we're dragging a composite onto a condition, add the condition to the composite
                     else if (draggedCondition.DataType == ConditionDataType.Composite)
                     {
+                        // Check for circular references - don't allow a composite to be added to itself
+                        if (draggedCondition.ParentGroupId == targetCondition.UniqueId ||
+                            IsConditionInsideComposite(draggedCondition, targetCondition))
+                        {
+                            evt.StopPropagation();
+                            _dropIndicator.style.display = DisplayStyle.None;
+                            return;
+                        }
+
                         // Move the condition into the dragged composite
                         targetCondition.ParentGroupId = draggedCondition.UniqueId;
                         targetCondition.NestingLevel = draggedCondition.NestingLevel + 1;

@@ -73,30 +73,5 @@ namespace Animation.Flow.Editor.Panels.Conditions
             };
         }
 
-        /// <summary>
-        ///     Create a dropdown for selecting comparison types
-        /// </summary>
-        public VisualElement CreateDropdown(ComparisonType current, Action<ComparisonType> onValueChanged)
-        {
-            // Use a PopupField for a proper dropdown
-            var availableTypes = GetAvailableComparisonTypes();
-
-            // Make sure the current type is in the available types list
-            if (!availableTypes.Contains(current))
-                current = availableTypes[0];
-
-            var dropdown = new PopupField<ComparisonType>(
-                "Comparison", // Label
-                availableTypes, // Choices
-                current, // Default value
-                value => value.ToString(),
-                value => value.ToString()
-            );
-
-            dropdown.AddToClassList("comparison-dropdown");
-            dropdown.RegisterValueChangedCallback(evt => onValueChanged?.Invoke(evt.newValue));
-
-            return dropdown;
-        }
     }
 }

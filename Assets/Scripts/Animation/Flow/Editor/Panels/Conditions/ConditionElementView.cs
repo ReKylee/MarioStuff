@@ -1,4 +1,5 @@
 ﻿using Animation.Flow.Conditions;
+using Animation.Flow.Editor.Utilities;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -27,25 +28,39 @@ namespace Animation.Flow.Editor.Panels.Conditions
 
             // Comparison type dropdown as a button that opens a menu
             Button comparisonButton = new();
-            comparisonButton.text = _condition.ComparisonType.ToString();
+            comparisonButton.text = ComparisonSymbols.GetSymbol(_condition.ComparisonType);
             comparisonButton.AddToClassList("comparison-button");
-            comparisonButton.clicked += () =>
-            {
-                GenericMenu menu = new();
-                foreach (ComparisonType compType in _comparisonSelector.GetAvailableComparisonTypes())
-                {
-                    menu.AddItem(new GUIContent(compType.ToString()),
-                        _condition.ComparisonType == compType,
-                        () =>
-                        {
-                            _condition.ComparisonType = compType;
-                            comparisonButton.text = compType.ToString();
-                            _panel.UpdateCondition(_condition);
-                        });
-                }
+            comparisonButton.tooltip = _condition.ComparisonType.ToString();
 
-                menu.DropDown(comparisonButton.worldBound);
-            };
+            // Get available comparison types
+            var availableCompTypes = _comparisonSelector.GetAvailableComparisonTypes();
+
+            // If there's only one comparison type, make the button non-interactive
+            if (availableCompTypes.Count <= 1)
+            {
+                comparisonButton.AddToClassList("non-interactive");
+            }
+            else
+            {
+                comparisonButton.clicked += () =>
+                {
+                    GenericMenu menu = new();
+                    foreach (ComparisonType compType in availableCompTypes)
+                    {
+                        menu.AddItem(new GUIContent(ComparisonSymbols.GetDescription(compType)),
+                            _condition.ComparisonType == compType,
+                            () =>
+                            {
+                                _condition.ComparisonType = compType;
+                                comparisonButton.text = ComparisonSymbols.GetSymbol(compType);
+                                comparisonButton.tooltip = compType.ToString();
+                                _panel.UpdateCondition(_condition);
+                            });
+                    }
+
+                    menu.DropDown(comparisonButton.worldBound);
+                };
+            }
 
             Add(comparisonButton);
 
@@ -69,8 +84,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
                 case ConditionDataType.Boolean:
                     Toggle toggle = new();
                     toggle.value = condition.BoolValue;
-                    toggle.style.marginLeft = 10;
-                    toggle.style.marginRight = 10;
+                    // Style is now handled in the CSS
                     toggle.RegisterValueChangedCallback(evt =>
                     {
                         condition.BoolValue = evt.newValue;
@@ -138,6 +152,8 @@ namespace Animation.Flow.Editor.Panels.Conditions
             AddToClassList("condition-element");
             style.flexDirection = FlexDirection.Row;
             style.marginLeft = condition.NestingLevel * 20;
+            style.justifyContent = Justify.FlexStart;
+            style.alignItems = Align.Center;
 
             _comparisonSelector = new ComparisonTypeSelector(condition.DataType);
             CreateUI();
