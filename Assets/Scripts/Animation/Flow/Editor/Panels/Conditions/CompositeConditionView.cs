@@ -66,6 +66,8 @@ namespace Animation.Flow.Editor.Panels.Conditions
         private readonly ConditionData _condition;
         private readonly ConditionListPanel _panel;
         private Button _compositeTypeButton;
+        private Button _notToggleButton;
+        private bool _isNot;
         public VisualElement ChildContainer { get; private set; }
 
         #endregion
@@ -84,9 +86,34 @@ namespace Animation.Flow.Editor.Panels.Conditions
             dragHandle.AddToClassList("drag-handle");
             headerSection.Add(dragHandle);
 
+            // Create NOT toggle button (before the composite type)
+            _notToggleButton = new Button(ToggleNot)
+            {
+                text = "NOT"
+            };
+
+            // Add styling class (now shares base styles with composite-type-button in USS)
+            _notToggleButton.AddToClassList("not-toggle");
+
+            // Check if the condition has NOT prefix
+            _isNot = _condition.BoolValue;
+            if (_isNot)
+            {
+                AddToClassList("composite-not");
+            }
+            else
+            {
+                _notToggleButton.AddToClassList("disabled");
+            }
+
+            headerSection.Add(_notToggleButton);
+
             // Composite type button - clicking cycles through available types
-            _compositeTypeButton = new Button(CycleCompositeType);
-            _compositeTypeButton.text = compositeType.ToString();
+            _compositeTypeButton = new Button(CycleCompositeType)
+            {
+                text = compositeType.ToString()
+            };
+
             _compositeTypeButton.AddToClassList("composite-type-button");
 
             // Set a fixed width to make it shorter
@@ -129,7 +156,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
             _condition.StringValue = newType.ToString();
             _panel.UpdateCondition(_condition);
 
-            // Update button
+            // Update button text (consider the NOT state)
             _compositeTypeButton.text = newType.ToString();
 
             // Update CSS classes
@@ -139,6 +166,41 @@ namespace Animation.Flow.Editor.Panels.Conditions
 
             _compositeTypeButton.EnableInClassList("and-type", newType == CompositeType.And);
             _compositeTypeButton.EnableInClassList("or-type", newType == CompositeType.Or);
+        }
+
+        private void ToggleNot()
+        {
+            _isNot = !_isNot;
+
+            // Store the NOT state in the BoolValue field of the condition
+            _condition.BoolValue = _isNot;
+            _panel.UpdateCondition(_condition);
+
+            // Update visual appearance
+            if (_isNot)
+            {
+                AddToClassList("composite-not");
+                _notToggleButton.RemoveFromClassList("disabled");
+
+                // Parse current type and update the composite type button text to show the NOT prefix
+                CompositeType currentType = Enum.TryParse(_condition.StringValue, out CompositeType result)
+                    ? result
+                    : CompositeType.And;
+
+                _compositeTypeButton.text = currentType.ToString();
+            }
+            else
+            {
+                RemoveFromClassList("composite-not");
+                _notToggleButton.AddToClassList("disabled");
+
+                // Update button text to show normal type (without NOT)
+                CompositeType currentType = Enum.TryParse(_condition.StringValue, out CompositeType result)
+                    ? result
+                    : CompositeType.And;
+
+                _compositeTypeButton.text = currentType.ToString();
+            }
         }
 
         #endregion

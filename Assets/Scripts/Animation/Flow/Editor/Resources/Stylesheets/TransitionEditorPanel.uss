@@ -31,7 +31,7 @@
     border-radius: var(--parameter-border-radius);
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.05);
-    cursor: pan;
+    cursor: move-arrow;
     transition: all 0.15s ease-out;
 }
 
@@ -43,7 +43,7 @@
 }
 
 .parameter-item:active {
-    cursor: pan;
+    cursor: move-arrow;
     background-color: rgb(85, 85, 85);
 }
 

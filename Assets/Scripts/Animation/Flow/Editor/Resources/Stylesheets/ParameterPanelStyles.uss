@@ -1,4 +1,26 @@
 ﻿/* Parameter Panel Styles */
+:root {
+    --background-dark: rgb(45, 45, 45);
+    --background-mid: rgb(55, 55, 55);
+    --background-light: rgb(65, 65, 65);
+    --background-lighter: rgb(75, 75, 75);
+    --background-lightest: rgb(85, 85, 85);
+    --border-light: rgba(255, 255, 255, 0.05);
+    --border-highlight: rgba(255, 255, 255, 0.1);
+    --text-light: rgb(220, 220, 220);
+    --text-mid: rgb(170, 170, 170);
+    --panel-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    --border-radius-standard: 4px;
+    --border-radius-small: 3px;
+    --border-radius-pill: 10px;
+    --transition-standard: all 0.15s ease-out;
+
+    /* Type-specific colors */
+    --color-boolean: rgb(100, 180, 255);
+    --color-float: rgb(120, 200, 120);
+    --color-integer: rgb(200, 120, 120);
+    --color-string: rgb(180, 140, 220);
+}
 
 /* Base Container */
 .parameter-panel {
@@ -9,8 +31,8 @@
 /* Scroll Area */
 .parameter-scroll-view {
     flex-grow: 1;
-    background-color: rgb(45, 45, 45);
-    border-radius: 3px;
+    background-color: var(--background-dark);
+    border-radius: var(--border-radius-small);
     padding: 6px;
 }
 
@@ -20,56 +42,56 @@
     align-items: center;
     padding: 10px 12px;
     margin: 6px;
-    background-color: rgb(65, 65, 65);
-    border-radius: 4px;
+    background-color: var(--background-light);
+    border-radius: var(--border-radius-standard);
     border-width: 1px;
-    border-color: rgba(255, 255, 255, 0.05);
-    cursor: grab;
-    transition: all 0.15s ease-out;
+    border-color: var(--border-light);
+    cursor: move-arrow;
+    transition: var(--transition-standard);
 }
 
 .parameter-item:hover {
-    background-color: rgb(75, 75, 75);
-    border-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--background-lighter);
+    border-color: var(--border-highlight);
     translate: 0 -2px;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--panel-shadow);
 }
 
 .parameter-item:active {
-    cursor: grabbing;
-    background-color: rgb(85, 85, 85);
+    cursor: move-arrow;
+    background-color: var(--background-lightest);
 }
 
 /* Parameter Type Icon */
 .parameter-type-icon {
     font-size: 18px;
     margin-right: 10px;
-    color: rgb(170, 170, 170);
+    color: var(--text-mid);
     width: 20px;
     -unity-text-align: middle-center;
 }
 
 .parameter-type-icon.boolean {
-    color: rgb(100, 180, 255);
+    color: var(--color-boolean);
 }
 
 .parameter-type-icon.float {
-    color: rgb(120, 200, 120);
+    color: var(--color-float);
 }
 
 .parameter-type-icon.integer {
-    color: rgb(200, 120, 120);
+    color: var(--color-integer);
 }
 
 .parameter-type-icon.string {
-    color: rgb(180, 140, 220);
+    color: var(--color-string);
 }
 
 /* Parameter Name */
 .parameter-name {
     flex-grow: 1;
     font-size: 14px;
-    color: rgb(220, 220, 220);
+    color: var(--text-light);
     -unity-font-style: bold;
 }
 
@@ -78,7 +100,7 @@
     font-size: 12px;
     color: rgb(150, 150, 150);
     background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
+    border-radius: var(--border-radius-pill);
     padding: 2px 8px;
     margin-left: 8px;
 }
@@ -86,20 +108,20 @@
 /* Parameter Type-Specific Styling */
 .parameter-type-label.boolean {
     background-color: rgba(100, 180, 255, 0.2);
-    color: rgb(120, 200, 255);
+    color: var(--color-boolean);
 }
 
 .parameter-type-label.float {
     background-color: rgba(120, 200, 120, 0.2);
-    color: rgb(140, 220, 140);
+    color: var(--color-float);
 }
 
 .parameter-type-label.integer {
     background-color: rgba(200, 120, 120, 0.2);
-    color: rgb(220, 140, 140);
+    color: var(--color-integer);
 }
 
 .parameter-type-label.string {
     background-color: rgba(180, 140, 220, 0.2);
-    color: rgb(200, 160, 240);
+    color: var(--color-string);
 }

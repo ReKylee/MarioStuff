@@ -1,10 +1,21 @@
 ﻿/* DraggablePanel Styles */
+:root {
+    --panel-background: rgb(51, 51, 51);
+    --panel-border: rgb(26, 26, 26);
+    --panel-title-background: rgb(77, 77, 77);
+    --panel-content-background: rgb(45, 45, 45);
+    --text-color-light: rgb(255, 255, 255);
+    --handle-color: rgba(255, 255, 255, 0.5);
+    --panel-border-radius: 4px;
+    --panel-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
 .draggable-panel {
-    background-color: rgb(51, 51, 51);
+    background-color: var(--panel-background);
     border-width: 1px;
-    border-color: rgb(26, 26, 26);
-    border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border-color: var(--panel-border);
+    border-radius: var(--panel-border-radius);
+    box-shadow: var(--panel-shadow);
     min-width: 200px;
     min-height: 250px;
     flex-grow: 1;
@@ -15,27 +26,27 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    background-color: rgb(77, 77, 77);
+    background-color: var(--panel-title-background);
     height: 30px;
     padding: 0 8px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+    border-top-left-radius: var(--panel-border-radius);
+    border-top-right-radius: var(--panel-border-radius);
 }
 
 .panel-title-text {
     font-size: 14px;
     -unity-font-style: bold;
-    color: white;
+    color: var(--text-color-light);
 }
 
 .panel-content {
     padding: 10px;
     flex-grow: 1;
-    background-color: rgb(45, 45, 45);
+    background-color: var(--panel-content-background);
     overflow: visible;
     width: auto;
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: var(--panel-border-radius);
+    border-bottom-right-radius: var(--panel-border-radius);
 }
 
 /* Bottom left resize handle */
@@ -47,7 +58,7 @@
     width: 16px;
     height: 16px;
     border-width: 0 0 2px 2px;
-    border-color: rgba(255, 255, 255, 0.5);
+    border-color: var(--handle-color);
     margin: 0 0 4px 4px;
     cursor: resize-up-right;
 }
@@ -61,7 +72,7 @@
     width: 16px;
     height: 16px;
     border-width: 0 2px 2px 0;
-    border-color: rgba(255, 255, 255, 0.5);
+    border-color: var(--handle-color);
     margin: 0 4px 4px 0;
     cursor: resize-up-left;
 }

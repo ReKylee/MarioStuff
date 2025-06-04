@@ -294,11 +294,7 @@ Port {
 
 .group-conditions-container {
     border-left-width: 1px;
-    border-color: rgba(255, 255, 255, 0.2);
-    padding-left: 5px;
-    padding-right: 5px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    padding: 5px;
     margin-left: 15px;
     margin-top: 5px;
     margin-bottom: 5px;
@@ -374,10 +370,7 @@ Port {
 .group-conditions-container {
     margin-left: 15px;
     margin-top: 5px;
-    padding-left: 5px;
-    padding-right: 5px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    padding: 5px;
     border-width: 1px;
     border-radius: 3px;
     border-color: rgba(77, 77, 77, 0.5);
@@ -462,23 +455,12 @@ Port {
     flex-grow: 1;
 }
 
-.panel-resize-handle {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 16px;
-    height: 16px;
-    cursor: resize-bottom-left;
-}
 
 .dropdown-selector {
     flex-grow: 1;
     background-color: rgb(51, 51, 51);
     border-radius: 3px;
-    padding-left: 8px;
-    padding-right: 8px;
-    padding-top: 3px;
-    padding-bottom: 3px;
+    padding: 3px 8px;
 }
 
 .empty-group-message {
