@@ -38,14 +38,30 @@
     border-bottom-right-radius: 4px;
 }
 
-.panel-resize-handle {
+/* Bottom left resize handle */
+.panel-resize-handle-bottom-left {
     position: absolute;
-    left: 0;
-    bottom: 0;
+    left: 0 !important;
+    bottom: 0 !important;
+    right: auto !important;
+    width: 16px;
+    height: 16px;
+    border-width: 0 0 2px 2px;
+    border-color: rgba(255, 255, 255, 0.5);
+    margin: 0 0 4px 4px;
+    cursor: resize-up-right;
+}
+
+/* Bottom right resize handle */
+.panel-resize-handle-bottom-right {
+    position: absolute;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
     width: 16px;
     height: 16px;
     border-width: 0 2px 2px 0;
     border-color: rgba(255, 255, 255, 0.5);
     margin: 0 4px 4px 0;
-    cursor: resize-up-right;
+    cursor: resize-up-left;
 }

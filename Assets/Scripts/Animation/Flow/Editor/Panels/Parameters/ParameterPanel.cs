@@ -19,6 +19,11 @@ namespace Animation.Flow.Editor.Panels.Parameters
         public ParameterPanel(VisualElement parentContainer)
             : base(parentContainer, "Parameters", new Vector2(20, 100))
         {
+            // Default is already bottom-right
+            // Set resize handle to bottom right
+            _resizeHandlePosition = ResizeHandlePosition.BottomRight;
+            // Set resize handle to bottom right
+            _resizeHandlePosition = ResizeHandlePosition.BottomRight;
             // Add class for specific styling
             AddToClassList("parameter-panel");
 

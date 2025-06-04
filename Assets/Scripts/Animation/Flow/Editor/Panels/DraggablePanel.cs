@@ -11,7 +11,17 @@ namespace Animation.Flow.Editor.Panels
 
         #region Constructor
 
+        protected DraggablePanel()
+        {
+            // Empty constructor to allow derived classes to set properties before initialization
+        }
+
         protected DraggablePanel(VisualElement parentContainer, string title, Vector2 defaultPosition)
+        {
+            Initialize(parentContainer, title, defaultPosition);
+        }
+
+        protected void Initialize(VisualElement parentContainer, string title, Vector2 defaultPosition)
         {
             ParentContainer = parentContainer;
             _position = defaultPosition;
@@ -98,7 +108,7 @@ namespace Animation.Flow.Editor.Panels
 
         #region Fields
 
-        protected readonly VisualElement ParentContainer;
+        protected VisualElement ParentContainer;
         protected VisualElement ContentContainer;
         protected TContent Content;
         private bool _isDragging;
@@ -107,9 +117,20 @@ namespace Animation.Flow.Editor.Panels
         private Vector2 _dragStartPosition;
         private Vector2 _resizeStartPosition;
         private Vector2 _resizeStartSize;
+        private Vector2 _resizeStartPanelPosition;
         private Vector2 _position;
         private Vector2 _size;
         private readonly Vector2 _minSize = new(200, 250);
+
+        // Enum to specify the resize handle position
+        protected enum ResizeHandlePosition
+        {
+            BottomRight,
+            BottomLeft
+        }
+
+        // Default to bottom right
+        protected ResizeHandlePosition _resizeHandlePosition = ResizeHandlePosition.BottomRight;
 
         #endregion
 
@@ -152,11 +173,21 @@ namespace Animation.Flow.Editor.Panels
             OnContentCreated(Content);
         }
 
-        private void CreateResizeHandle()
+        protected void CreateResizeHandle()
         {
+            // Create the handle once
             VisualElement resizeHandle = new();
-            resizeHandle.AddToClassList("panel-resize-handle");
             resizeHandle.RegisterCallback<MouseDownEvent>(OnResizeHandleMouseDown);
+
+            // Set the handle position and style based on the panel type
+            if (_resizeHandlePosition == ResizeHandlePosition.BottomRight)
+            {
+                resizeHandle.AddToClassList("panel-resize-handle-bottom-right");
+            }
+            else // BottomLeft
+            {
+                resizeHandle.AddToClassList("panel-resize-handle-bottom-left");
+            }
 
             Add(resizeHandle);
         }
@@ -195,6 +226,7 @@ namespace Animation.Flow.Editor.Panels
                 _isResizing = true;
                 _resizeStartPosition = evt.mousePosition;
                 _resizeStartSize = _size;
+                _resizeStartPanelPosition = _position;
                 evt.StopPropagation();
             }
         }
@@ -219,13 +251,56 @@ namespace Animation.Flow.Editor.Panels
             else if (_isResizing)
             {
                 Vector2 delta = evt.mousePosition - _resizeStartPosition;
-                Vector2 newSize = _resizeStartSize + delta;
+                Vector2 newSize;
+
+                // Handle resize direction based on handle position
+                if (_resizeHandlePosition == ResizeHandlePosition.BottomRight)
+                {
+                    // Bottom right - Just add the delta
+                    newSize = _resizeStartSize + delta;
+                }
+                else // ResizeHandlePosition.BottomLeft
+                {
+                    // For bottom-left resize, width and position must be adjusted together
+
+                    // Reverse the x delta since moving left (negative) should increase width
+                    float widthChange = -delta.x;
+
+                    // Calculate new width and ensure it respects minimum size
+                    float newWidth = Mathf.Max(_minSize.x, _resizeStartSize.x + widthChange);
+
+                    // Position should move opposite to the width change
+                    float newX = _resizeStartPanelPosition.x - (newWidth - _resizeStartSize.x);
+
+                    // Check if position would go out of bounds
+                    if (newX < 0)
+                    {
+                        // If we'd go past the left edge, clamp position and adjust width
+                        newX = 0;
+                        newWidth = _resizeStartSize.x + _resizeStartPanelPosition.x;
+                    }
+
+                    // Update panel position
+                    _position.x = newX;
+                    style.left = newX;
+
+                    // Height calculation remains the same as bottom-right
+                    float newHeight = Mathf.Max(_minSize.y, _resizeStartSize.y + delta.y);
+
+                    newSize = new Vector2(newWidth, newHeight);
+                }
+
+                // Enforce minimum size
                 newSize = Vector2.Max(newSize, _minSize);
 
                 // Make sure panel doesn't resize outside the graph view's bounds
                 Rect parentBounds = ParentContainer.worldBound;
-                float maxWidth = parentBounds.width - _position.x;
+                float maxWidth = _resizeHandlePosition == ResizeHandlePosition.BottomRight
+                    ? parentBounds.width - _position.x
+                    : _position.x + _size.x; // For BottomLeft, max width depends on right edge
+
                 float maxHeight = parentBounds.height - _position.y;
+
                 newSize.x = Mathf.Min(newSize.x, maxWidth);
                 newSize.y = Mathf.Min(newSize.y, maxHeight);
 

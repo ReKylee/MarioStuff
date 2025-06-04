@@ -10,7 +10,7 @@
 ### **UI**
 
 - [x] Unity Style Sheet
-- [ ] Better TransitionEditorPanel UI
+- [x] Better TransitionEditorPanel UI
 - [ ] Better Frame Events GUI
 - [ ] Graph View remember view position, if not frame around nodes
 - [ ] Breadcrumbs

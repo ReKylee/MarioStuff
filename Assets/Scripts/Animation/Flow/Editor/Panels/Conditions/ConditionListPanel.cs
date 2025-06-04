@@ -19,8 +19,23 @@ namespace Animation.Flow.Editor.Panels.Conditions
         #region Constructor
 
         public ConditionListPanel(VisualElement parentContainer)
-            : base(parentContainer, "Conditions", new Vector2(320, 10))
         {
+            // Set resize handle position before base constructor
+            _resizeHandlePosition = ResizeHandlePosition.BottomLeft;
+
+            // Call base constructor which will use our handle position
+            Initialize(parentContainer, "Conditions", new Vector2(320, 10));
+            // Set resize handle position before creating UI
+            _resizeHandlePosition = ResizeHandlePosition.BottomLeft;
+            // Force refresh resize handle
+            VisualElement oldHandle = this.Q(null, "panel-resize-handle-bottom-right");
+            if (oldHandle != null) oldHandle.RemoveFromHierarchy();
+            CreateResizeHandle();
+            // Set resize handle to bottom left
+            _resizeHandlePosition = ResizeHandlePosition.BottomLeft;
+
+            // Set resize handle to bottom left
+            _resizeHandlePosition = ResizeHandlePosition.BottomLeft;
             // Initialize view factory and drag handler
             _viewFactory = new ConditionViewFactory(this);
 
