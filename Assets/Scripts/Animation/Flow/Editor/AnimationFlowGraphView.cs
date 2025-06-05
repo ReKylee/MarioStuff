@@ -62,7 +62,7 @@ namespace Animation.Flow.Editor
                 styleSheets.Add(contextMenuStyleSheet);
 
 
-            _transitionEditorPanel = new TransitionEditorPanel(this);
+            _transitionEditorPanel = new TransitionEditorPanel(this, _targetAnimator);
 
             // Register keyboard shortcuts
             RegisterKeyboardShortcuts();
@@ -273,7 +273,8 @@ namespace Animation.Flow.Editor
                     // Initialize with empty conditions list
                     if (!string.IsNullOrEmpty(edgeId))
                     {
-                        EdgeConditionManager.Instance.SetConditions(edgeId, new List<ConditionData>());
+                        var emptyConditions = new List<ConditionData>();
+                        EdgeConditionManager.Instance.SetConditions(edgeId, emptyConditions);
                     }
                 }
             }
@@ -299,7 +300,7 @@ namespace Animation.Flow.Editor
             // Add "Create Animation State" as a submenu with all node types
             try
             {
-                var stateTypes = StateTypeRegistry.GetRegisteredStateTypes();
+                var stateTypes = StateRegistry.GetRegisteredStateTypes();
                 if (stateTypes != null)
                 {
                     foreach (AnimationStateType nodeType in stateTypes)

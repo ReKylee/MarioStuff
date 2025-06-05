@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Animation.Flow.Editor.Managers;
 using Animation.Flow.Interfaces;
+using Animation.Flow.Parameters;
 using UnityEngine;
 #if UNITY_EDITOR
 #endif
@@ -253,10 +254,7 @@ namespace Animation.Flow.Core
                 // Create animation context with the animator
                 _animationContext = new AnimationContext(_animator, gameObject);
 
-                // Register with AnimationContextAccessor
-#if UNITY_EDITOR
-                AnimationContextAccessor.SetActiveContext(_animationContext);
-#endif
+                
             }
             catch (Exception ex)
             {
@@ -470,6 +468,12 @@ namespace Animation.Flow.Core
             }
 
             _animationContext.SetParameter(name, value);
+
+            // If we have a flow asset, add the parameter to it as well
+            if (flowAsset != null)
+            {
+                AddParameterToAsset(name, value);
+            }
         }
 
         /// <summary>
@@ -487,6 +491,63 @@ namespace Animation.Flow.Core
         ///     Check if a parameter exists
         /// </summary>
         public bool HasParameter(string name) => _animationContext is not null && _animationContext.HasParameter(name);
+
+        /// <summary>
+        ///     Set the animation context
+        /// </summary>
+        public void SetAnimationContext(AnimationContext context)
+        {
+            if (context == null) return;
+
+            // Keep the existing animator and entity
+            if (_animator != null)
+            {
+                context.SetAnimator(_animator);
+            }
+
+            context.SetEntity(gameObject);
+
+            _animationContext = context;
+        }
+
+        /// <summary>
+        ///     Add a parameter to the flow asset
+        /// </summary>
+        private void AddParameterToAsset<T>(string name, T value)
+        {
+            if (!flowAsset || string.IsNullOrEmpty(name))
+                return;
+
+            // Get existing parameter
+            var existingParam = flowAsset.GetParameter(name);
+            if (existingParam != null)
+                return; // Parameter already exists in the asset
+
+            // Create parameter based on type
+            FlowParameter newParam = null;
+
+            if (typeof(T) == typeof(bool))
+            {
+                newParam = new Parameters.ConcreteParameters.BoolParameter(name, (bool)(object)value);
+            }
+            else if (typeof(T) == typeof(int))
+            {
+                newParam = new Parameters.ConcreteParameters.IntParameter(name, (int)(object)value);
+            }
+            else if (typeof(T) == typeof(float))
+            {
+                newParam = new Parameters.ConcreteParameters.FloatParameter(name, (float)(object)value);
+            }
+            else if (typeof(T) == typeof(string))
+            {
+                newParam = new Parameters.ConcreteParameters.StringParameter(name, (string)(object)value);
+            }
+
+            if (newParam != null)
+            {
+                flowAsset.AddParameter(newParam);
+            }
+        }
 
         #endregion
 

@@ -370,14 +370,14 @@ namespace Animation.Flow.Editor
                         conditions = new List<ConditionData>(flowEdge.Conditions);
                     }
 
-                    TransitionData transitionData = new()
+                    FlowTransition flowTransition = new()
                     {
                         FromStateId = outputNode.ID,
                         ToStateId = inputNode.ID,
                         Conditions = conditions
                     };
 
-                    flowAsset.transitions.Add(transitionData);
+                    flowAsset.transitions.Add(flowTransition);
                 }
             }
 
@@ -528,7 +528,7 @@ namespace Animation.Flow.Editor
             }
 
             // Load Transitions
-            foreach (TransitionData transitionData in flowAsset.transitions)
+            foreach (FlowTransition transitionData in flowAsset.transitions)
             {
                 if (!graphNodes.TryGetValue(transitionData.FromStateId, out AnimationStateNode fromNode) ||
                     !graphNodes.TryGetValue(transitionData.ToStateId, out AnimationStateNode toNode))
@@ -559,9 +559,6 @@ namespace Animation.Flow.Editor
 
             // Frame the entire graph to show all nodes
             _graphView.FrameAll();
-
-            // Force parameter refresh in AnimationContextAccessor
-            AnimationContextAccessor.Instance.SyncWithActiveContext();
 
 
             // Reset unsaved changes flag since we just loaded

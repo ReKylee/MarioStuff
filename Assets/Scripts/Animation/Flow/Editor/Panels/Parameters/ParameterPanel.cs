@@ -1,12 +1,16 @@
 ﻿using System;
-using Animation.Flow.Conditions;
+using System.Linq;
 using Animation.Flow.Conditions.Core;
+using Animation.Flow.Core;
 using Animation.Flow.Editor.Managers;
+using Animation.Flow.Parameters;
+using Animation.Flow.Parameters.ConcreteParameters;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 using PopupWindow = UnityEditor.PopupWindow;
+
 
 namespace Animation.Flow.Editor.Panels.Parameters
 {
@@ -44,7 +48,7 @@ namespace Animation.Flow.Editor.Panels.Parameters
 
         #region Fields
 
-        public event Action<ParameterData> OnParameterDragStart;
+        public event Action<FlowParameter> OnParameterDragStart;
 
         #endregion
 
@@ -99,25 +103,25 @@ namespace Animation.Flow.Editor.Panels.Parameters
         {
             Content.Clear();
 
-            foreach (ParameterData parameter in AnimationContextAccessor.Instance.Parameters)
+            foreach (FlowParameter parameter in ParameterRegistry.GetAllParameterDefinitions())
             {
                 VisualElement element = CreateParameterElement(parameter);
                 Content.Add(element);
             }
         }
 
-        private VisualElement CreateParameterElement(ParameterData parameter)
+        private VisualElement CreateParameterElement(FlowParameter parameter)
         {
             VisualElement element = new();
             element.AddToClassList("parameter-item");
             element.userData = parameter;
 
             // Create type icon with appropriate type-specific class
-            Label typeIcon = new(GetTypeIcon(parameter.Type));
+            Label typeIcon = new(GetTypeIcon(parameter.ParameterType));
             typeIcon.AddToClassList("parameter-type-icon");
 
             // Add type-specific class
-            string typeName = parameter.Type.ToString().ToLower();
+            string typeName = parameter.ParameterType.Name.ToLower();
             typeIcon.AddToClassList(typeName);
 
             element.Add(typeIcon);
@@ -126,7 +130,7 @@ namespace Animation.Flow.Editor.Panels.Parameters
             nameLabel.AddToClassList("parameter-name");
             element.Add(nameLabel);
 
-            Label typeLabel = new(parameter.Type.ToString());
+            Label typeLabel = new(parameter.ParameterType.Name);
             typeLabel.AddToClassList("parameter-type-label");
             // Add type-specific class
             typeLabel.AddToClassList(typeName);
@@ -141,26 +145,28 @@ namespace Animation.Flow.Editor.Panels.Parameters
             return element;
         }
 
-        private string GetTypeIcon(ConditionDataType type)
+        private string GetTypeIcon(Type parameterType)
         {
-            return type switch
-            {
-                ConditionDataType.Boolean => "☑",
-                ConditionDataType.Float => "◈",
-                ConditionDataType.Integer => "◆",
-                ConditionDataType.String => "◉",
-                _ => "○"
-            };
+            if (parameterType == typeof(bool))
+                return "☑";
+            else if (parameterType == typeof(float))
+                return "◈";
+            else if (parameterType == typeof(int))
+                return "◆";
+            else if (parameterType == typeof(string))
+                return "◉";
+            else
+                return "○";
         }
 
-        private void OnParameterMouseDown(MouseDownEvent evt, ParameterData parameter)
+        private void OnParameterMouseDown(MouseDownEvent evt, FlowParameter parameter)
         {
             if (evt.button == 0)
             {
                 OnParameterDragStart?.Invoke(parameter);
                 DragAndDrop.PrepareStartDrag();
                 DragAndDrop.objectReferences = new Object[0];
-                DragAndDrop.SetGenericData("ParameterData", parameter);
+                DragAndDrop.SetGenericData("FlowParameter", parameter);
                 DragAndDrop.StartDrag(parameter.Name);
                 evt.StopPropagation();
             }
@@ -171,107 +177,82 @@ namespace Animation.Flow.Editor.Panels.Parameters
             GenericMenu menu = new();
 
             menu.AddItem(new GUIContent("Boolean"), false,
-                () => AddNewParameter("New Bool", ConditionDataType.Boolean, false));
+                () => AddNewParameter("New Bool", ParameterValueType.Bool, false));
 
             menu.AddItem(new GUIContent("Float"), false,
-                () => AddNewParameter("New Float", ConditionDataType.Float, 0f));
+                () => AddNewParameter("New Float", ParameterValueType.Float, 0f));
 
             menu.AddItem(new GUIContent("Integer"), false,
-                () => AddNewParameter("New Int", ConditionDataType.Integer, 0));
+                () => AddNewParameter("New Int", ParameterValueType.Int, 0));
 
             menu.AddItem(new GUIContent("String"), false,
-                () => AddNewParameter("New String", ConditionDataType.String, ""));
+                () => AddNewParameter("New String", ParameterValueType.String, ""));
 
             menu.ShowAsContext();
         }
 
-        private void ShowParameterContextMenu(ContextClickEvent evt, ParameterData parameter)
+        private void ShowParameterContextMenu(ContextClickEvent evt, FlowParameter parameter)
         {
             GenericMenu menu = new();
 
-            menu.AddItem(new GUIContent("Rename"), false, () => ShowRenameDialog(parameter));
             menu.AddItem(new GUIContent("Delete"), false, () => DeleteParameter(parameter));
 
             menu.ShowAsContext();
             evt.StopPropagation();
         }
 
-        private void DeleteParameter(ParameterData parameter)
+        private void DeleteParameter(FlowParameter parameter)
         {
             if (EditorUtility.DisplayDialog("Confirm Delete",
                     $"Are you sure you want to delete the parameter '{parameter.Name}'?", "Delete", "Cancel"))
             {
-                AnimationContextAccessor.Instance.RemoveParameter(parameter.Name);
+                ParameterRegistry.UnregisterParameter(parameter.Name);
                 RefreshParameterList();
             }
         }
 
-        private void AddNewParameter(string defaultName, ConditionDataType type, object defaultValue)
+        private void AddNewParameter(string defaultName, ParameterValueType paramType, object defaultValue)
         {
             // Generate a unique name
             string uniqueName = GenerateUniqueName(defaultName);
 
-            // Create the parameter
-            ParameterData newParameter = new()
+            // Create the parameter based on its type
+            FlowParameter newParameter;
+
+            switch (paramType)
             {
-                Name = uniqueName,
-                Type = type,
-                DefaultValue = defaultValue
-            };
+                case ParameterValueType.Bool:
+                    newParameter = new BoolParameter(uniqueName, (bool)defaultValue);
+                    break;
+                case ParameterValueType.Int:
+                    newParameter = new IntParameter(uniqueName, (int)defaultValue);
+                    break;
+                case ParameterValueType.Float:
+                    newParameter = new FloatParameter(uniqueName, (float)defaultValue);
+                    break;
+                case ParameterValueType.String:
+                    newParameter = new StringParameter(uniqueName, (string)defaultValue);
+                    break;
+                default:
+                    Debug.LogError($"Unsupported parameter type: {paramType}");
+                    return;
+            }
 
             // Add to parameter manager and refresh UI
-            AnimationContextAccessor.Instance.AddParameter(newParameter);
+            ParameterRegistry.RegisterParameter(newParameter);
             RefreshParameterList();
 
-            // Show rename dialog after short delay to allow UI to update
-            EditorApplication.delayCall += () => ShowRenameDialog(newParameter);
         }
 
         private string GenerateUniqueName(string baseName)
         {
-            string name = baseName;
-            int counter = 1;
-
             // Check if name already exists
-            while (AnimationContextAccessor.Instance.Parameters.Exists(p => p.Name == name))
-            {
-                name = $"{baseName}_{counter}";
-                counter++;
-            }
-
-            return name;
+            int count = ParameterRegistry.GetAllParameterDefinitions().Count((parameter => parameter.Name == baseName));
+            string newName = $"{baseName}_{count + 1}";
+            return newName;
         }
 
-        private void ShowRenameDialog(ParameterData parameter)
-        {
-            // Position near the window center
-            Vector2 position = EditorWindow.GetWindow<EditorWindow>().position.center;
-
-            // Create and show rename popup
-            PopupWindow.Show(
-                new Rect(position.x - 100, position.y - 50, 0, 0),
-                new ParameterRenamePopup(parameter.Name, newName =>
-                {
-                    // Validate name is unique
-                    if (string.IsNullOrWhiteSpace(newName) ||
-                        AnimationContextAccessor.Instance.Parameters.Exists(p => p != parameter && p.Name == newName))
-                    {
-                        EditorUtility.DisplayDialog("Invalid Name", "Parameter name must be unique and not empty.",
-                            "OK");
-
-                        return false;
-                    }
-
-                    // Update name and refresh
-                    string oldName = parameter.Name;
-                    parameter.Name = newName;
-                    AnimationContextAccessor.Instance.UpdateParameter(parameter);
-                    RefreshParameterList();
-                    return true;
-                })
-            );
-        }
-
+       
         #endregion
 
     }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Animation.Flow.Conditions;
 using Animation.Flow.Conditions.Core;
+using Animation.Flow.Conditions.ParameterConditions;
 using Animation.Flow.Editor.ValueEditors;
 using UnityEngine.UIElements;
 
@@ -27,33 +27,66 @@ namespace Animation.Flow.Editor
 
             return new Label($"No editor for {typeof(T).Name}");
         }
-
-        public static VisualElement CreateEditor(ConditionData condition, Action onChanged)
+        
+        /// <summary>
+        /// Creates an appropriate value editor for a condition
+        /// </summary>
+        /// <param name="condition">The condition data to create an editor for</param>
+        /// <param name="onChanged">Callback when the condition is updated</param>
+        /// <returns>A visual element containing the appropriate editor</returns>
+        public static VisualElement CreateEditor(ConditionData condition, Action<ConditionData> onChanged)
         {
-            return condition.DataType switch
+            switch (condition.ParameterValueType)
             {
-                ConditionDataType.Boolean => CreateEditor(condition.BoolValue, val =>
-                {
-                    condition.BoolValue = val;
-                    onChanged();
-                }),
-                ConditionDataType.Float => CreateEditor(condition.FloatValue, val =>
-                {
-                    condition.FloatValue = val;
-                    onChanged();
-                }),
-                ConditionDataType.Integer => CreateEditor(condition.IntValue, val =>
-                {
-                    condition.IntValue = val;
-                    onChanged();
-                }),
-                ConditionDataType.String => CreateEditor(condition.StringValue, val =>
-                {
-                    condition.StringValue = val;
-                    onChanged();
-                }),
-                _ => new Label("N/A")
-            };
+                case ParameterValueType.Bool:
+                    return CreateEditor(condition.BoolValue, value => {
+                        condition.BoolValue = value;
+                        onChanged?.Invoke(condition);
+                    });
+
+                case ParameterValueType.Int:
+                    return CreateEditor(condition.IntValue, value => {
+                        condition.IntValue = value;
+                        onChanged?.Invoke(condition);
+                    });
+
+                case ParameterValueType.Float:
+                    return CreateEditor(condition.FloatValue, value => {
+                        condition.FloatValue = value;
+                        onChanged?.Invoke(condition);
+                    });
+
+                case ParameterValueType.String:
+                    var editor = CreateEditor(condition.StringValue ?? string.Empty, value => {
+                        condition.StringValue = value;
+                        onChanged?.Invoke(condition);
+                    });
+
+                    // For string operations that need ignore case option
+                    if (condition.ComparisonType == ComparisonType.Contains || 
+                        condition.ComparisonType == ComparisonType.StartsWith || 
+                        condition.ComparisonType == ComparisonType.EndsWith)
+                    {
+                        var container = new VisualElement();
+                        container.AddToClassList("string-value-container");
+                        container.Add(editor);
+
+                        var caseToggle = new Toggle("Ignore Case");
+                        caseToggle.value = condition.BoolValue;
+                        caseToggle.RegisterValueChangedCallback(evt => {
+                            condition.BoolValue = evt.newValue;
+                            onChanged?.Invoke(condition);
+                        });
+
+                        container.Add(caseToggle);
+                        return container;
+                    }
+
+                    return editor;
+
+                default:
+                    return new Label("Value not editable");
+            }
         }
     }
 }

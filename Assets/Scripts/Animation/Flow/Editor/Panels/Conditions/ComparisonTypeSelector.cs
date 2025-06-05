@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Animation.Flow.Conditions;
+using Animation.Flow.Conditions.Core;
+using Animation.Flow.Conditions.ParameterConditions;
 using UnityEngine.UIElements;
 
 namespace Animation.Flow.Editor.Panels.Conditions
@@ -11,9 +12,22 @@ namespace Animation.Flow.Editor.Panels.Conditions
     /// </summary>
     public class ComparisonTypeSelector
     {
-        private readonly ConditionDataType _dataType;
+        private readonly ParameterValueType _dataType;
 
-        public ComparisonTypeSelector(ConditionDataType dataType)
+        private static readonly Dictionary<ComparisonType, string> Symbols = new()
+        {
+            { ComparisonType.Equal, "=" },
+            { ComparisonType.NotEqual, "≠" },
+            { ComparisonType.Greater, ">" },
+            { ComparisonType.Less, "<" },
+            { ComparisonType.GreaterOrEqual, "≥" },
+            { ComparisonType.LessOrEqual, "≤" },
+            { ComparisonType.Contains, "∈" },
+            { ComparisonType.StartsWith, "≻" },
+            { ComparisonType.EndsWith, "≺" }
+        };
+
+        public ComparisonTypeSelector(ParameterValueType dataType)
         {
             _dataType = dataType;
         }
@@ -25,51 +39,36 @@ namespace Animation.Flow.Editor.Panels.Conditions
         {
             return _dataType switch
             {
-                ConditionDataType.Boolean => new List<ComparisonType>
-                    { ComparisonType.Equals },
-                ConditionDataType.Integer => new List<ComparisonType>
+                ParameterValueType.Bool => new List<ComparisonType>
+                    { ComparisonType.Equal },
+                ParameterValueType.Int => new List<ComparisonType>
                 {
-                    ComparisonType.Equals,
-                    ComparisonType.NotEquals,
-                    ComparisonType.GreaterThan,
-                    ComparisonType.GreaterThanOrEqual,
-                    ComparisonType.LessThan,
-                    ComparisonType.LessThanOrEqual
+                    ComparisonType.Equal,
+                    ComparisonType.NotEqual,
+                    ComparisonType.Greater,
+                    ComparisonType.GreaterOrEqual,
+                    ComparisonType.Less,
+                    ComparisonType.LessOrEqual
                 },
-                ConditionDataType.Float => new List<ComparisonType>
+                ParameterValueType.Float => new List<ComparisonType>
                 {
-                    ComparisonType.Equals,
-                    ComparisonType.NotEquals,
-                    ComparisonType.GreaterThan,
-                    ComparisonType.GreaterThanOrEqual,
-                    ComparisonType.LessThan,
-                    ComparisonType.LessThanOrEqual
+                    ComparisonType.Equal,
+                    ComparisonType.NotEqual,
+                    ComparisonType.Greater,
+                    ComparisonType.GreaterOrEqual,
+                    ComparisonType.Less,
+                    ComparisonType.LessOrEqual
                 },
-                ConditionDataType.String => new List<ComparisonType>
+                ParameterValueType.String => new List<ComparisonType>
                 {
-                    ComparisonType.Equals,
-                    ComparisonType.NotEquals,
+                    ComparisonType.Equal,
+                    ComparisonType.NotEqual,
                     ComparisonType.Contains,
                     ComparisonType.StartsWith,
                     ComparisonType.EndsWith
                 },
-                ConditionDataType.Time => new List<ComparisonType>
-                {
-                    ComparisonType.GreaterThan,
-                    ComparisonType.GreaterThanOrEqual,
-                    ComparisonType.LessThan,
-                    ComparisonType.LessThanOrEqual
-                },
-                ConditionDataType.Animation => new List<ComparisonType>
-                {
-                    ComparisonType.Completed
-                },
-                ConditionDataType.Composite => new List<ComparisonType>
-                {
-                    ComparisonType.IsTrue,
-                    ComparisonType.IsFalse
-                },
-                _ => new List<ComparisonType> { ComparisonType.Equals }
+                // Support for special types can be added with custom handling
+                _ => new List<ComparisonType> { ComparisonType.Equal }
             };
         }
 

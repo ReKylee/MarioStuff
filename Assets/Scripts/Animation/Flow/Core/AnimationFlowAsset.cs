@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using Animation.Flow.Conditions;
 using Animation.Flow.Conditions.Core;
 using Animation.Flow.Interfaces;
+using Animation.Flow.Parameters;
 using Animation.Flow.States;
 using UnityEngine;
 
-// Ensure this is the new Conditions namespace
 #if UNITY_EDITOR
 #endif
 
@@ -18,19 +18,45 @@ namespace Animation.Flow.Core
     [CreateAssetMenu(fileName = "NewAnimationFlow", menuName = "Animation/Flow Asset", order = 120)]
     public class AnimationFlowAsset : ScriptableObject
     {
+        #region Serialized Fields
+
         [Tooltip("All states in this animation flow")]
         public List<AnimationStateData> states = new();
 
         [Tooltip("All transitions between states")] [SerializeReference]
-        public List<TransitionData> transitions = new();
+        public List<FlowTransition> transitions = new();
 
-        // List of controllers that use this asset (not serialized, only for editor usage)
+        [Tooltip("All parameters used in this flow")]
+        [SerializeField] private List<FlowParameter> parameters = new();
+
+        [Tooltip("The context that manages parameters at runtime")]
+        [SerializeField] private AnimationContext _context = new();
+
+        #endregion
+
+        #region Runtime Fields
+
+        // Controller that uses this asset (not serialized, only for editor usage)
         [NonSerialized] private AnimationFlowController _controller;
+
+        #endregion
+
+        #region Validation
 
         /// <summary>
         ///     Validate this asset to ensure all references are correct
         /// </summary>
         private void Validate()
+        {
+            ValidateStates();
+            ValidateTransitions();
+            ValidateParameters();
+        }
+
+        /// <summary>
+        ///     Validate states to ensure IDs are unique and one state is marked as initial
+        /// </summary>
+        private void ValidateStates()
         {
             // Validate states
             HashSet<string> stateIds = new();
@@ -84,29 +110,100 @@ namespace Animation.Flow.Core
                     }
                 }
             }
+        }
 
-            // Validate transitions
-            if (transitions != null)
+        /// <summary>
+        ///     Validate transitions to ensure they reference valid states
+        /// </summary>
+        private void ValidateTransitions()
+        {
+            if (transitions == null) return;
+
+            // Create a set of state IDs for faster lookup
+            HashSet<string> stateIds = new();
+            foreach (AnimationStateData state in states)
             {
-                foreach (TransitionData transition in transitions)
+                if (!string.IsNullOrEmpty(state.Id))
                 {
-                    if (transition == null) continue;
+                    stateIds.Add(state.Id);
+                }
+            }
 
-                    // Ensure from and to states exist
-                    bool fromExists = !string.IsNullOrEmpty(transition.FromStateId) &&
-                                      stateIds.Contains(transition.FromStateId);
+            foreach (FlowTransition transition in transitions)
+            {
+                if (transition == null) continue;
 
-                    bool toExists = !string.IsNullOrEmpty(transition.ToStateId) &&
-                                    stateIds.Contains(transition.ToStateId);
+                // Ensure from and to states exist
+                bool fromExists = !string.IsNullOrEmpty(transition.FromStateId) &&
+                                  stateIds.Contains(transition.FromStateId);
 
-                    if (!fromExists || !toExists)
-                    {
-                        Debug.LogWarning(
-                            $"Invalid transition in {name}: {(fromExists ? "" : "Source")} {(fromExists ? "and" : "")} {(toExists ? "" : "Target")} state(s) not found.");
-                    }
+                bool toExists = !string.IsNullOrEmpty(transition.ToStateId) &&
+                                stateIds.Contains(transition.ToStateId);
+
+                if (!fromExists || !toExists)
+                {
+                    Debug.LogWarning(
+                        $"Invalid transition in {name}: {(fromExists ? "" : "Source")} {(fromExists ? "and" : "")} {(toExists ? "" : "Target")} state(s) not found.");
                 }
             }
         }
+
+        /// <summary>
+        ///     Validate parameters to ensure they are valid
+        /// </summary>
+        private void ValidateParameters()
+        {
+            // Ensure all parameters have valid names
+            for (int i = parameters.Count - 1; i >= 0; i--)
+            {
+                if (parameters[i] == null || string.IsNullOrEmpty(parameters[i].Name) || !parameters[i].Validate())
+                {
+                    parameters.RemoveAt(i);
+                }
+            }
+
+            // Remove duplicate parameter names, keeping the first one
+            HashSet<string> paramNames = new();
+            for (int i = parameters.Count - 1; i >= 0; i--)
+            {
+                if (paramNames.Contains(parameters[i].Name))
+                {
+                    parameters.RemoveAt(i);
+                }
+                else
+                {
+                    paramNames.Add(parameters[i].Name);
+                }
+            }
+
+            // Update the context with parameter definitions
+            SyncContextWithParameters();
+        }
+
+        /// <summary>
+        ///     Synchronize the context with parameter definitions
+        /// </summary>
+        private void SyncContextWithParameters()
+        {
+            if (_context == null)
+            {
+                _context = new AnimationContext();
+            }
+
+
+            // Add all parameters from the parameter list to the context
+            foreach (var param in parameters)
+            {
+                if (param != null && !string.IsNullOrEmpty(param.Name))
+                {
+                    _context.AddParameterDefinition(param.Clone());
+                }
+            }
+        }
+
+        #endregion
+
+        #region Controller Building
 
         /// <summary>
         ///     Create a runtime flow controller from this asset
@@ -126,6 +223,9 @@ namespace Animation.Flow.Core
             // Validate asset to ensure integrity
             Validate();
 
+            // Setup the animation context in the controller
+            SetupControllerContext(controller);
+
             // Create dictionary to map state IDs to actual state instances
             var stateMap = new Dictionary<string, IAnimationState>();
 
@@ -133,7 +233,7 @@ namespace Animation.Flow.Core
             foreach (AnimationStateData stateData in states)
             {
                 // Create state based on its type using the factory
-                IAnimationState state = StateFactory.CreateFromData(stateData);
+                IAnimationState state = StateRegistry.CreateFromData(stateData);
 
                 // Add to controller
                 controller.AddState(state);
@@ -149,7 +249,7 @@ namespace Animation.Flow.Core
             }
 
             // Create transitions
-            foreach (TransitionData transitionData in transitions)
+            foreach (FlowTransition transitionData in transitions)
             {
                 if (transitionData is null) continue;
                 if (stateMap.TryGetValue(transitionData.FromStateId, out IAnimationState fromState) &&
@@ -164,11 +264,11 @@ namespace Animation.Flow.Core
                         // Add conditions
                         if (transitionData.Conditions != null)
                         {
-                            foreach (ConditionData conditionDataNewType in transitionData.Conditions)
+                            foreach (ConditionData conditionData in transitionData.Conditions)
                             {
-                                if (conditionDataNewType != null)
+                                if (conditionData != null)
                                 {
-                                    AddConditionToTransition(transition, conditionDataNewType);
+                                    AddConditionToTransition(transition, conditionData);
                                 }
                             }
                         }
@@ -178,31 +278,24 @@ namespace Animation.Flow.Core
         }
 
         /// <summary>
-        ///     Create an animation state from serialized data
+        ///     Setup the controller's context with parameters from this asset
         /// </summary>
-        private static IAnimationState CreateStateFromData(AnimationStateData stateData)
+        private void SetupControllerContext(AnimationFlowController controller)
         {
-            AnimationStateType stateType = stateData.GetStateType();
+            // Create a copy of the context for the controller
+            var controllerContext = new AnimationContext();
 
-            try
+            // Add all parameter definitions to the controller's context
+            foreach (var param in parameters)
             {
-                // Special case for HoldFrameState which needs additional parameters
-                if (stateType == AnimationStateType.HoldFrame)
+                if (param != null && !string.IsNullOrEmpty(param.Name) && param.Validate())
                 {
-                    return StateTypeRegistry.CreateSpecializedState<HoldFrameState>(
-                        stateData.Id, stateData.AnimationName, stateData.FrameToHold);
+                    controllerContext.AddParameterDefinition(param.Clone());
                 }
-
-                // Use registry for standard state types
-                return StateTypeRegistry.CreateState(stateType, stateData.Id, stateData.AnimationName);
             }
-            catch (Exception ex)
-            {
-                Debug.LogWarning(
-                    $"Failed to create state of type {stateType}: {ex.Message}. Creating default OneTime state.");
 
-                return new OneTimeState(stateData.Id, stateData.AnimationName);
-            }
+            // Set the context in the controller
+            controller.SetAnimationContext(controllerContext);
         }
 
         /// <summary>
@@ -214,13 +307,77 @@ namespace Animation.Flow.Core
                 return;
 
             // Use the ConditionFactory to create a condition from the serialized data
-            ICondition condition = ConditionFactory.CreateCondition(conditionData);
+            FlowCondition condition = ConditionFactory.CreateFromData(conditionData);
             if (condition != null)
             {
                 transition.AddCondition(condition);
             }
         }
 
+        #endregion
+
+        #region Parameter Management
+
+        /// <summary>
+        ///     Add a parameter to this asset
+        /// </summary>
+        public void AddParameter(FlowParameter parameter)
+        {
+            if (parameter == null || string.IsNullOrEmpty(parameter.Name) || !parameter.Validate())
+                return;
+
+            // Remove any existing parameter with the same name
+            RemoveParameter(parameter.Name);
+
+            // Add the new parameter
+            parameters.Add(parameter);
+
+            // Update the context
+            _context.AddParameterDefinition(parameter.Clone());
+
+            // Register with the global registry
+            ParameterRegistry.RegisterParameter(parameter.Clone());
+        }
+
+        /// <summary>
+        ///     Remove a parameter from this asset
+        /// </summary>
+        public void RemoveParameter(string parameterName)
+        {
+            if (string.IsNullOrEmpty(parameterName))
+                return;
+
+            // Remove from parameters list
+            parameters.RemoveAll(p => p != null && p.Name == parameterName);
+
+            // Remove from context
+            _context.RemoveParameterDefinition(parameterName);
+        }
+
+        /// <summary>
+        ///     Get a parameter by name
+        /// </summary>
+        public FlowParameter GetParameter(string parameterName)
+        {
+            if (string.IsNullOrEmpty(parameterName))
+                return null;
+
+            return parameters.Find(p => p != null && p.Name == parameterName);
+        }
+
+        /// <summary>
+        ///     Get all parameters
+        /// </summary>
+        public IReadOnlyList<FlowParameter> GetAllParameters() => parameters;
+
+        /// <summary>
+        ///     Get the animation context
+        /// </summary>
+        public AnimationContext GetContext() => _context;
+
+        #endregion
+
+        #region Editor Support
 
 #if UNITY_EDITOR
         /// <summary>
@@ -239,17 +396,16 @@ namespace Animation.Flow.Core
         /// </summary>
         public void UnregisterController(AnimationFlowController controller)
         {
-            if (controller is not null)
+            if (controller is not null && _controller == controller)
             {
                 _controller = null;
             }
         }
 
         /// <summary>
-        ///     Get a controller that uses this asset (returns the first valid one)
+        ///     Get a controller that uses this asset
         /// </summary>
         public AnimationFlowController GetController() => _controller;
-
 
         private void OnValidate()
         {
@@ -257,7 +413,7 @@ namespace Animation.Flow.Core
             Validate();
         }
 #endif
+
+        #endregion
     }
-
-
 }

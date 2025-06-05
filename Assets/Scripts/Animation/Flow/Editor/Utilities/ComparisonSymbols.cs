@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
-using Animation.Flow.Conditions;
+using Animation.Flow.Conditions.ParameterConditions;
+using Animation.Flow.Conditions.ParameterConditions;
 
 namespace Animation.Flow.Editor.Utilities
 {
@@ -10,12 +11,12 @@ namespace Animation.Flow.Editor.Utilities
     {
         private static readonly Dictionary<ComparisonType, string> Symbols = new()
         {
-            { ComparisonType.Equals, "=" },
-            { ComparisonType.NotEquals, "≠" },
-            { ComparisonType.GreaterThan, ">" },
-            { ComparisonType.LessThan, "<" },
-            { ComparisonType.GreaterThanOrEqual, "≥" },
-            { ComparisonType.LessThanOrEqual, "≤" },
+            { ComparisonType.Equal, "=" },
+            { ComparisonType.NotEqual, "≠" },
+            { ComparisonType.Greater, ">" },
+            { ComparisonType.Less, "<" },
+            { ComparisonType.GreaterOrEqual, "≥" },
+            { ComparisonType.LessOrEqual, "≤" },
             { ComparisonType.Contains, "∈" },
             { ComparisonType.StartsWith, "≻" },
             { ComparisonType.EndsWith, "≺" }

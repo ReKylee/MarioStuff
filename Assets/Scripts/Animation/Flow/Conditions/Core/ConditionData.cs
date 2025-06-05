@@ -1,124 +1,169 @@
 ﻿using System;
+using System.Collections.Generic;
+using Animation.Flow.Conditions.ParameterConditions;
+using UnityEditor;
 using UnityEngine;
 
 namespace Animation.Flow.Conditions.Core
 {
     /// <summary>
-    ///     Serializable data for a condition
+    ///     Types of parameter values
+    /// </summary>
+    public enum ParameterValueType
+    {
+        Bool,
+        Int,
+        Float,
+        String
+    }
+
+    /// <summary>
+    ///     Serializable data for storing condition information
     /// </summary>
     [Serializable]
     public class ConditionData
     {
-        [Tooltip("Unique identifier for this condition")]
-        public string UniqueId = Guid.NewGuid().ToString();
+        [SerializeField] public string UniqueId;
+        [SerializeField] public uint NestingLevel;
+        [SerializeField] private ConditionType _type;
+        [SerializeField] private bool _isNegated;
 
-        [Tooltip("Type of data for this condition")]
-        public ConditionDataType DataType;
+        // Parameter condition data
+        [SerializeField] private string _parameterName;
+        [SerializeField] private ParameterValueType _parameterValueType;
 
-        [Tooltip("Type of comparison for this condition")]
-        public ComparisonType ComparisonType;
+        // Possible values (only one will be used depending on the parameter type)
+        [SerializeField] private bool _boolValue;
+        [SerializeField] private int _intValue;
+        [SerializeField] private float _floatValue;
+        [SerializeField] private string _stringValue;
 
-        [Tooltip("Name of the parameter to check")]
-        public string ParameterName = string.Empty;
+        // For numeric comparisons
+        [SerializeField] private ComparisonType _comparisonType;
 
-        [Tooltip("String value for the condition")]
-        public string StringValue = string.Empty;
-
-        [Tooltip("Float value for the condition")]
-        public float FloatValue;
-
-        [Tooltip("Integer value for the condition")]
-        public int IntValue;
-
-        [Tooltip("Boolean value for the condition")]
-        public bool BoolValue;
-
-        [Tooltip("Index of this condition in its parent group")]
-        public int GroupIndex;
-
-        [Tooltip("Depth level of this condition in nested groups")]
-        public int NestingLevel;
-
-        [Tooltip("Parent group ID for this condition")]
-        public string ParentGroupId = string.Empty;
+        // For composite conditions
+        [SerializeField] private List<ConditionData> _childConditions;
+        [SerializeField] public string ParentGroupId;
 
         /// <summary>
-        ///     Create an empty condition data object
+        ///     Gets or sets the condition type
         /// </summary>
-        public ConditionData()
+        public ConditionType Type
         {
+            get => _type;
+            set => _type = value;
         }
 
         /// <summary>
-        ///     Create a condition data object with specified type and parameter
+        ///     Gets or sets whether the condition is negated
         /// </summary>
-        public ConditionData(ConditionDataType dataType, ComparisonType comparisonType, string parameterName = "")
+        public bool IsNegated
         {
-            DataType = dataType;
-            ComparisonType = comparisonType;
-            ParameterName = parameterName;
-
+            get => _isNegated;
+            set => _isNegated = value;
         }
 
+        /// <summary>
+        ///     Gets or sets the parameter name
+        /// </summary>
+        public string ParameterName
+        {
+            get => _parameterName;
+            set => _parameterName = value;
+        }
 
         /// <summary>
-        ///     Get the value object based on the data type
+        ///     Gets or sets the parameter value type
         /// </summary>
-        public object GetValue()
+        public ParameterValueType ParameterValueType
         {
-            return DataType switch
+            get => _parameterValueType;
+            set => _parameterValueType = value;
+        }
+
+        /// <summary>
+        ///     Gets or sets the boolean value
+        /// </summary>
+        public bool BoolValue
+        {
+            get => _boolValue;
+            set => _boolValue = value;
+        }
+
+        /// <summary>
+        ///     Gets or sets the integer value
+        /// </summary>
+        public int IntValue
+        {
+            get => _intValue;
+            set => _intValue = value;
+        }
+
+        /// <summary>
+        ///     Gets or sets the float value
+        /// </summary>
+        public float FloatValue
+        {
+            get => _floatValue;
+            set => _floatValue = value;
+        }
+
+        /// <summary>
+        ///     Gets or sets the string value
+        /// </summary>
+        public string StringValue
+        {
+            get => _stringValue;
+            set => _stringValue = value;
+        }
+
+        /// <summary>
+        ///     Gets or sets the comparison type
+        /// </summary>
+        public ComparisonType ComparisonType
+        {
+            get => _comparisonType;
+            set => _comparisonType = value;
+        }
+
+        /// <summary>
+        ///     Gets or sets the child conditions for composite conditions
+        /// </summary>
+        public List<ConditionData> ChildConditions
+        {
+            get => _childConditions;
+            set => _childConditions = value;
+        }
+
+        /// <summary>
+        ///     Creates a deep copy of this condition data
+        /// </summary>
+        public ConditionData Clone()
+        {
+            ConditionData clone = new ConditionData
             {
-                ConditionDataType.Boolean => BoolValue,
-                ConditionDataType.Float => FloatValue,
-                ConditionDataType.Integer => IntValue,
-                ConditionDataType.String => StringValue,
-                ConditionDataType.Time => FloatValue,
-                _ => null
+                _type = _type,
+                _isNegated = _isNegated,
+                _parameterName = _parameterName,
+                _parameterValueType = _parameterValueType,
+                _boolValue = _boolValue,
+                _intValue = _intValue,
+                _floatValue = _floatValue,
+                _stringValue = _stringValue,
+                _comparisonType = _comparisonType
             };
-        }
 
-        /// <summary>
-        ///     Set a value based on the data type
-        /// </summary>
-        public void SetValue(object value)
-        {
-            switch (DataType)
+            // Clone child conditions if they exist
+            if (_childConditions != null && _childConditions.Count > 0)
             {
-                case ConditionDataType.Boolean:
-                    BoolValue = Convert.ToBoolean(value);
-                    break;
-
-                case ConditionDataType.Float:
-                case ConditionDataType.Time:
-                    FloatValue = Convert.ToSingle(value);
-                    break;
-
-                case ConditionDataType.Integer:
-                    IntValue = Convert.ToInt32(value);
-                    break;
-
-                case ConditionDataType.String:
-                    StringValue = value?.ToString() ?? string.Empty;
-                    break;
+                clone._childConditions = new List<ConditionData>();
+                foreach (var childCondition in _childConditions)
+                {
+                    clone._childConditions.Add(childCondition.Clone());
+                }
             }
-        }
 
-        /// <summary>
-        ///     Create a deep copy of this condition data
-        /// </summary>
-        public ConditionData Clone() =>
-            new()
-            {
-                DataType = DataType,
-                ComparisonType = ComparisonType,
-                ParameterName = ParameterName,
-                StringValue = StringValue,
-                FloatValue = FloatValue,
-                IntValue = IntValue,
-                BoolValue = BoolValue,
-                GroupIndex = GroupIndex,
-                NestingLevel = NestingLevel,
-                ParentGroupId = ParentGroupId
-            };
+            return clone;
+        }
     }
 }

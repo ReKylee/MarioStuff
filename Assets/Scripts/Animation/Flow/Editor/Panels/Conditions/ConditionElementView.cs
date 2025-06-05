@@ -1,9 +1,10 @@
-﻿using Animation.Flow.Conditions;
-using Animation.Flow.Conditions.Core;
+﻿using Animation.Flow.Conditions.Core;
+using Animation.Flow.Conditions.ParameterConditions;
 using Animation.Flow.Editor.Utilities;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Animation.Flow.Editor;
 
 namespace Animation.Flow.Editor.Panels.Conditions
 {
@@ -74,7 +75,11 @@ namespace Animation.Flow.Editor.Panels.Conditions
             middleContainer.Add(comparisonButton);
 
             // Value field based on parameter type
-            VisualElement valueField = CreateTypeSpecificValueField(_condition);
+            VisualElement valueField = ValueEditorFactory.CreateEditor(_condition, (condition) => 
+            {
+                // When the value changes, update the condition in the panel
+                _panel.UpdateCondition(condition);
+            });
             middleContainer.Add(valueField);
 
             // Remove button
@@ -83,82 +88,6 @@ namespace Animation.Flow.Editor.Panels.Conditions
             Add(removeButton);
         }
 
-        private VisualElement CreateTypeSpecificValueField(ConditionData condition)
-        {
-            VisualElement field = new();
-            field.AddToClassList("value-field");
-
-            switch (condition.DataType)
-            {
-                case ConditionDataType.Boolean:
-                    // Set up container box style for the toggle
-                    field.style.minWidth = 30;
-                    field.style.maxWidth = 30;
-                    field.style.minHeight = 20;
-                    field.style.maxHeight = 20;
-                    field.style.justifyContent = Justify.Center;
-                    field.style.alignItems = Align.Center;
-
-                    Toggle toggle = new();
-                    toggle.value = condition.BoolValue;
-                    toggle.style.marginLeft = 0;
-                    toggle.style.marginRight = 0;
-                    toggle.style.marginTop = 0;
-                    toggle.style.marginBottom = 0;
-
-                    toggle.RegisterValueChangedCallback(evt =>
-                    {
-                        condition.BoolValue = evt.newValue;
-                        _panel.UpdateCondition(condition);
-                    });
-
-                    field.Add(toggle);
-                    break;
-
-                case ConditionDataType.Integer:
-                    IntegerField intField = new();
-                    intField.value = condition.IntValue;
-                    intField.RegisterValueChangedCallback(evt =>
-                    {
-                        condition.IntValue = evt.newValue;
-                        _panel.UpdateCondition(condition);
-                    });
-
-                    field.Add(intField);
-                    break;
-
-                case ConditionDataType.Float:
-                case ConditionDataType.Time:
-                    FloatField floatField = new();
-                    floatField.value = condition.FloatValue;
-                    floatField.RegisterValueChangedCallback(evt =>
-                    {
-                        condition.FloatValue = evt.newValue;
-                        _panel.UpdateCondition(condition);
-                    });
-
-                    field.Add(floatField);
-                    break;
-
-                case ConditionDataType.String:
-                    TextField textField = new();
-                    textField.value = condition.StringValue;
-                    textField.RegisterValueChangedCallback(evt =>
-                    {
-                        condition.StringValue = evt.newValue;
-                        _panel.UpdateCondition(condition);
-                    });
-
-                    field.Add(textField);
-                    break;
-
-                default:
-                    field.Add(new Label("Unsupported type"));
-                    break;
-            }
-
-            return field;
-        }
 
         #endregion
 
@@ -173,7 +102,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
             AddToClassList("condition-element");
             style.marginLeft = condition.NestingLevel * 20; // Keep this dynamic based on nesting level
 
-            _comparisonSelector = new ComparisonTypeSelector(condition.DataType);
+            _comparisonSelector = new ComparisonTypeSelector(condition.ParameterValueType);
             CreateUI();
 
             // Make element droppable

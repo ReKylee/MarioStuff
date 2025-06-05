@@ -46,7 +46,23 @@ namespace Animation.Flow.Editor.Managers
             if (string.IsNullOrEmpty(edgeId))
                 return;
 
-            _edgeConditions[edgeId] = conditions ?? new List<ConditionData>();
+            // Create a deep copy of the conditions to avoid reference issues
+            if (conditions != null)
+            {
+                var clonedConditions = new List<ConditionData>();
+                foreach (var condition in conditions)
+                {
+                    if (condition != null)
+                    {
+                        clonedConditions.Add(condition.Clone());
+                    }
+                }
+                _edgeConditions[edgeId] = clonedConditions;
+            }
+            else
+            {
+                _edgeConditions[edgeId] = new List<ConditionData>();
+            }
         }
 
         // Remove all conditions associated with an edge
