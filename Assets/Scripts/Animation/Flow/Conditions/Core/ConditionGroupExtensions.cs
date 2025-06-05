@@ -39,10 +39,6 @@ namespace Animation.Flow.Conditions
             return group;
         }
 
-        /// <summary>
-        ///     Negate a condition
-        /// </summary>
-        public static NotCondition Not(this ICondition condition) => new(condition);
 
         /// <summary>
         ///     Create an "At Least N of these conditions" group

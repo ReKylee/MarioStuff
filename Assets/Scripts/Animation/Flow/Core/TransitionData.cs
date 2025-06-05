@@ -17,12 +17,6 @@ namespace Animation.Flow.Core
         [Tooltip("ID of the destination state")]
         public string ToStateId;
 
-        [Tooltip("Type of source state (for validation)")] [SerializeField]
-        private AnimationStateType _fromStateType = AnimationStateType.OneTime;
-
-        [Tooltip("Type of destination state (for validation)")] [SerializeField]
-        private AnimationStateType _toStateType = AnimationStateType.OneTime;
-
         [Tooltip("Conditions that must be met for this transition")]
         public List<ConditionData> Conditions = new();
 
@@ -53,26 +47,6 @@ namespace Animation.Flow.Core
         {
             FromStateId = fromStateId;
             ToStateId = toStateId;
-            _fromStateType = fromStateType;
-            _toStateType = toStateType;
-        }
-
-        /// <summary>
-        ///     Type of source state
-        /// </summary>
-        public AnimationStateType FromStateType
-        {
-            get => _fromStateType;
-            set => _fromStateType = value;
-        }
-
-        /// <summary>
-        ///     Type of destination state
-        /// </summary>
-        public AnimationStateType ToStateType
-        {
-            get => _toStateType;
-            set => _toStateType = value;
         }
 
         /// <summary>
@@ -98,7 +72,7 @@ namespace Animation.Flow.Core
             };
 
             // Clone conditions
-            if (Conditions != null && Conditions.Count > 0)
+            if (Conditions is { Count: > 0 })
             {
                 clone.Conditions = new List<ConditionData>();
                 foreach (ConditionData condition in Conditions)
@@ -108,7 +82,7 @@ namespace Animation.Flow.Core
             }
 
             // Clone connection points if they exist
-            if (ConnectionPoints != null && ConnectionPoints.Length > 0)
+            if (ConnectionPoints is { Length: > 0 })
             {
                 clone.ConnectionPoints = new Vector2[ConnectionPoints.Length];
                 Array.Copy(ConnectionPoints, clone.ConnectionPoints, ConnectionPoints.Length);

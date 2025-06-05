@@ -306,7 +306,9 @@ namespace Animation.Flow.Editor
                     {
                         menuEvent.menu.AppendAction($"✨ Create Animation State/{nodeType}",
                             _ => CreateStateNode(nodeType, "NewAnimation",
-                                new Rect(localMousePosition, new Vector2(150, 200))));
+                                new Rect(localMousePosition, new Vector2(150, 200))),
+                            _ => DropdownMenuAction.Status.Normal,
+                            "create-action");
                     }
                 }
             }
@@ -327,7 +329,8 @@ namespace Animation.Flow.Editor
                         DeleteElements(selectedGraphElements);
                     }
                 },
-                hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                _ => hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled,
+                "edit-action");
 
             menuEvent.menu.AppendAction("📝 Copy", _ =>
                 {
@@ -336,10 +339,12 @@ namespace Animation.Flow.Editor
                         _copiedElements = new List<ISelectable>(selectedNodes);
                     }
                 },
-                hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                _ => hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled,
+                "edit-action");
 
             menuEvent.menu.AppendAction("📋 Paste", _ => PasteElements(),
-                hasCopiedElements ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                _ => hasCopiedElements ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled,
+                "edit-action");
 
             menuEvent.menu.AppendAction("🗑️ Delete", _ =>
                 {
@@ -348,7 +353,8 @@ namespace Animation.Flow.Editor
                         DeleteElements(selectedGraphElements);
                     }
                 },
-                hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                _ => hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled,
+                "delete-action");
 
             // Add separator before duplicate
             menuEvent.menu.AppendSeparator();
@@ -362,34 +368,40 @@ namespace Animation.Flow.Editor
                         PasteElements(20);
                     }
                 },
-                hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                _ => hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled,
+                "edit-action");
 
             // Add separator before view options
             menuEvent.menu.AppendSeparator();
 
             // VIEW SECTION
             menuEvent.menu.AppendAction("🔍 Frame Selection", _ => FrameSelection(),
-                hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
+                _ => hasSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled,
+                "view-action");
 
-            menuEvent.menu.AppendAction("🔍 Frame All", _ => FrameAll());
+            menuEvent.menu.AppendAction("🔍 Frame All", _ => FrameAll(),
+                _ => DropdownMenuAction.Status.Normal,
+                "view-action");
 
             // Add separator before select all
             menuEvent.menu.AppendSeparator();
 
             // SELECT SECTION
             menuEvent.menu.AppendAction("📌 Select All Nodes", _ =>
-            {
-                if (nodes == null)
-                    return;
-
-                foreach (Node node in nodes)
                 {
-                    if (node != null)
+                    if (nodes == null)
+                        return;
+
+                    foreach (Node node in nodes)
                     {
-                        AddToSelection(node);
+                        if (node != null)
+                        {
+                            AddToSelection(node);
+                        }
                     }
-                }
-            });
+                },
+                _ => DropdownMenuAction.Status.Normal,
+                "select-action");
         }
         private void RegisterKeyboardShortcuts()
         {

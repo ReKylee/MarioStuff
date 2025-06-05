@@ -2,6 +2,10 @@
 
 ## *FSM/Behavior Trees Sprite-Oriented Animation System in Unity*
 
+### **Bugs**
+- [ ] Saving transitions doesn't save the right animation state type (looping, one shot)
+- [ ] Available Parameters don't save or load on the Parameters panel. 
+- [ ] Conditions panel not opening on the right side of the window
 ### **Testing**
 
 - [ ] Unit Tests!!!
@@ -25,9 +29,11 @@
 
 ### **Core**
 
+- [ ] Auto-register parameters when using them in code with (SetParameter)
 - [ ] More Conditions
 - [ ] More Parameter Types Support
 - [ ] Make an in-house IAnimator instead of relying on SpriteAnimatorAdapter
+
 
 ### **Documentation**
 

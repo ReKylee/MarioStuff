@@ -11,12 +11,10 @@ namespace Animation.Flow.Core
     public static class StateRegistry
     {
         // Store all registered states by their ID
-        private static readonly Dictionary<string, IAnimationState> _registeredStates = 
-            new Dictionary<string, IAnimationState>();
+        private static readonly Dictionary<string, IAnimationState> RegisteredStates = new();
 
         // Store state IDs by their owner (for cleanup)
-        private static readonly Dictionary<object, HashSet<string>> _stateOwners =
-            new Dictionary<object, HashSet<string>>();
+        private static readonly Dictionary<object, HashSet<string>> StateOwners = new();
 
         /// <summary>
         ///     Register a state with the global registry
@@ -30,15 +28,15 @@ namespace Animation.Flow.Core
             }
 
             // Register the state
-            _registeredStates[state.Id] = state;
+            RegisteredStates[state.Id] = state;
 
             // Register with owner for cleanup if provided
             if (owner != null)
             {
-                if (!_stateOwners.TryGetValue(owner, out var ownedStates))
+                if (!StateOwners.TryGetValue(owner, out var ownedStates))
                 {
                     ownedStates = new HashSet<string>();
-                    _stateOwners[owner] = ownedStates;
+                    StateOwners[owner] = ownedStates;
                 }
 
                 ownedStates.Add(state.Id);
@@ -52,10 +50,10 @@ namespace Animation.Flow.Core
         {
             if (string.IsNullOrEmpty(stateId)) return;
 
-            _registeredStates.Remove(stateId);
+            RegisteredStates.Remove(stateId);
 
             // Clean up owner references
-            foreach (var ownerStates in _stateOwners.Values)
+            foreach (var ownerStates in StateOwners.Values)
             {
                 ownerStates.Remove(stateId);
             }
@@ -68,31 +66,29 @@ namespace Animation.Flow.Core
         {
             if (owner == null) return;
 
-            if (_stateOwners.TryGetValue(owner, out var ownedStates))
+            if (StateOwners.TryGetValue(owner, out var ownedStates))
             {
-                foreach (var stateId in ownedStates)
+                foreach (string stateId in ownedStates)
                 {
-                    _registeredStates.Remove(stateId);
+                    RegisteredStates.Remove(stateId);
                 }
 
-                _stateOwners.Remove(owner);
+                StateOwners.Remove(owner);
             }
         }
 
         /// <summary>
         ///     Get a state by its ID
         /// </summary>
-        public static IAnimationState GetState(string stateId)
-        {
-            return _registeredStates.TryGetValue(stateId, out var state) ? state : null;
-        }
+        public static IAnimationState GetState(string stateId) =>
+            RegisteredStates.TryGetValue(stateId, out IAnimationState state) ? state : null;
 
         /// <summary>
         ///     Get a strongly-typed state by its ID
         /// </summary>
         public static T GetState<T>(string stateId) where T : class, IAnimationState
         {
-            if (_registeredStates.TryGetValue(stateId, out var state) && state is T typedState)
+            if (RegisteredStates.TryGetValue(stateId, out IAnimationState state) && state is T typedState)
             {
                 return typedState;
             }
@@ -103,33 +99,27 @@ namespace Animation.Flow.Core
         /// <summary>
         ///     Get all registered states
         /// </summary>
-        public static IEnumerable<IAnimationState> GetAllStates()
-        {
-            return _registeredStates.Values;
-        }
+        public static IEnumerable<IAnimationState> GetAllStates() => RegisteredStates.Values;
 
         /// <summary>
         ///     Get all registered state IDs
         /// </summary>
-        public static IEnumerable<string> GetAllStateIds()
-        {
-            return _registeredStates.Keys;
-        }
+        public static IEnumerable<string> GetAllStateIds() => RegisteredStates.Keys;
 
         /// <summary>
         ///     Get all states owned by a specific owner
         /// </summary>
         public static IEnumerable<IAnimationState> GetStatesForOwner(object owner)
         {
-            if (owner == null || !_stateOwners.TryGetValue(owner, out var ownedStates))
+            if (owner == null || !StateOwners.TryGetValue(owner, out var ownedStates))
             {
                 return Array.Empty<IAnimationState>();
             }
 
-            List<IAnimationState> result = new List<IAnimationState>();
-            foreach (var stateId in ownedStates)
+            var result = new List<IAnimationState>();
+            foreach (string stateId in ownedStates)
             {
-                if (_registeredStates.TryGetValue(stateId, out var state))
+                if (RegisteredStates.TryGetValue(stateId, out IAnimationState state))
                 {
                     result.Add(state);
                 }
@@ -141,9 +131,7 @@ namespace Animation.Flow.Core
         /// <summary>
         ///     Check if a state with the given ID exists
         /// </summary>
-        public static bool StateExists(string stateId)
-        {
-            return !string.IsNullOrEmpty(stateId) && _registeredStates.ContainsKey(stateId);
-        }
+        public static bool StateExists(string stateId) =>
+            !string.IsNullOrEmpty(stateId) && RegisteredStates.ContainsKey(stateId);
     }
 }

@@ -1,120 +1,220 @@
-﻿/* Context Menu Styles */
+﻿/* Context Menu Styles - Targeting DropdownMenu specifically */
 :root {
-    /* Primary colors */
-    --menu-background-color: rgb(50, 50, 50);
-    --menu-border-color: rgb(70, 70, 70);
-    --menu-text-color: rgb(230, 230, 230);
-    --menu-hover-color: rgb(77, 117, 179);
-    --menu-disabled-text-color: rgb(130, 130, 130);
+    /* Context Menu Colors */
+    --context-menu-bg: rgb(42, 42, 42);
+    --context-menu-border: rgb(70, 70, 70);
+    --context-menu-item-bg: transparent;
+    --context-menu-item-hover: rgb(60, 60, 60);
+    --context-menu-item-text: rgb(220, 220, 220);
+    --context-menu-item-disabled: rgb(120, 120, 120);
+    --context-menu-separator: rgb(70, 70, 70);
 
-    /* Item colors */
-    --item-create-color: rgb(51, 153, 51); /* Green for create actions */
-    --item-edit-color: rgb(77, 117, 179);   /* Blue for edit actions */
-    --item-delete-color: rgb(150, 40, 40);   /* Red for delete actions */
-    --item-view-color: rgb(102, 26, 128);    /* Purple for view actions */
-    --item-select-color: rgb(153, 77, 26);   /* Orange for select actions */
+    /* Action specific colors */
+    --create-action-bg: rgba(50, 120, 50, 0.2);
+    --create-action-hover: rgba(50, 120, 50, 0.4);
+    --edit-action-bg: rgba(70, 120, 180, 0.2);
+    --edit-action-hover: rgba(70, 120, 180, 0.4);
+    --delete-action-bg: rgba(180, 60, 60, 0.2);
+    --delete-action-hover: rgba(180, 60, 60, 0.4);
+    --view-action-bg: rgba(120, 100, 180, 0.2);
+    --view-action-hover: rgba(120, 100, 180, 0.4);
+    --select-action-bg: rgba(180, 140, 60, 0.2);
+    --select-action-hover: rgba(180, 140, 60, 0.4);
 }
 
-/* Main context menu container */
-.context-menu {
-    background-color: var(--menu-background-color);
-    border-width: 1px;
-    border-color: var(--menu-border-color);
-    border-radius: 4px;
-    padding: 6px 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+/* Target DropdownMenu specifically */
+DropdownMenu,
+.unity-dropdown-menu {
+    background-color: var(--context-menu-bg) !important;
+    border-color: var(--context-menu-border) !important;
+    border-width: 1px !important;
+    border-radius: 6px !important;
+    padding: 6px !important;
+    min-width: 220px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* Menu item */
-.context-menu-item {
-    padding: 6px 20px 6px 10px;
-    transition: background-color 0.1s ease-out;
-    cursor: link;
+/* Target DropdownMenuItem */
+DropdownMenuItem,
+.unity-dropdown-menu__item {
+    background-color: var(--context-menu-item-bg) !important;
+    color: var(--context-menu-item-text) !important;
+    padding: 8px 16px !important;
+    margin: 2px !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    -unity-text-align: middle-left !important;
+    transition: all 0.15s ease-out !important;
+    border-width: 0 !important;
 }
 
-.context-menu-item:hover {
-    background-color: var(--menu-hover-color);
+/* Hover states for DropdownMenuItem */
+DropdownMenuItem:hover,
+.unity-dropdown-menu__item:hover {
+    background-color: var(--context-menu-item-hover) !important;
+    color: white !important;
+    transform: translateX(2px) !important;
 }
 
-.context-menu-item__content {
-    flex-direction: row;
-    align-items: center;
+/* Disabled states for DropdownMenuItem */
+DropdownMenuItem:disabled,
+.unity-dropdown-menu__item:disabled {
+    color: var(--context-menu-item-disabled) !important;
+    background-color: transparent !important;
+    opacity: 0.6 !important;
 }
 
-/* Menu item icon */
-.context-menu-item__icon {
-    width: 20px;
-    height: 20px;
-    margin-right: 8px;
-    -unity-text-align: middle-center;
-    font-size: 16px;
+DropdownMenuItem:disabled:hover,
+.unity-dropdown-menu__item:disabled:hover {
+    background-color: transparent !important;
+    transform: none !important;
 }
 
-/* Menu item text */
-.context-menu-item__text {
-    color: var(--menu-text-color);
-    font-size: 13px;
-    flex-grow: 1;
-    -unity-text-align: middle-left;
+/* Separators for DropdownMenu */
+DropdownMenuSeparator,
+.unity-dropdown-menu__separator {
+    background-color: var(--context-menu-separator) !important;
+    height: 1px !important;
+    margin: 6px 12px !important;
+    border-radius: 1px !important;
 }
 
-/* Separator */
-.context-menu-separator {
-    height: 1px;
-    background-color: var(--menu-border-color);
-    margin: 5px 0;
+/* Action-specific styling using userData - Create Actions */
+DropdownMenuItem[data-user-data="create-action"],
+.unity-dropdown-menu__item[data-user-data="create-action"] {
+    background-color: var(--create-action-bg) !important;
+    border-left-color: rgb(50, 120, 50) !important;
+    border-left-width: 3px !important;
 }
 
-/* Disabled menu items */
-.context-menu-item.disabled {
-    opacity: 0.5;
-    background-color: transparent;
-    pointer-events: none;
+DropdownMenuItem[data-user-data="create-action"]:hover,
+.unity-dropdown-menu__item[data-user-data="create-action"]:hover {
+    background-color: var(--create-action-hover) !important;
+    border-left-color: rgb(70, 140, 70) !important;
 }
 
-.context-menu-item.disabled .context-menu-item__text {
-    color: var(--menu-disabled-text-color);
+/* Edit Actions */
+DropdownMenuItem[data-user-data="edit-action"],
+.unity-dropdown-menu__item[data-user-data="edit-action"] {
+    background-color: var(--edit-action-bg) !important;
+    border-left-color: rgb(70, 120, 180) !important;
+    border-left-width: 3px !important;
 }
 
-/* Category styling */
-.context-menu-item.category-create .context-menu-item__icon {
-    color: var(--item-create-color);
+DropdownMenuItem[data-user-data="edit-action"]:hover,
+.unity-dropdown-menu__item[data-user-data="edit-action"]:hover {
+    background-color: var(--edit-action-hover) !important;
+    border-left-color: rgb(90, 140, 200) !important;
 }
 
-.context-menu-item.category-edit .context-menu-item__icon {
-    color: var(--item-edit-color);
+/* Delete Actions */
+DropdownMenuItem[data-user-data="delete-action"],
+.unity-dropdown-menu__item[data-user-data="delete-action"] {
+    background-color: var(--delete-action-bg) !important;
+    border-left-color: rgb(180, 60, 60) !important;
+    border-left-width: 3px !important;
 }
 
-.context-menu-item.category-delete .context-menu-item__icon {
-    color: var(--item-delete-color);
+DropdownMenuItem[data-user-data="delete-action"]:hover,
+.unity-dropdown-menu__item[data-user-data="delete-action"]:hover {
+    background-color: var(--delete-action-hover) !important;
+    border-left-color: rgb(200, 80, 80) !important;
 }
 
-.context-menu-item.category-view .context-menu-item__icon {
-    color: var(--item-view-color);
+/* View Actions */
+DropdownMenuItem[data-user-data="view-action"],
+.unity-dropdown-menu__item[data-user-data="view-action"] {
+    background-color: var(--view-action-bg) !important;
+    border-left-color: rgb(120, 100, 180) !important;
+    border-left-width: 3px !important;
 }
 
-.context-menu-item.category-select .context-menu-item__icon {
-    color: var(--item-select-color);
+DropdownMenuItem[data-user-data="view-action"]:hover,
+.unity-dropdown-menu__item[data-user-data="view-action"]:hover {
+    background-color: var(--view-action-hover) !important;
+    border-left-color: rgb(140, 120, 200) !important;
 }
 
-/* Submenu arrow */
-.context-menu-item__submenu-arrow {
-    font-size: 14px;
-    width: 20px;
-    -unity-text-align: middle-center;
-    margin-left: 5px;
-    color: var(--menu-text-color);
+/* Select Actions */
+DropdownMenuItem[data-user-data="select-action"],
+.unity-dropdown-menu__item[data-user-data="select-action"] {
+    background-color: var(--select-action-bg) !important;
+    border-left-color: rgb(180, 140, 60) !important;
+    border-left-width: 3px !important;
 }
 
-/* Submenu container */
-.context-menu-submenu {
-    position: absolute;
-    left: 100%;
-    top: 0;
-    background-color: var(--menu-background-color);
-    border-width: 1px;
-    border-color: var(--menu-border-color);
-    border-radius: 4px;
-    padding: 6px 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+DropdownMenuItem[data-user-data="select-action"]:hover,
+.unity-dropdown-menu__item[data-user-data="select-action"]:hover {
+    background-color: var(--select-action-hover) !important;
+    border-left-color: rgb(200, 160, 80) !important;
+}
+
+/* Additional fallback selectors for any nested elements */
+DropdownMenu VisualElement,
+.unity-dropdown-menu VisualElement {
+    color: inherit !important;
+}
+
+/* Target by element type without class dependency */
+DropdownMenu > *,
+DropdownMenu * {
+    color: inherit !important;
+}
+
+/* Special handling for submenu items */
+DropdownMenuItem[data-user-data="create-action"],
+.unity-dropdown-menu__item[data-user-data="create-action"] {
+    padding-left: 24px !important;
+    font-size: 12px !important;
+}
+
+/* Global dropdown menu override using element type */
+* > DropdownMenu {
+    background-color: var(--context-menu-bg) !important;
+    border-color: var(--context-menu-border) !important;
+    color: var(--context-menu-item-text) !important;
+}
+
+* > DropdownMenuItem {
+    background-color: var(--context-menu-item-bg) !important;
+    color: var(--context-menu-item-text) !important;
+    padding: 8px 16px !important;
+    margin: 2px !important;
+    border-radius: 4px !important;
+}
+
+* > DropdownMenuItem:hover {
+    background-color: var(--context-menu-item-hover) !important;
+    color: white !important;
+}
+
+/* Alternative approach using attribute selectors */
+[class*="dropdown-menu"] {
+    background-color: var(--context-menu-bg) !important;
+    border-color: var(--context-menu-border) !important;
+    padding: 6px !important;
+    border-radius: 6px !important;
+}
+
+[class*="dropdown-menu"] [class*="item"] {
+    background-color: var(--context-menu-item-bg) !important;
+    color: var(--context-menu-item-text) !important;
+    padding: 8px 16px !important;
+    margin: 2px !important;
+    border-radius: 4px !important;
+}
+
+[class*="dropdown-menu"] [class*="item"]:hover {
+    background-color: var(--context-menu-item-hover) !important;
+    color: white !important;
+}
+
+/* Nuclear option - override any possible dropdown styling */
+* {
+    --unity-dropdown-menu-background-color: var(--context-menu-bg) !important;
+    --unity-dropdown-menu-border-color: var(--context-menu-border) !important;
+    --unity-dropdown-menu-item-background-color: var(--context-menu-item-bg) !important;
+    --unity-dropdown-menu-item-background-color-hover: var(--context-menu-item-hover) !important;
+    --unity-dropdown-menu-item-text-color: var(--context-menu-item-text) !important;
+    --unity-dropdown-menu-item-text-color-hover: white !important;
 }

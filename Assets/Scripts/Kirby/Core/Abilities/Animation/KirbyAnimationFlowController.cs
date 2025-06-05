@@ -153,7 +153,7 @@ namespace Kirby.Core.Abilities.Animation
             // Set physics-based parameters
             SetParameter("VerticalVelocity", verticalVelocity);
             SetParameter("IsGrounded", _kirbyController.IsGrounded);
-
+            SetParameter("isRunning", _kirbyController.CurrentInput.RunInput);
             // Set input-based parameters
             SetParameter("JumpHeld", _currentInput.JumpHeld);
             SetParameter("JumpPressed", _currentInput.JumpPressed);
