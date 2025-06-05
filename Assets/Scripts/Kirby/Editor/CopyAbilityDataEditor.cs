@@ -624,7 +624,7 @@ namespace Kirby.Editor
                     "Duplicate Module Not Allowed",
                     $"Cannot add multiple instances of {ObjectNames.NicifyVariableName(abilityType.Name)}.\n\n" +
                     $"An instance already exists: {moduleName}.\n\n" +
-                    "This module type is configured to not allow multiple instances.",
+                    "This module types is configured to not allow multiple instances.",
                     "OK");
 
                 return;
@@ -633,8 +633,8 @@ namespace Kirby.Editor
             if (canAddResult == CopyAbilityData.AbilityAddResult.InvalidAbility)
             {
                 EditorUtility.DisplayDialog(
-                    "Invalid Ability Type",
-                    $"The selected type '{abilityType?.Name ?? "null"}' is not a valid ability module type.",
+                    "Invalid Ability Types",
+                    $"The selected types '{abilityType?.Name ?? "null"}' is not a valid ability module types.",
                     "OK");
 
                 return;

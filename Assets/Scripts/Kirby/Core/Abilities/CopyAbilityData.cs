@@ -49,9 +49,9 @@ namespace Kirby.Abilities
         }
 
         /// <summary>
-        ///     Checks if an ability module of the given type can be added
+        ///     Checks if an ability module of the given types can be added
         /// </summary>
-        /// <param name="addedAbilityType">The type of ability module to check</param>
+        /// <param name="addedAbilityType">The types of ability module to check</param>
         /// <returns>Result indicating if addition is allowed and why if not</returns>
         public AbilityAddResult CanAddAbilityModule(Type addedAbilityType)
         {
@@ -70,9 +70,9 @@ namespace Kirby.Abilities
         }
 
         /// <summary>
-        ///     Returns the existing module that prevents adding a new one of the given type
+        ///     Returns the existing module that prevents adding a new one of the given types
         /// </summary>
-        /// <param name="abilityType">The type of ability module to check</param>
+        /// <param name="abilityType">The types of ability module to check</param>
         /// <returns>The existing module that prevents adding a new one, or null if no conflict</returns>
         public AbilityModuleBase GetConflictingModule(Type abilityType)
         {
@@ -98,7 +98,7 @@ namespace Kirby.Abilities
                 return AbilityAddResult.InvalidAbility;
             }
 
-            // Check if an ability of this type already exists
+            // Check if an ability of this types already exists
             AbilityAddResult result = CanAddAbilityModule(module.GetType());
             if (result != AbilityAddResult.Success)
             {

@@ -104,7 +104,7 @@ namespace Kirby.Abilities
         }
 
         /// <summary>
-        ///     Get a stat value by its enum type
+        ///     Get a stat value by its enum types
         /// </summary>
         public float GetStat(StatType statType)
         {
@@ -112,7 +112,7 @@ namespace Kirby.Abilities
             return field != null ? (float)field.GetValue(this) : 1.0f;
         } // ReSharper disable Unity.PerformanceAnalysis
         /// <summary>
-        ///     Set a stat value by its enum type
+        ///     Set a stat value by its enum types
         /// </summary>
         public void SetStat(StatType statType, float value)
         {

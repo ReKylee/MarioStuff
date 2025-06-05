@@ -13,7 +13,7 @@ namespace Kirby.Abilities
         bool HasSpecialAction { get; }
 
         /// <summary>
-        ///     The type of special ability
+        ///     The types of special ability
         /// </summary>
         SpecialAbilityType SpecialType { get; }
 

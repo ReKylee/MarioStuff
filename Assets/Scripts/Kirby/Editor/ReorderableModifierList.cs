@@ -82,7 +82,7 @@ namespace Kirby.Editor
 
             // Draw column headers
             EditorGUI.LabelField(new Rect(rect.x + 8, rect.y, statWidth, rect.height), "Stat", _headerStyle);
-            EditorGUI.LabelField(new Rect(rect.x + statWidth + 4, rect.y, typeWidth, rect.height), "Type",
+            EditorGUI.LabelField(new Rect(rect.x + statWidth + 4, rect.y, typeWidth, rect.height), "Types",
                 _headerStyle);
 
             EditorGUI.LabelField(new Rect(rect.x + statWidth + typeWidth + 4, rect.y, valueWidth, rect.height), "Value",
@@ -113,7 +113,7 @@ namespace Kirby.Editor
             Rect typeRect = new(rect.x + statWidth, rect.y, typeWidth - 4, rect.height);
             Rect valueRect = new(rect.x + statWidth + typeWidth, rect.y, valueWidth, rect.height);
 
-            // Draw stat type field with popup button
+            // Draw stat types field with popup button
             string currentStatName = "Select Stat";
             if (statTypeProp.enumValueIndex >= 0 && statTypeProp.enumValueIndex < statTypeProp.enumDisplayNames.Length)
             {
@@ -143,7 +143,7 @@ namespace Kirby.Editor
                 StatModifierEditorUtility.ShowStatTypeSelectionMenu(statTypeProp, usedStatTypesInList);
             }
 
-            // Draw modification type dropdown
+            // Draw modification types dropdown
             EditorGUI.PropertyField(typeRect, modTypeProp, GUIContent.none);
 
             // Draw value field

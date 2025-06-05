@@ -14,7 +14,7 @@ namespace Kirby.Abilities
         [SerializeField] private List<StatModifier> abilityDefinedModifiers = new();
 
         [Header("Module Settings")]
-        [Tooltip("If false, CopyAbilityData cannot contain multiple instances of this module type")]
+        [Tooltip("If false, CopyAbilityData cannot contain multiple instances of this module types")]
         [SerializeField]
         private bool allowMultipleInstances;
 
@@ -28,7 +28,7 @@ namespace Kirby.Abilities
         protected Rigidbody2D Rigidbody { get; private set; }
 
         /// <summary>
-        ///     Gets or sets whether multiple instances of this module type can be added to a CopyAbilityData
+        ///     Gets or sets whether multiple instances of this module types can be added to a CopyAbilityData
         /// </summary>
         public bool AllowMultipleInstances
         {

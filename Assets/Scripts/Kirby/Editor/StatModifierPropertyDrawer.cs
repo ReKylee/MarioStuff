@@ -50,7 +50,7 @@ namespace Kirby.Editor
                 alignment = TextAnchor.MiddleLeft
             };
 
-            if (GUI.Button(statTypeButtonRect, new GUIContent(currentStatName, "Click to select Stat Type"),
+            if (GUI.Button(statTypeButtonRect, new GUIContent(currentStatName, "Click to select Stat Types"),
                     buttonStyle))
             {
                 // Use the centralized utility method to show the stat selection menu

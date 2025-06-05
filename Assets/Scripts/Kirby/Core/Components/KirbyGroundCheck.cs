@@ -45,7 +45,7 @@ namespace Kirby.Core.Components
         public Vector2 GroundNormal { get; private set; } = Vector2.up;
 
         /// <summary>
-        ///     Returns the surface type the character is standing on
+        ///     Returns the surface types the character is standing on
         /// </summary>
         public SurfaceType CurrentSurface { get; private set; } = SurfaceType.None;
 
@@ -80,7 +80,7 @@ namespace Kirby.Core.Components
                 // Make sure slope direction points right when going uphill
                 if (GroundSlopeAngle < 0) slopeDir = -slopeDir;
 
-                // Color based on surface type
+                // Color based on surface types
                 Gizmos.color = CurrentSurface switch
                 {
                     SurfaceType.Flat => Color.green,
@@ -92,7 +92,7 @@ namespace Kirby.Core.Components
                 Gizmos.DrawRay(normalOrigin, slopeDir * 0.5f);
 
 #if UNITY_EDITOR
-                // Draw text label with slope angle and type in the scene view
+                // Draw text label with slope angle and types in the scene view
                 Handles.Label(boxPosition + Vector2.up * 0.3f,
                     $"{CurrentSurface}: {GroundSlopeAngle:F1}°");
 #endif
@@ -149,7 +149,7 @@ namespace Kirby.Core.Components
                 GroundSlopeAngle *= Mathf.Sign(-GroundNormal.x);
             }
 
-            // Classify surface type based on absolute slope angle
+            // Classify surface types based on absolute slope angle
             float absSlopeAngle = Mathf.Abs(GroundSlopeAngle);
             if (absSlopeAngle <= slopeThreshold)
             {

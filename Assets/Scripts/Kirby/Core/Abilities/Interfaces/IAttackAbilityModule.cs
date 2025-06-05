@@ -29,7 +29,7 @@ namespace Kirby.Abilities
         bool IsOnCooldown { get; }
 
         /// <summary>
-        ///     Type of attack (melee, projectile, etc.)
+        ///     Types of attack (melee, projectile, etc.)
         /// </summary>
         AttackType AttackType { get; }
 

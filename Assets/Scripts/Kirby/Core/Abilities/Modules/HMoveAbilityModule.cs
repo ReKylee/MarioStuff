@@ -38,7 +38,7 @@ namespace Kirby.Abilities
             float absRunInput = Mathf.Abs(runInput);
             float absWalkInput = Mathf.Abs(walkInput);
 
-            // Determine input type and movement input in one pass
+            // Determine input types and movement input in one pass
             bool isRunInput = absRunInput > MIN_INPUT_THRESHOLD;
             float movementInput = isRunInput ? runInput : walkInput;
             float absMovementInput = isRunInput ? absRunInput : absWalkInput;
