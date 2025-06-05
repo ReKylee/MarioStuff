@@ -1,146 +1,114 @@
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Animation.Flow.Interfaces;
-using UnityEngine;
 
 namespace Animation.Flow.Core
 {
     /// <summary>
-    ///     Implementation of the animation context with strong typing for parameters
+    ///     Context for animation flow execution
+    ///     Contains parameters and the animator interface
     /// </summary>
-    [Serializable]
-    public class AnimationContext : IAnimationContext
+    public class AnimationContext
     {
+        // The animator interface used to play animations
+        private readonly IAnimator _animator;
 
-        #region Properties
+        // Dictionary to store parameters of different types
+        private readonly Dictionary<string, bool> _boolParams = new();
+        private readonly Dictionary<string, int> _intParams = new();
+        private readonly Dictionary<string, float> _floatParams = new();
+        private readonly Dictionary<string, string> _stringParams = new();
 
         /// <summary>
-        ///     Gets the animator instance
+        ///     Creates a new animation context with the specified animator
+        /// </summary>
+        /// <param name="animator">The animator to use for playing animations</param>
+        public AnimationContext(IAnimator animator)
+        {
+            _animator = animator;
+        }
+
+        /// <summary>
+        ///     Gets the animator interface
         /// </summary>
         public IAnimator Animator => _animator;
 
-        #endregion
-
-
-        #region Runtime Fields
-
-        private readonly Dictionary<string, object> _runtimeValues = new();
-
-        // The animator instance
-        [NonSerialized] private IAnimator _animator;
-
-        #endregion
-
-        #region Constructors
-
-        public AnimationContext()
-        {
-        }
-
-        public AnimationContext(IAnimator animator)
-        {
-            _animator = animator ?? throw new ArgumentNullException(nameof(animator));
-        }
-
-        #endregion
-
-
-        #region Parameter Management
+        #region Parameter Access
 
         /// <summary>
-        ///     Set the animator instance
+        ///     Sets a boolean parameter
         /// </summary>
-        public void SetAnimator(IAnimator animator)
+        public void SetBool(string name, bool value)
         {
-            _animator = animator;
-
-        }
-        /// <summary>
-        ///     Check if a parameter exists
-        /// </summary>
-        /// <param name="parameterName">Name of the parameter to check</param>
-        /// <returns>True if the parameter exists, false otherwise</returns>
-        public bool HasParameter(string parameterName)
-        {
-            if (string.IsNullOrEmpty(parameterName))
-                return false;
-
-            return _runtimeValues.ContainsKey(parameterName);
+            _boolParams[name] = value;
         }
 
         /// <summary>
-        ///     Get a parameter value with strong typing
+        ///     Gets a boolean parameter
         /// </summary>
-        /// <typeparam name="T">Type of the parameter value</typeparam>
-        /// <param name="parameterName">Name of the parameter</param>
-        /// <returns>The parameter value or default(T) if not found</returns>
-        public T GetParameter<T>(string parameterName)
+        public bool GetBool(string name, bool defaultValue = false)
         {
-            if (string.IsNullOrEmpty(parameterName))
-                return default;
-
-            if (_runtimeValues.TryGetValue(parameterName, out object value))
-            {
-                try
-                {
-                    // Handle type conversion
-                    if (value is T directValue)
-                        return directValue;
-
-                    // Try to convert the value to the requested type
-                    if (value != null)
-                        return (T)Convert.ChangeType(value, typeof(T));
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning(
-                        $"Failed to convert parameter '{parameterName}' from {value?.GetType()?.Name} to {typeof(T).Name}: {ex.Message}");
-                }
-            }
-
-            return default;
+            return _boolParams.TryGetValue(name, out bool value) ? value : defaultValue;
         }
 
         /// <summary>
-        ///     Set a parameter value with strong typing
+        ///     Sets an integer parameter
         /// </summary>
-        /// <typeparam name="T">Type of the parameter value</typeparam>
-        /// <param name="parameterName">Name of the parameter</param>
-        /// <param name="value">Value to set</param>
-        public void SetParameter<T>(string parameterName, T value)
+        public void SetInt(string name, int value)
         {
-            if (string.IsNullOrEmpty(parameterName))
-            {
-                Debug.LogWarning("Cannot set parameter with null or empty name");
-                return;
-            }
-
-            _runtimeValues[parameterName] = value;
+            _intParams[name] = value;
         }
 
         /// <summary>
-        ///     Remove a parameter
+        ///     Gets an integer parameter
         /// </summary>
-        /// <param name="parameterName">Name of the parameter to remove</param>
-        /// <returns>True if the parameter was removed, false if it didn't exist</returns>
-        public bool RemoveParameter(string parameterName)
+        public int GetInt(string name, int defaultValue = 0)
         {
-            if (string.IsNullOrEmpty(parameterName))
-                return false;
-
-            return _runtimeValues.Remove(parameterName);
+            return _intParams.TryGetValue(name, out int value) ? value : defaultValue;
         }
 
+        /// <summary>
+        ///     Sets a float parameter
+        /// </summary>
+        public void SetFloat(string name, float value)
+        {
+            _floatParams[name] = value;
+        }
 
         /// <summary>
-        ///     Clear all runtime parameter values
+        ///     Gets a float parameter
         /// </summary>
-        public void ClearRuntimeValues()
+        public float GetFloat(string name, float defaultValue = 0f)
         {
-            _runtimeValues.Clear();
+            return _floatParams.TryGetValue(name, out float value) ? value : defaultValue;
+        }
+
+        /// <summary>
+        ///     Sets a string parameter
+        /// </summary>
+        public void SetString(string name, string value)
+        {
+            _stringParams[name] = value;
+        }
+
+        /// <summary>
+        ///     Gets a string parameter
+        /// </summary>
+        public string GetString(string name, string defaultValue = "")
+        {
+            return _stringParams.TryGetValue(name, out string value) ? value : defaultValue;
+        }
+
+        /// <summary>
+        ///     Clears all parameters
+        /// </summary>
+        public void ClearParameters()
+        {
+            _boolParams.Clear();
+            _intParams.Clear();
+            _floatParams.Clear();
+            _stringParams.Clear();
         }
 
         #endregion
-
     }
 }

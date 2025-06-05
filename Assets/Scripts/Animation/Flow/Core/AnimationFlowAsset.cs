@@ -1,168 +1,81 @@
-using System;
-using System.Collections.Generic;
-using Animation.Flow.Parameters;
+﻿using System.Collections.Generic;
 using UnityEngine;
-#if UNITY_EDITOR
-#endif
 
 namespace Animation.Flow.Core
 {
     /// <summary>
-    ///     Serializable asset that stores an animation flow configuration.
+    ///     Scriptable object that defines an animation flow configuration
+    ///     Acts as a data container for behavior tree nodes that control animation transitions
     /// </summary>
-    [CreateAssetMenu(fileName = "NewAnimationFlow", menuName = "Animation/Flow Asset", order = 120)]
+    [CreateAssetMenu(fileName = "New Animation Flow", menuName = "Animation/Flow/Animation Flow Asset")]
     public class AnimationFlowAsset : ScriptableObject
     {
-
-        #region Runtime Fields
-
-        // Controller that uses this asset (not serialized, only for editor usage)
-        [NonSerialized] private AnimationFlowController _controller;
-
-        #endregion
-
-        #region Serialized Fields
-
-        [Tooltip("All states in this animation flow")] [SerializeReference]
-        public List<FlowState> states = new();
-
-        [Tooltip("All parameters used in this flow")]
-        public List<FlowParameter> parameters = new();
-
-        [Tooltip("The context that manages parameters at runtime")] [SerializeField]
-        private AnimationContext context = new();
-
-        #endregion
-
-        #region Validation
+        [SerializeField] private string _description;
+        [SerializeField] private FlowNode _rootNode;
+        [SerializeField] private List<FlowNode> _nodes = new();
 
         /// <summary>
-        ///     Validate this asset to ensure all references are correct
+        ///     Description of this animation flow
         /// </summary>
-        private void Validate()
-        {
-            ValidateStates();
-            ValidateParameters();
-        }
+        public string Description => _description;
 
         /// <summary>
-        ///     Validate states to ensure IDs are unique and one state is marked as initial
+        ///     Root node of the behavior tree
         /// </summary>
-        private void ValidateStates()
+        public FlowNode RootNode => _rootNode;
+
+        /// <summary>
+        ///     All nodes in this behavior tree
+        /// </summary>
+        public List<FlowNode> Nodes => _nodes;
+
+        /// <summary>
+        ///     Sets the root node of this behavior tree
+        /// </summary>
+        public void SetRootNode(FlowNode rootNode)
         {
-            foreach (FlowState state in states)
+            _rootNode = rootNode;
+
+            // Make sure the root node is in the list
+            if (!_nodes.Contains(rootNode))
             {
-                state.Validate();
-            }
-        }
-
-
-        /// <summary>
-        ///     Validate parameters to ensure they are valid
-        /// </summary>
-        private void ValidateParameters()
-        {
-            // Ensure all parameters have valid names
-            for (int i = parameters.Count - 1; i >= 0; i--)
-            {
-                if (!parameters[i].Validate())
-                {
-                    parameters.RemoveAt(i);
-                }
-            }
-
-        }
-
-        #endregion
-
-        #region Controller Building
-
-        /// <summary>
-        ///     Create a runtime flow controller from this asset
-        /// </summary>
-        public void BuildFlowController(AnimationFlowController controller)
-        {
-            if (controller is null) return;
-
-#if UNITY_EDITOR
-            // Register the controller when building from this asset
-            RegisterController(controller);
-#endif
-
-            // Clear existing states
-            controller.ClearStates();
-
-            // Validate asset to ensure integrity
-            Validate();
-
-            // Setup the animation context in the controller
-            SetupControllerContext(controller);
-
-        }
-
-        /// <summary>
-        ///     Setup the controller's context with parameters from this asset
-        /// </summary>
-        private void SetupControllerContext(AnimationFlowController controller)
-        {
-            // Set the context in the controller
-            controller.SetAnimationContext(context);
-        }
-
-        #endregion
-
-        #region Parameter Management
-
-        /// <summary>
-        ///     Get all parameters
-        /// </summary>
-        public IReadOnlyList<FlowParameter> GetAllParameters() => parameters;
-
-        /// <summary>
-        ///     Get the animation context
-        /// </summary>
-        public AnimationContext GetContext() => context;
-
-        #endregion
-
-        #region Editor Support
-
-#if UNITY_EDITOR
-        /// <summary>
-        ///     Called when this asset is assigned to a controller
-        /// </summary>
-        public void RegisterController(AnimationFlowController controller)
-        {
-            if (controller is not null)
-            {
-                _controller = controller;
+                _nodes.Add(rootNode);
             }
         }
 
         /// <summary>
-        ///     Called when this asset is unassigned from a controller
+        ///     Adds a node to this behavior tree
         /// </summary>
-        public void UnregisterController(AnimationFlowController controller)
+        public void AddNode(FlowNode node)
         {
-            if (controller is not null && _controller == controller)
+            // Avoid duplicates
+            if (!_nodes.Contains(node))
             {
-                _controller = null;
+                _nodes.Add(node);
             }
         }
 
         /// <summary>
-        ///     Get a controller that uses this asset
+        ///     Removes a node from this behavior tree
         /// </summary>
-        public AnimationFlowController GetController() => _controller;
-
-        private void OnValidate()
+        public void RemoveNode(FlowNode node)
         {
-            // Validate the asset whenever it changes in the editor
-            Validate();
+            _nodes.Remove(node);
+
+            // If we removed the root node, clear it
+            if (_rootNode == node)
+            {
+                _rootNode = null;
+            }
         }
-#endif
 
-        #endregion
-
+        /// <summary>
+        ///     Clears all nodes from this behavior tree
+        /// </summary>
+        public void ClearNodes()
+        {
+            _nodes.Clear();
+            _rootNode = null;
+        }
     }
 }
