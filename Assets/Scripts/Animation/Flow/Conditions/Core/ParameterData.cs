@@ -1,12 +1,12 @@
-﻿using Animation.Flow.Conditions;
-
-namespace Animation.Flow.Editor.Panels.Parameters
+﻿namespace Animation.Flow.Conditions.Core
 {
     /// <summary>
     ///     Data for parameters that can be used in conditions
     /// </summary>
     public class ParameterData
     {
+
+
         /// <summary>
         ///     Name of the parameter
         /// </summary>

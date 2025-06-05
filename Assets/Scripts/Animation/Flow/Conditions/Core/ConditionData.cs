@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Animation.Flow.Conditions
+namespace Animation.Flow.Conditions.Core
 {
     /// <summary>
     ///     Serializable data for a condition

@@ -1,5 +1,6 @@
 ﻿using System;
 using Animation.Flow.Conditions;
+using Animation.Flow.Conditions.Core;
 using Animation.Flow.Editor.Managers;
 using UnityEditor;
 using UnityEngine;
@@ -36,7 +37,6 @@ namespace Animation.Flow.Editor.Panels.Parameters
                 styleSheets.Add(parameterPanelStylesheet);
             }
 
-            LoadDefaultParameters();
             RefreshParameterList();
         }
 
@@ -92,16 +92,10 @@ namespace Animation.Flow.Editor.Panels.Parameters
 
         #region Parameter Management
 
-        private void LoadDefaultParameters()
-        {
-            // Parameters are now loaded from AnimationContextAccessor, which has its own default parameter set
-            AnimationContextAccessor.Instance.Parameters.ForEach(p =>
-            {
-                /* Just access to initialize */
-            });
-        }
-
-        private void RefreshParameterList()
+        /// <summary>
+        ///     Refreshes the parameter list with the latest parameters from AnimationContextAccessor
+        /// </summary>
+        public void RefreshParameterList()
         {
             Content.Clear();
 
@@ -215,12 +209,12 @@ namespace Animation.Flow.Editor.Panels.Parameters
         private void AddNewParameter(string defaultName, ConditionDataType type, object defaultValue)
         {
             // Generate a unique name
-            string name = GenerateUniqueName(defaultName);
+            string uniqueName = GenerateUniqueName(defaultName);
 
             // Create the parameter
             ParameterData newParameter = new()
             {
-                Name = name,
+                Name = uniqueName,
                 Type = type,
                 DefaultValue = defaultValue
             };

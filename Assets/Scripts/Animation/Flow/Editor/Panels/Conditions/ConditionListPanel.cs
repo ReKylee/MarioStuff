@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Animation.Flow.Conditions;
+using Animation.Flow.Conditions.Core;
 using Animation.Flow.Editor.Factories;
 using Animation.Flow.Editor.Panels.Parameters;
 using UnityEditor;

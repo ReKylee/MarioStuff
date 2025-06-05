@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Animation.Flow.Conditions;
+using Animation.Flow.Conditions.Core;
 using Animation.Flow.Core;
 using Animation.Flow.Editor.Managers;
 using Animation.Flow.Interfaces;
@@ -559,6 +559,10 @@ namespace Animation.Flow.Editor
 
             // Frame the entire graph to show all nodes
             _graphView.FrameAll();
+
+            // Force parameter refresh in AnimationContextAccessor
+            AnimationContextAccessor.Instance.SyncWithActiveContext();
+
 
             // Reset unsaved changes flag since we just loaded
             _hasUnsavedChanges = false;

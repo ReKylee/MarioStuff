@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Animation.Flow.Conditions;
+using Animation.Flow.Conditions.Core;
 using Animation.Flow.Editor.ValueEditors;
 using UnityEngine.UIElements;
 

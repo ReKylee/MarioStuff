@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using Animation.Flow.Conditions.Core;
+
 namespace Animation.Flow.Interfaces
 {
     /// <summary>
@@ -20,5 +24,15 @@ namespace Animation.Flow.Interfaces
         ///     Set a parameter value in this context
         /// </summary>
         void SetParameter<T>(string parameterName, T value);
+
+        /// <summary>
+        ///     Get the parameter type
+        /// </summary>
+        Type GetParameterType(string name);
+
+        /// <summary>
+        ///     Get all parameter data for serialization or editor usage
+        /// </summary>
+        IEnumerable<ParameterData> GetAllParameters();
     }
 }

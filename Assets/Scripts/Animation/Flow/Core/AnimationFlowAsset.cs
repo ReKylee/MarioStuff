@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Animation.Flow.Conditions;
+using Animation.Flow.Conditions.Core;
 using Animation.Flow.Interfaces;
 using Animation.Flow.States;
 using UnityEngine;
@@ -220,11 +221,6 @@ namespace Animation.Flow.Core
             }
         }
 
-
-        /// <summary>
-        ///     Create a new animation flow asset from a template
-        /// </summary>
-        public static AnimationFlowAsset CreateFromTemplate(string templateName) => default;
 
 #if UNITY_EDITOR
         /// <summary>

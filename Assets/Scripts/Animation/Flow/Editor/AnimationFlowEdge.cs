@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Animation.Flow.Conditions;
+using Animation.Flow.Conditions.Core;
 using Animation.Flow.Editor.Managers;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;

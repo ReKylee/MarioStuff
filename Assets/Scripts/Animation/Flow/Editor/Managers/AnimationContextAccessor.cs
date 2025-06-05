@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Animation.Flow.Conditions;
+using Animation.Flow.Conditions.Core;
 using Animation.Flow.Core;
-using Animation.Flow.Editor.Panels.Parameters;
-using UnityEditor;
-using UnityEngine;
 
 namespace Animation.Flow.Editor.Managers
 {
@@ -14,10 +12,8 @@ namespace Animation.Flow.Editor.Managers
     public class AnimationContextAccessor
     {
 
-        private const string ParametersKey = "AnimationFlowParameters";
         private static AnimationContextAccessor _instance;
 
-        // Reference to the active AnimationContext (set by the AnimationFlowController)
         private static AnimationContext _activeContext;
 
         public static AnimationContextAccessor Instance
@@ -27,14 +23,14 @@ namespace Animation.Flow.Editor.Managers
                 if (_instance == null)
                 {
                     _instance = new AnimationContextAccessor();
-                    _instance.LoadParameters();
+                    _instance.TryLoadParametersFromContext();
                 }
 
                 return _instance;
             }
         }
 
-        public List<ParameterData> Parameters { get; private set; } = new();
+        public List<ParameterData> Parameters { get; } = new();
 
         /// <summary>
         ///     Set the active animation context
@@ -42,6 +38,12 @@ namespace Animation.Flow.Editor.Managers
         public static void SetActiveContext(AnimationContext context)
         {
             _activeContext = context;
+
+            // If we have an active context, try to load parameters from it
+            if (_activeContext != null && Instance != null)
+            {
+                Instance.TryLoadParametersFromContext();
+            }
         }
 
         /// <summary>
@@ -57,7 +59,6 @@ namespace Animation.Flow.Editor.Managers
             if (!Parameters.Exists(p => p.Name == parameter.Name))
             {
                 Parameters.Add(parameter);
-                SaveParameters();
 
                 // Set default value in active context if available
                 if (_activeContext != null)
@@ -73,7 +74,6 @@ namespace Animation.Flow.Editor.Managers
         public void RemoveParameter(string parameterName)
         {
             Parameters.RemoveAll(p => p.Name == parameterName);
-            SaveParameters();
         }
 
         /// <summary>
@@ -85,7 +85,6 @@ namespace Animation.Flow.Editor.Managers
             if (index >= 0)
             {
                 Parameters[index] = parameter;
-                SaveParameters();
 
                 // Update in active context if available
                 if (_activeContext != null)
@@ -127,40 +126,6 @@ namespace Animation.Flow.Editor.Managers
             return Parameters.Find(p => p.Name == name);
         }
 
-        /// <summary>
-        ///     Save parameters to EditorPrefs
-        /// </summary>
-        private void SaveParameters()
-        {
-            string json = JsonUtility.ToJson(new ParameterDataList { Parameters = Parameters });
-            EditorPrefs.SetString(ParametersKey, json);
-        }
-
-        /// <summary>
-        ///     Load parameters from EditorPrefs
-        /// </summary>
-        private void LoadParameters()
-        {
-            if (EditorPrefs.HasKey(ParametersKey))
-            {
-                string json = EditorPrefs.GetString(ParametersKey);
-                ParameterDataList dataList = JsonUtility.FromJson<ParameterDataList>(json);
-                Parameters = dataList?.Parameters ?? new List<ParameterData>();
-            }
-            else
-            {
-                // Create default parameters if none exist
-                Parameters = new List<ParameterData>
-                {
-                    new() { Name = "IsGrounded", Type = ConditionDataType.Boolean, DefaultValue = false },
-                    new() { Name = "Speed", Type = ConditionDataType.Float, DefaultValue = 0f },
-                    new() { Name = "Health", Type = ConditionDataType.Integer, DefaultValue = 100 },
-                    new() { Name = "State", Type = ConditionDataType.String, DefaultValue = "Idle" }
-                };
-
-                SaveParameters();
-            }
-        }
 
         /// <summary>
         ///     Synchronize parameters with the active AnimationContext
@@ -169,10 +134,24 @@ namespace Animation.Flow.Editor.Managers
         {
             if (_activeContext == null) return;
 
-            // Apply all current parameters to the active context
-            foreach (ParameterData parameter in Parameters)
+            TryLoadParametersFromContext();
+
+        }
+
+        /// <summary>
+        ///     Try to load parameters from the active AnimationContext
+        /// </summary>
+        private void TryLoadParametersFromContext()
+        {
+
+            // Get parameters from the context using the new GetAllParameters method
+            var contextParameters = _activeContext?.GetAllParameters();
+            if (contextParameters != null)
             {
-                SetParameterInContext(parameter);
+                // Clear existing parameters and add all from context
+                Parameters.Clear();
+                Parameters.AddRange(contextParameters);
+
             }
         }
 

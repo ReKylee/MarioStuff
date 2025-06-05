@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Animation.Flow.Conditions;
+using Animation.Flow.Conditions.Core;
 using Animation.Flow.Core;
 using Animation.Flow.Editor.Managers;
 using Animation.Flow.Editor.Panels;
