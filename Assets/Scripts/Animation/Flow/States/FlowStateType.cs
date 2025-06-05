@@ -3,7 +3,7 @@
     /// <summary>
     ///     Defines all available animation state types
     /// </summary>
-    public enum AnimationStateType
+    public enum FlowStateType
     {
         /// <summary>
         ///     One-time animation that plays and stops

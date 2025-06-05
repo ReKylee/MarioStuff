@@ -12,7 +12,7 @@ namespace Animation.Flow.Editor.Managers
         private static EdgeConditionManager _instance;
 
         // Dictionary mapping edge IDs to their conditions
-        private readonly Dictionary<string, List<ConditionData>> _edgeConditions = new();
+        private readonly Dictionary<string, List<FlowCondition>> _edgeConditions = new();
         public static EdgeConditionManager Instance => _instance ??= new EdgeConditionManager();
 
         // Get a unique identifier for an edge based on its connected nodes
@@ -26,14 +26,14 @@ namespace Animation.Flow.Editor.Managers
         }
 
         // Get conditions for an edge
-        public List<ConditionData> GetConditions(string edgeId)
+        public List<FlowCondition> GetConditions(string edgeId)
         {
             if (string.IsNullOrEmpty(edgeId))
-                return new List<ConditionData>();
+                return new List<FlowCondition>();
 
             if (!_edgeConditions.TryGetValue(edgeId, out var conditions))
             {
-                conditions = new List<ConditionData>();
+                conditions = new List<FlowCondition>();
                 _edgeConditions[edgeId] = conditions;
             }
 
@@ -41,7 +41,7 @@ namespace Animation.Flow.Editor.Managers
         }
 
         // Set conditions for an edge
-        public void SetConditions(string edgeId, List<ConditionData> conditions)
+        public void SetConditions(string edgeId, List<FlowCondition> conditions)
         {
             if (string.IsNullOrEmpty(edgeId))
                 return;
@@ -49,19 +49,20 @@ namespace Animation.Flow.Editor.Managers
             // Create a deep copy of the conditions to avoid reference issues
             if (conditions != null)
             {
-                var clonedConditions = new List<ConditionData>();
-                foreach (var condition in conditions)
+                var clonedConditions = new List<FlowCondition>();
+                foreach (FlowCondition condition in conditions)
                 {
                     if (condition != null)
                     {
                         clonedConditions.Add(condition.Clone());
                     }
                 }
+
                 _edgeConditions[edgeId] = clonedConditions;
             }
             else
             {
-                _edgeConditions[edgeId] = new List<ConditionData>();
+                _edgeConditions[edgeId] = new List<FlowCondition>();
             }
         }
 

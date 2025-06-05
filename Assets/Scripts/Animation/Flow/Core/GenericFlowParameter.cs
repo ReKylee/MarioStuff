@@ -9,20 +9,22 @@ namespace Animation.Flow.Parameters
     [Serializable]
     public class FlowParameter<T> : FlowParameter
     {
-        [SerializeField] private T _defaultValue;
+        [SerializeField] private T defaultValue;
 
-        public FlowParameter() { }
+        public FlowParameter()
+        {
+        }
 
         public FlowParameter(string name, T defaultValue = default, string description = "")
             : base(name, description)
         {
-            _defaultValue = defaultValue;
+            this.defaultValue = defaultValue;
         }
 
         /// <summary>
         ///     Gets the strongly-typed default value
         /// </summary>
-        public T DefaultValue => _defaultValue;
+        public T DefaultValue => defaultValue;
 
         /// <summary>
         ///     Gets the parameter type
@@ -32,14 +34,11 @@ namespace Animation.Flow.Parameters
         /// <summary>
         ///     Gets the default value as an object
         /// </summary>
-        public override object GetDefaultValue() => _defaultValue;
+        public override object GetDefaultValue() => defaultValue;
 
         /// <summary>
         ///     Creates a clone of this parameter
         /// </summary>
-        public override FlowParameter Clone()
-        {
-            return new FlowParameter<T>(Name, _defaultValue, Description);
-        }
+        public override FlowParameter Clone() => new FlowParameter<T>(Name, defaultValue, Description);
     }
 }

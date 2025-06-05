@@ -1,19 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Animation.Flow.Conditions.Core;
 using Animation.Flow.Conditions.ParameterConditions;
-using UnityEngine.UIElements;
 
 namespace Animation.Flow.Editor.Panels.Conditions
 {
-
     /// <summary>
-    ///     Utility for selecting comparison types based on data type
+    ///     Utility for selecting comparison types based on condition type
     /// </summary>
     public class ComparisonTypeSelector
     {
-        private readonly ParameterValueType _dataType;
-
         private static readonly Dictionary<ComparisonType, string> Symbols = new()
         {
             { ComparisonType.Equal, "=" },
@@ -27,21 +22,27 @@ namespace Animation.Flow.Editor.Panels.Conditions
             { ComparisonType.EndsWith, "≺" }
         };
 
-        public ComparisonTypeSelector(ParameterValueType dataType)
+        private readonly FlowCondition _condition;
+
+        public ComparisonTypeSelector(FlowCondition condition)
         {
-            _dataType = dataType;
+            _condition = condition;
         }
 
         /// <summary>
-        ///     Get available comparison types for the current data type
+        ///     Get available comparison types for the current condition type
         /// </summary>
         public List<ComparisonType> GetAvailableComparisonTypes()
         {
-            return _dataType switch
+            // Check the specific condition type using 'is' pattern matching
+            if (_condition is BoolCondition)
             {
-                ParameterValueType.Bool => new List<ComparisonType>
-                    { ComparisonType.Equal },
-                ParameterValueType.Int => new List<ComparisonType>
+                return new List<ComparisonType> { ComparisonType.Equal };
+            }
+
+            if (_condition is IntCondition)
+            {
+                return new List<ComparisonType>
                 {
                     ComparisonType.Equal,
                     ComparisonType.NotEqual,
@@ -49,8 +50,12 @@ namespace Animation.Flow.Editor.Panels.Conditions
                     ComparisonType.GreaterOrEqual,
                     ComparisonType.Less,
                     ComparisonType.LessOrEqual
-                },
-                ParameterValueType.Float => new List<ComparisonType>
+                };
+            }
+
+            if (_condition is FloatCondition)
+            {
+                return new List<ComparisonType>
                 {
                     ComparisonType.Equal,
                     ComparisonType.NotEqual,
@@ -58,19 +63,49 @@ namespace Animation.Flow.Editor.Panels.Conditions
                     ComparisonType.GreaterOrEqual,
                     ComparisonType.Less,
                     ComparisonType.LessOrEqual
-                },
-                ParameterValueType.String => new List<ComparisonType>
+                };
+            }
+
+            if (_condition is StringCondition)
+            {
+                return new List<ComparisonType>
                 {
                     ComparisonType.Equal,
                     ComparisonType.NotEqual,
                     ComparisonType.Contains,
                     ComparisonType.StartsWith,
                     ComparisonType.EndsWith
-                },
-                // Support for special types can be added with custom handling
-                _ => new List<ComparisonType> { ComparisonType.Equal }
-            };
+                };
+            }
+
+            // Default fallback for unknown condition types
+            return new List<ComparisonType> { ComparisonType.Equal };
         }
 
+        /// <summary>
+        ///     Get the symbol for a comparison type
+        /// </summary>
+        public static string GetSymbol(ComparisonType comparisonType) =>
+            Symbols.TryGetValue(comparisonType, out string symbol) ? symbol : "?";
+
+        /// <summary>
+        ///     Get a human-readable description for a comparison type
+        /// </summary>
+        public static string GetDescription(ComparisonType comparisonType)
+        {
+            return comparisonType switch
+            {
+                ComparisonType.Equal => "Equal to",
+                ComparisonType.NotEqual => "Not equal to",
+                ComparisonType.Greater => "Greater than",
+                ComparisonType.Less => "Less than",
+                ComparisonType.GreaterOrEqual => "Greater than or equal to",
+                ComparisonType.LessOrEqual => "Less than or equal to",
+                ComparisonType.Contains => "Contains",
+                ComparisonType.StartsWith => "Starts with",
+                ComparisonType.EndsWith => "Ends with",
+                _ => comparisonType.ToString()
+            };
+        }
     }
 }

@@ -18,7 +18,7 @@ namespace Animation.Flow.Editor
         private Toggle _initialStateToggle;
         private bool _isCollapsed;
 
-        public AnimationStateNode(AnimationStateType stateType, string animationName)
+        public AnimationStateNode(FlowStateType stateType, string animationName)
         {
             StateType = stateType;
             AnimationName = animationName;
@@ -30,8 +30,8 @@ namespace Animation.Flow.Editor
             // Build node UI
             BuildNodeUI();
         }
-
-        public AnimationStateType StateType { get; }
+        public int FrameToHold => _frameToHoldField?.value ?? 0;
+        public FlowStateType StateType { get; }
         public string AnimationName { get; set; }
         public bool IsInitialState { get; set; }
         public string ID { get; set; }
@@ -338,11 +338,11 @@ namespace Animation.Flow.Editor
 
             switch (StateType)
             {
-                case AnimationStateType.HoldFrame:
+                case FlowStateType.HoldFrame:
                     return new Color(0.2f, 0.2f, 0.6f); // Blue for hold frame
-                case AnimationStateType.OneTime:
+                case FlowStateType.OneTime:
                     return new Color(0.6f, 0.3f, 0.1f); // Orange for one-time
-                case AnimationStateType.Looping:
+                case FlowStateType.Looping:
                     return new Color(0.4f, 0.1f, 0.5f); // Purple for looping
                 default:
                     return new Color(0.3f, 0.3f, 0.3f); // Gray for unknown

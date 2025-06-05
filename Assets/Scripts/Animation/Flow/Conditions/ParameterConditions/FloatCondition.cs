@@ -15,11 +15,15 @@ namespace Animation.Flow.Conditions.ParameterConditions
         [SerializeField] private ComparisonType _comparisonType = ComparisonType.Equal;
         [SerializeField] private float _epsilon = 0.0001f; // For float equality comparison
 
-        public FloatCondition() { }
+        public FloatCondition()
+        {
+        }
 
-        public FloatCondition(string parameterName, float compareValue, ComparisonType comparisonType = ComparisonType.Equal, 
+        public FloatCondition(string parameterName, float compareValue,
+            ComparisonType comparisonType = ComparisonType.Equal,
             float epsilon = 0.0001f, bool isNegated = false)
-            : base(parameterName, $"Parameter '{parameterName}' {GetComparisonSymbol(comparisonType)} {compareValue}", isNegated)
+            : base(parameterName, $"Parameter '{parameterName}' {GetComparisonSymbol(comparisonType)} {compareValue}",
+                isNegated)
         {
             _compareValue = compareValue;
             _comparisonType = comparisonType;
@@ -49,7 +53,7 @@ namespace Animation.Flow.Conditions.ParameterConditions
             if (!ParameterExists(context))
                 return false;
 
-            float value = context.GetParameter<float>(_parameterName);
+            float value = context.GetParameter<float>(parameterName);
 
             return _comparisonType switch
             {
@@ -66,10 +70,8 @@ namespace Animation.Flow.Conditions.ParameterConditions
         /// <summary>
         ///     Creates a clone of this condition
         /// </summary>
-        public override FlowCondition Clone()
-        {
-            return new FloatCondition(_parameterName, _compareValue, _comparisonType, _epsilon, _isNegated);
-        }
+        public override FlowCondition Clone() =>
+            new FloatCondition(parameterName, _compareValue, _comparisonType, _epsilon, isNegated);
 
         /// <summary>
         ///     Gets a string representation of the comparison type

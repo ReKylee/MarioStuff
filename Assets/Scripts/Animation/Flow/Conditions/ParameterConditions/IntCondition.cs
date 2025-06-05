@@ -14,11 +14,15 @@ namespace Animation.Flow.Conditions.ParameterConditions
         [SerializeField] private int _compareValue;
         [SerializeField] private ComparisonType _comparisonType = ComparisonType.Equal;
 
-        public IntCondition() { }
+        public IntCondition()
+        {
+        }
 
-        public IntCondition(string parameterName, int compareValue, ComparisonType comparisonType = ComparisonType.Equal, 
+        public IntCondition(string parameterName, int compareValue,
+            ComparisonType comparisonType = ComparisonType.Equal,
             bool isNegated = false)
-            : base(parameterName, $"Parameter '{parameterName}' {GetComparisonSymbol(comparisonType)} {compareValue}", isNegated)
+            : base(parameterName, $"Parameter '{parameterName}' {GetComparisonSymbol(comparisonType)} {compareValue}",
+                isNegated)
         {
             _compareValue = compareValue;
             _comparisonType = comparisonType;
@@ -42,7 +46,7 @@ namespace Animation.Flow.Conditions.ParameterConditions
             if (!ParameterExists(context))
                 return false;
 
-            int value = context.GetParameter<int>(_parameterName);
+            int value = context.GetParameter<int>(parameterName);
 
             return _comparisonType switch
             {
@@ -59,10 +63,8 @@ namespace Animation.Flow.Conditions.ParameterConditions
         /// <summary>
         ///     Creates a clone of this condition
         /// </summary>
-        public override FlowCondition Clone()
-        {
-            return new IntCondition(_parameterName, _compareValue, _comparisonType, _isNegated);
-        }
+        public override FlowCondition Clone() =>
+            new IntCondition(parameterName, _compareValue, _comparisonType, isNegated);
 
         /// <summary>
         ///     Gets a string representation of the comparison type

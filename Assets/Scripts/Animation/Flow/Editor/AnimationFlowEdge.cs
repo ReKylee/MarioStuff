@@ -26,7 +26,7 @@ namespace Animation.Flow.Editor
             RegisterCallback<MouseDownEvent>(OnMouseDown);
         }
 
-        public List<ConditionData> Conditions { get; set; } = new();
+        public List<FlowCondition> Conditions { get; set; } = new();
 
         private void OnMouseDown(MouseDownEvent evt)
         {
@@ -62,7 +62,7 @@ namespace Animation.Flow.Editor
                     var conditions = EdgeConditionManager.Instance.GetConditions(edgeId);
                     if (conditions == null)
                     {
-                        conditions = new List<ConditionData>();
+                        conditions = new List<FlowCondition>();
                         EdgeConditionManager.Instance.SetConditions(edgeId, conditions);
                     }
 

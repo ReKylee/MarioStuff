@@ -6,9 +6,8 @@ namespace Animation.Flow.States
     /// <summary>
     ///     State that holds on a specific frame of an animation
     /// </summary>
-    public class HoldFrameState : AnimationStateBase
+    public class HoldFrameState : FlowState
     {
-        private readonly int _frameToHold;
 
         /// <summary>
         ///     Create a new hold frame animation state
@@ -18,14 +17,14 @@ namespace Animation.Flow.States
         /// <param name="frameToHold">Frame index to hold on</param>
         public HoldFrameState(string id, string animationName, int frameToHold) : base(id, animationName)
         {
-            _frameToHold = frameToHold;
+            FrameToHold = frameToHold;
             ShouldLoop = false;
         }
 
         /// <summary>
         ///     The frame index this state will hold on
         /// </summary>
-        public int FrameToHold => _frameToHold;
+        public int FrameToHold { get; }
 
         public override void OnEnter(IAnimationContext context)
         {
@@ -35,7 +34,7 @@ namespace Animation.Flow.States
             // Then immediately set it to the target frame
             if (context?.Animator != null)
             {
-                context.Animator.SetCurrentFrame(_frameToHold);
+                context.Animator.SetCurrentFrame(FrameToHold);
                 context.Animator.Pause();
             }
         }

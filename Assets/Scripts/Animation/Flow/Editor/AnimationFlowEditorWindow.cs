@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Animation.Flow.Conditions.Core;
 using Animation.Flow.Core;
 using Animation.Flow.Editor.Managers;
 using Animation.Flow.Interfaces;
+using Animation.Flow.States;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.UIElements;
@@ -331,55 +333,10 @@ namespace Animation.Flow.Editor
 
             // Clear existing data if overwriting
             flowAsset.states.Clear();
-            flowAsset.transitions.Clear();
 
-            // Populate States
-            foreach (Node viewNode in _graphView.nodes.ToList())
-            {
-                if (viewNode is AnimationStateNode stateNode)
-                {
-                    AnimationStateData stateData = new()
-                    {
-                        Id = stateNode.ID,
-                        StateType = stateNode.StateType,
-                        AnimationName = stateNode.AnimationName,
-                        IsInitialState = stateNode.IsInitialState,
-                        Position = stateNode.GetPosition().position
-                    };
-
-                    flowAsset.states.Add(stateData);
-                }
-            }
-
-            // Populate Transitions
-            foreach (Edge edge in _graphView.edges.ToList())
-            {
-                if (edge.output.node is AnimationStateNode outputNode &&
-                    edge.input.node is AnimationStateNode inputNode)
-                {
-                    string edgeId = EdgeConditionManager.GetEdgeId(edge);
-                    var conditions = new List<ConditionData>();
-
-                    // Get conditions either from EdgeConditionManager or from AnimationFlowEdge
-                    if (!string.IsNullOrEmpty(edgeId))
-                    {
-                        conditions = EdgeConditionManager.Instance.GetConditions(edgeId);
-                    }
-                    else if (edge is AnimationFlowEdge flowEdge)
-                    {
-                        conditions = new List<ConditionData>(flowEdge.Conditions);
-                    }
-
-                    FlowTransition flowTransition = new()
-                    {
-                        FromStateId = outputNode.ID,
-                        ToStateId = inputNode.ID,
-                        Conditions = conditions
-                    };
-
-                    flowAsset.transitions.Add(flowTransition);
-                }
-            }
+            // Populate States and Transitions
+            PopulateStatesFromGraph(flowAsset);
+            PopulateTransitionsFromGraph(flowAsset);
 
             // Mark the asset as dirty but don't force an immediate save
             EditorUtility.SetDirty(flowAsset);
@@ -399,6 +356,58 @@ namespace Animation.Flow.Editor
 
             // Show a brief notification instead of dialog
             ShowNotification(new GUIContent($"Saved {flowAsset.name}"));
+        }
+        private void PopulateStatesFromGraph(AnimationFlowAsset flowAsset)
+        {
+            foreach (Node viewNode in _graphView.nodes.ToList())
+            {
+                if (viewNode is AnimationStateNode stateNode)
+                {
+                    FlowState state = stateNode.StateType switch
+                        {
+                            FlowStateType.Looping => new LoopingState(stateNode.ID, stateNode.AnimationName),
+                            FlowStateType.OneTime => new OneTimeState(stateNode.ID, stateNode.AnimationName),
+                            FlowStateType.HoldFrame => new HoldFrameState(stateNode.ID, stateNode.AnimationName,
+                                stateNode.FrameToHold),
+
+                            _ => throw new ArgumentOutOfRangeException(nameof(stateNode.StateType),
+                                $"Unknown state type: {stateNode.StateType}")
+                        }
+                        ;
+
+                    flowAsset.states.Add(state);
+                }
+            }
+        }
+        private void PopulateTransitionsFromGraph(AnimationFlowAsset flowAsset)
+        {
+            foreach (Edge edge in _graphView.edges.ToList())
+            {
+                if (edge.output?.node is AnimationStateNode outputNode &&
+                    edge.input?.node is AnimationStateNode inputNode)
+                {
+                    string edgeId = EdgeConditionManager.GetEdgeId(edge);
+                    var conditions = new List<FlowCondition>();
+
+                    // Get conditions either from EdgeConditionManager or from AnimationFlowEdge
+                    if (!string.IsNullOrEmpty(edgeId))
+                    {
+                        conditions = EdgeConditionManager.Instance.GetConditions(edgeId);
+                    }
+                    else if (edge is AnimationFlowEdge flowEdge)
+                    {
+                        conditions = new List<FlowCondition>(flowEdge.Conditions);
+                    }
+
+                    // Create transition using correct constructor
+                    FlowTransition flowTransition = new(inputNode.ID, outputNode.ID);
+                    flowTransition.AddConditions(conditions);
+                    // Find the source state and add the transition to it
+                    FlowState sourceState = flowAsset.states.FirstOrDefault(s => s.Id == outputNode.ID);
+                    sourceState?.AddTransition(flowTransition);
+
+                }
+            }
         }
 
         private void LoadGraph()
@@ -450,6 +459,7 @@ namespace Animation.Flow.Editor
             }
         }
 
+
         public void LoadAsset(AnimationFlowAsset flowAsset)
         {
             if (_graphView is null)
@@ -464,8 +474,79 @@ namespace Animation.Flow.Editor
                 return;
             }
 
+            SetupAssetAndAnimator(flowAsset);
+            var graphNodes = PrepareGraphForLoading();
+            LoadStatesFromAsset(flowAsset, graphNodes);
+            LoadTransitionsFromAsset(flowAsset, graphNodes);
+            FinalizeAssetLoading(flowAsset);
+
+        }
+        private Dictionary<string, AnimationStateNode> PrepareGraphForLoading()
+        {
+            _graphView.ClearGraph();
+            EdgeConditionManager.Instance.Clear();
+            return new Dictionary<string, AnimationStateNode>();
+        }
+
+        private void LoadStatesFromAsset(AnimationFlowAsset flowAsset,
+            Dictionary<string, AnimationStateNode> graphNodes)
+        {
+            foreach (FlowState stateData in flowAsset.states)
+            {
+                // Use default values for missing properties
+                AnimationStateNode node = _graphView.CreateStateNode(
+                    FlowStateType.Looping,
+                    stateData.AnimationName,
+                    new Rect(Vector2.zero, new Vector2(150, 200)), // Default position
+                    stateData.Id // Default to not initial state
+                );
+
+                graphNodes[stateData.Id] = node;
+            }
+        }
+
+        private void LoadTransitionsFromAsset(AnimationFlowAsset flowAsset,
+            Dictionary<string, AnimationStateNode> graphNodes)
+        {
+            // Iterate through states and their transitions
+            foreach (FlowState state in flowAsset.states)
+            {
+                if (!graphNodes.TryGetValue(state.Id, out AnimationStateNode fromNode))
+                    continue;
+
+                // Get transitions from the state (assuming transitions are stored within states)
+                string nextStateId = state.CheckTransitions(new AnimationContext());
+                if (string.IsNullOrEmpty(nextStateId) ||
+                    !graphNodes.TryGetValue(nextStateId, out AnimationStateNode toNode))
+                    continue;
+
+                Port outputPort = (Port)fromNode.outputContainer[0];
+                Port inputPort = (Port)toNode.inputContainer[0];
+                Edge edge = _graphView.ConnectPorts(outputPort, inputPort);
+
+                // Set empty conditions for now since the structure has changed
+                string edgeId = EdgeConditionManager.GetEdgeId(edge);
+                if (!string.IsNullOrEmpty(edgeId))
+                {
+                    EdgeConditionManager.Instance.SetConditions(edgeId, new List<FlowCondition>());
+                }
+            }
+        }
+
+        private void FinalizeAssetLoading(AnimationFlowAsset flowAsset)
+        {
+            UpdateWindowTitle();
+            ShowNotification(new GUIContent($"Loaded {flowAsset.name}"));
+            _graphView.FrameAll();
+            _hasUnsavedChanges = false;
+        }
+
+        private void SetupAssetAndAnimator(AnimationFlowAsset flowAsset)
+        {
             Debug.Log($"[Animation Flow Editor] Loading asset: {flowAsset.name}");
             _currentAsset = flowAsset;
+
+            _graphView?.SetFlowAsset(flowAsset);
 
             // Remember this asset for domain reload
             string assetPath = AssetDatabase.GetAssetPath(flowAsset);
@@ -481,7 +562,6 @@ namespace Animation.Flow.Editor
 
             if (!foundController)
             {
-                // Fallback to current selection if no controller is found
                 Debug.Log("[Animation Flow Editor] No controller found, falling back to selection...");
                 UpdateTargetGameObject();
             }
@@ -491,78 +571,14 @@ namespace Animation.Flow.Editor
             {
                 Debug.Log($"[Animation Flow Editor] Target animator found: {_targetAnimator.GetType().Name}");
                 var animations = _targetAnimator.GetAvailableAnimations();
-                Debug.Log($"[Animation Flow Editor] Available animations from target: {string.Join(", ", animations)}");
+                Debug.Log(
+                    $"[Animation Flow Editor] Available animations from target: {string.Join(", ", animations)}");
             }
             else
             {
                 Debug.LogWarning("[Animation Flow Editor] No target animator found!");
             }
 
-            // Clear current graph and condition manager
-            _graphView.ClearGraph();
-            EdgeConditionManager.Instance.Clear();
-
-            // Create a dictionary to map loaded node IDs to graph nodes for connecting edges
-            var graphNodes = new Dictionary<string, AnimationStateNode>();
-
-            // Load States
-            foreach (AnimationStateData stateData in flowAsset.states)
-            {
-                AnimationStateNode node = _graphView.CreateStateNode(
-                    stateData.StateType,
-                    stateData.AnimationName,
-                    new Rect(stateData.Position, new Vector2(150, 200)), // Update size to match node creation
-                    stateData.Id,
-                    stateData.IsInitialState
-                );
-
-                graphNodes[stateData.Id] = node;
-
-
-                // Set initial state
-                if (stateData.IsInitialState)
-                {
-                    node.IsInitialState = true;
-                    node.RefreshInitialStateToggle();
-                }
-            }
-
-            // Load Transitions
-            foreach (FlowTransition transitionData in flowAsset.transitions)
-            {
-                if (!graphNodes.TryGetValue(transitionData.FromStateId, out AnimationStateNode fromNode) ||
-                    !graphNodes.TryGetValue(transitionData.ToStateId, out AnimationStateNode toNode))
-                    continue;
-
-                // Get output port from the source node
-                Port outputPort = (Port)fromNode.outputContainer[0];
-
-                // Get input port from the target node
-                Port inputPort = (Port)toNode.inputContainer[0];
-
-                // Create edge
-                Edge edge = _graphView.ConnectPorts(outputPort, inputPort);
-
-                // Store conditions for this edge
-                string edgeId = EdgeConditionManager.GetEdgeId(edge);
-                if (!string.IsNullOrEmpty(edgeId) && transitionData.Conditions != null)
-                {
-                    EdgeConditionManager.Instance.SetConditions(edgeId, transitionData.Conditions);
-                }
-            }
-
-            // Update window title to show current asset name
-            UpdateWindowTitle();
-
-            // Show a brief status message in the status bar instead of dialog
-            ShowNotification(new GUIContent($"Loaded {flowAsset.name}"));
-
-            // Frame the entire graph to show all nodes
-            _graphView.FrameAll();
-
-
-            // Reset unsaved changes flag since we just loaded
-            _hasUnsavedChanges = false;
         }
 
         private void UpdateWindowTitle()
@@ -650,6 +666,7 @@ namespace Animation.Flow.Editor
 
         // Getter methods for target info
         public GameObject GetTargetGameObject() => _targetGameObject;
+
         public IAnimator GetTargetAnimator() => _targetAnimator;
 
 

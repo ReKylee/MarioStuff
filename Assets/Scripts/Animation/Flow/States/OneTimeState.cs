@@ -6,7 +6,7 @@ namespace Animation.Flow.States
     /// <summary>
     ///     State that plays an animation once and then waits
     /// </summary>
-    public class OneTimeState : AnimationStateBase
+    public class OneTimeState : FlowState
     {
         /// <summary>
         ///     Create a new one-time animation state

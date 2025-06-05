@@ -11,20 +11,18 @@ namespace Animation.Flow.Conditions.ParameterConditions
     [Serializable]
     public abstract class ParameterCondition : FlowCondition
     {
-        [SerializeField] protected string _parameterName;
+        [SerializeField] protected string parameterName;
 
-        protected ParameterCondition() { }
-
-        protected ParameterCondition(string parameterName, string name = null, bool isNegated = false)
-            : base(name ?? $"Parameter '{parameterName}'" , isNegated)
+        protected ParameterCondition()
         {
-            _parameterName = parameterName;
         }
 
-        /// <summary>
-        ///     Gets the parameter name this condition checks
-        /// </summary>
-        public string ParameterName => _parameterName;
+        protected ParameterCondition(string parameterName, string name = null, bool isNegated = false)
+            : base(name ?? $"Parameter '{parameterName}'", isNegated)
+        {
+            this.parameterName = parameterName;
+        }
+
 
         /// <summary>
         ///     Gets the condition type
@@ -34,9 +32,8 @@ namespace Animation.Flow.Conditions.ParameterConditions
         /// <summary>
         ///     Checks if the parameter exists in the context
         /// </summary>
-        protected bool ParameterExists(IAnimationContext context)
-        {
-            return context != null && !string.IsNullOrEmpty(_parameterName) && context.HasParameter(_parameterName);
-        }
+        protected bool ParameterExists(IAnimationContext context) => context != null &&
+                                                                     !string.IsNullOrEmpty(parameterName) &&
+                                                                     context.HasParameter(parameterName);
     }
 }

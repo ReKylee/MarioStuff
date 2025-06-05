@@ -45,6 +45,9 @@ namespace Animation.Flow.Editor
 
             Debug.Log($"[Animation Flow Editor] Opening window for asset: {flowAsset.name}");
             window.LoadAsset(flowAsset);
+            window.Show();
+            window.Repaint();
+
             window.Focus();
         }
     }

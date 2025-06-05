@@ -12,39 +12,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fb3a5b10d1667949b83903b56c197b7, type: 3}
   m_Name: AnimFlow
   m_EditorClassIdentifier: 
-  states:
-  - Id: 7744ec86-0e08-4ff9-bffb-cb00f5617f7c
-    _stateType: 1
-    AnimationName: Run
-    IsInitialState: 0
-    Position: {x: 629, y: 339}
-    _frameToHold: 0
-  - Id: d3d4f9b4-850f-4ba9-83ed-94316ddf9018
-    _stateType: 1
-    AnimationName: Idle
-    IsInitialState: 1
-    Position: {x: 316, y: 339}
-    _frameToHold: 0
-  transitions:
-  - rid: 8340308181528346743
-  references:
-    version: 2
-    RefIds:
-    - rid: 8340308181528346743
-      type: {class: TransitionData, ns: Animation.Flow.Core, asm: AnimFlow}
-      data:
-        FromStateId: d3d4f9b4-850f-4ba9-83ed-94316ddf9018
-        ToStateId: 7744ec86-0e08-4ff9-bffb-cb00f5617f7c
-        Conditions:
-        - UniqueId: 7c4e3fb7-a2c4-474b-bee1-12d29a2364b8
-          DataType: 1
-          ComparisonType: 1
-          ParameterName: isRunning
-          StringValue: 
-          FloatValue: 0
-          IntValue: 0
-          BoolValue: 0
-          GroupIndex: 0
-          NestingLevel: 0
-          ParentGroupId: 
-        ConnectionPoints: []

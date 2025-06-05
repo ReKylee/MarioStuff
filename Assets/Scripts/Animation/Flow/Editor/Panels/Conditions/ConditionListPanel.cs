@@ -4,8 +4,8 @@ using System.Linq;
 using Animation.Flow.Conditions;
 using Animation.Flow.Conditions.Core;
 using Animation.Flow.Conditions.ParameterConditions;
+using Animation.Flow.Core.Types;
 using Animation.Flow.Editor.Factories;
-using Animation.Flow.Editor.Panels.Parameters;
 using Animation.Flow.Parameters;
 using UnityEditor;
 using UnityEngine;
@@ -42,7 +42,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
             // Initialize view factory and drag handler
             _viewFactory = new ConditionViewFactory(this);
 
-            _dragHandler = new DragHandler<ConditionData>(Content, "ConditionData", "drag-handle");
+            _dragHandler = new DragHandler<FlowCondition>(Content, "FlowCondition", "drag-handle");
             _dragHandler.OnItemsReordered += OnConditionsReordered;
 
             // Load the condition list panel stylesheet
@@ -67,10 +67,10 @@ namespace Animation.Flow.Editor.Panels.Conditions
 
         private readonly Label _titleLabel;
         private readonly ConditionViewFactory _viewFactory;
-        private readonly DragHandler<ConditionData> _dragHandler;
-        private List<ConditionData> _conditions;
+        private readonly DragHandler<FlowCondition> _dragHandler;
+        private List<FlowCondition> _conditions;
         private readonly VisualElement _dropIndicator;
-        public event Action<List<ConditionData>> OnConditionsChanged;
+        public event Action<List<FlowCondition>> OnConditionsChanged;
 
         #endregion
 
@@ -102,7 +102,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
 
         #region Public Methods
 
-        public void Show(List<ConditionData> conditions, string title)
+        public void Show(List<FlowCondition> conditions, string title)
         {
             base.Show();
             _conditions = conditions;
@@ -131,15 +131,15 @@ namespace Animation.Flow.Editor.Panels.Conditions
             }
         }
 
-        public void RemoveCondition(ConditionData condition)
+        public void RemoveCondition(FlowCondition condition)
         {
-            if (condition.Type == ConditionType.Composite)
+            if (condition.ConditionType == ConditionType.Composite)
             {
-                var orphans = _conditions.Where(c => c.ParentGroupId == condition.UniqueId).ToList();
-                foreach (ConditionData orphan in orphans)
+                var orphans = _conditions.Where(c => c.parentGroupId == condition.uniqueId).ToList();
+                foreach (FlowCondition orphan in orphans)
                 {
-                    orphan.ParentGroupId = condition.ParentGroupId;
-                    orphan.NestingLevel = Math.Max(0, condition.NestingLevel);
+                    orphan.parentGroupId = condition.parentGroupId;
+                    orphan.nestingLevel = Math.Max(0, condition.nestingLevel);
                 }
             }
 
@@ -148,27 +148,27 @@ namespace Animation.Flow.Editor.Panels.Conditions
             RefreshConditionsList();
         }
 
-        public void UpdateCondition(ConditionData condition)
+        public void UpdateCondition(FlowCondition condition)
         {
             OnConditionsChanged?.Invoke(_conditions);
         }
 
-        public void MoveConditionToComposite(ConditionData condition, ConditionData composite)
+        public void MoveConditionToComposite(FlowCondition condition, FlowCondition composite)
         {
-            condition.ParentGroupId = composite.UniqueId;
-            condition.NestingLevel = composite.NestingLevel + 1;
+            condition.parentGroupId = composite.uniqueId;
+            condition.nestingLevel = composite.nestingLevel + 1;
             OnConditionsChanged?.Invoke(_conditions);
             RefreshConditionsList();
         }
 
-        public void MoveCompositeToComposite(ConditionData sourceComposite, ConditionData targetComposite)
+        public void MoveCompositeToComposite(FlowCondition sourceComposite, FlowCondition targetComposite)
         {
-            if (sourceComposite.Type != ConditionType.Composite ||
-                targetComposite.Type != ConditionType.Composite)
+            if (sourceComposite.ConditionType != ConditionType.Composite ||
+                targetComposite.ConditionType != ConditionType.Composite)
                 return;
 
             // Prevent circular references
-            if (sourceComposite.UniqueId == targetComposite.UniqueId ||
+            if (sourceComposite.uniqueId == targetComposite.uniqueId ||
                 IsConditionInsideComposite(targetComposite, sourceComposite))
                 return;
 
@@ -176,13 +176,13 @@ namespace Animation.Flow.Editor.Panels.Conditions
             var childConditions = GetAllChildrenOfComposite(sourceComposite);
 
             // Update the source composite's parent and nesting
-            sourceComposite.ParentGroupId = targetComposite.UniqueId;
-            sourceComposite.NestingLevel = targetComposite.NestingLevel + 1;
+            sourceComposite.parentGroupId = targetComposite.uniqueId;
+            sourceComposite.nestingLevel = targetComposite.nestingLevel + 1;
 
             // Update all children's nesting level (parent ID stays the same)
-            foreach (ConditionData child in childConditions)
+            foreach (FlowCondition child in childConditions)
             {
-                child.NestingLevel = sourceComposite.NestingLevel + 1;
+                child.nestingLevel = sourceComposite.nestingLevel + 1;
             }
 
             OnConditionsChanged?.Invoke(_conditions);
@@ -192,18 +192,18 @@ namespace Animation.Flow.Editor.Panels.Conditions
         /// <summary>
         ///     Get all conditions that are children of the specified composite
         /// </summary>
-        private List<ConditionData> GetAllChildrenOfComposite(ConditionData composite)
+        private List<FlowCondition> GetAllChildrenOfComposite(FlowCondition composite)
         {
-            var result = new List<ConditionData>();
+            var result = new List<FlowCondition>();
 
             // First, get direct children
-            var directChildren = _conditions.Where(c => c.ParentGroupId == composite.UniqueId).ToList();
+            var directChildren = _conditions.Where(c => c.parentGroupId == composite.uniqueId).ToList();
             result.AddRange(directChildren);
 
             // Then, recursively get children of any composite children
-            foreach (ConditionData child in directChildren)
+            foreach (FlowCondition child in directChildren)
             {
-                if (child.Type == ConditionType.Composite)
+                if (child.ConditionType == ConditionType.Composite)
                 {
                     result.AddRange(GetAllChildrenOfComposite(child));
                 }
@@ -215,13 +215,13 @@ namespace Animation.Flow.Editor.Panels.Conditions
         /// <summary>
         ///     Check if a condition is inside a specific composite (directly or nested)
         /// </summary>
-        private bool IsConditionInsideComposite(ConditionData condition, ConditionData composite)
+        private bool IsConditionInsideComposite(FlowCondition condition, FlowCondition composite)
         {
-            if (condition.ParentGroupId == composite.UniqueId)
+            if (condition.parentGroupId == composite.uniqueId)
                 return true;
 
             // If it's not a direct child, check if it's inside any of the composite's children
-            ConditionData conditionParent = _conditions.FirstOrDefault(c => c.UniqueId == condition.ParentGroupId);
+            FlowCondition conditionParent = _conditions.FirstOrDefault(c => c.uniqueId == condition.parentGroupId);
             if (conditionParent == null)
                 return false;
 
@@ -247,7 +247,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
         private void OnDragEnter(DragEnterEvent evt)
         {
             if (DragAndDrop.GetGenericData("FlowParameter") is FlowParameter ||
-                DragAndDrop.GetGenericData("ConditionData") is ConditionData)
+                DragAndDrop.GetGenericData("FlowCondition") is FlowCondition)
             {
                 DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
                 evt.StopPropagation();
@@ -281,7 +281,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
             // Handle parameter drop to create a new condition
             if (DragAndDrop.GetGenericData("FlowParameter") is FlowParameter parameter)
             {
-                ConditionData newCondition = CreateConditionFromParameter(parameter);
+                FlowCondition newCondition = CreateConditionFromParameter(parameter);
                 int dropIndex = GetDropIndex(evt.localMousePosition);
 
                 // Validate drop index to prevent out of range exceptions
@@ -292,16 +292,16 @@ namespace Animation.Flow.Editor.Panels.Conditions
                 RefreshConditionsList();
             }
             // Handle condition drop to create a composite condition
-            else if (DragAndDrop.GetGenericData("ConditionData") is ConditionData draggedCondition)
+            else if (DragAndDrop.GetGenericData("FlowCondition") is FlowCondition draggedCondition)
             {
                 // Find the drop target condition - this is for dropping onto a specific item
                 VisualElement targetElement = evt.target as VisualElement;
-                while (targetElement is { userData: not ConditionData })
+                while (targetElement is { userData: not FlowCondition })
                 {
                     targetElement = targetElement.parent;
                 }
 
-                if (targetElement?.userData is ConditionData targetCondition)
+                if (targetElement?.userData is FlowCondition targetCondition)
                 {
                     // Don't allow dropping onto itself
                     if (targetCondition == draggedCondition)
@@ -312,7 +312,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
                     }
 
                     // Check if the target is inside the dragged composite (prevent circular nesting)
-                    if (draggedCondition.Type == ConditionType.Composite &&
+                    if (draggedCondition.ConditionType == ConditionType.Composite &&
                         IsConditionInsideComposite(targetCondition, draggedCondition))
                     {
                         evt.StopPropagation();
@@ -321,10 +321,10 @@ namespace Animation.Flow.Editor.Panels.Conditions
                     }
 
                     // Check if the target is already a composite - if so, just move the dragged condition inside it
-                    if (targetCondition.Type == ConditionType.Composite)
+                    if (targetCondition.ConditionType == ConditionType.Composite)
                     {
                         // If we're dragging a composite, move all its children too
-                        if (draggedCondition.Type == ConditionType.Composite)
+                        if (draggedCondition.ConditionType == ConditionType.Composite)
                         {
                             MoveCompositeToComposite(draggedCondition, targetCondition);
                         }
@@ -334,10 +334,10 @@ namespace Animation.Flow.Editor.Panels.Conditions
                         }
                     }
                     // If we're dragging a composite onto a condition, add the condition to the composite
-                    else if (draggedCondition.Type == ConditionType.Composite)
+                    else if (draggedCondition.ConditionType == ConditionType.Composite)
                     {
                         // Check for circular references - don't allow a composite to be added to itself
-                        if (draggedCondition.ParentGroupId == targetCondition.UniqueId ||
+                        if (draggedCondition.parentGroupId == targetCondition.uniqueId ||
                             IsConditionInsideComposite(draggedCondition, targetCondition))
                         {
                             evt.StopPropagation();
@@ -346,8 +346,8 @@ namespace Animation.Flow.Editor.Panels.Conditions
                         }
 
                         // Move the condition into the dragged composite
-                        targetCondition.ParentGroupId = draggedCondition.UniqueId;
-                        targetCondition.NestingLevel = draggedCondition.NestingLevel + 1;
+                        targetCondition.parentGroupId = draggedCondition.uniqueId;
+                        targetCondition.nestingLevel = draggedCondition.nestingLevel + 1;
 
                         OnConditionsChanged?.Invoke(_conditions);
                         RefreshConditionsList();
@@ -355,11 +355,11 @@ namespace Animation.Flow.Editor.Panels.Conditions
                     else
                     {
                         // Create a new composite condition to hold both
-                        ConditionData composite = CreateCompositeCondition();
+                        FlowCondition composite = CreateCompositeCondition();
 
                         // Inherit parent and nesting from the target condition
-                        composite.ParentGroupId = targetCondition.ParentGroupId;
-                        composite.NestingLevel = targetCondition.NestingLevel;
+                        composite.parentGroupId = targetCondition.parentGroupId;
+                        composite.nestingLevel = targetCondition.nestingLevel;
 
                         // Insert the composite in place of the target
                         int targetIndex = _conditions.IndexOf(targetCondition);
@@ -368,11 +368,11 @@ namespace Animation.Flow.Editor.Panels.Conditions
                             _conditions.Insert(targetIndex, composite);
 
                             // Move target condition into the composite
-                            targetCondition.ParentGroupId = composite.UniqueId;
-                            targetCondition.NestingLevel = composite.NestingLevel + 1;
+                            targetCondition.parentGroupId = composite.uniqueId;
+                            targetCondition.nestingLevel = composite.nestingLevel + 1;
 
                             // If dragging a composite, move it and all its children
-                            if (draggedCondition.Type == ConditionType.Composite)
+                            if (draggedCondition.ConditionType == ConditionType.Composite)
                             {
                                 if (_conditions.Remove(draggedCondition)) // If we're moving from the same list
                                 {
@@ -380,14 +380,14 @@ namespace Animation.Flow.Editor.Panels.Conditions
                                     var childConditions = GetAllChildrenOfComposite(draggedCondition);
 
                                     // Remove all children from their current location
-                                    foreach (ConditionData child in childConditions)
+                                    foreach (FlowCondition child in childConditions)
                                     {
                                         _conditions.Remove(child);
                                     }
 
                                     // Insert the composite at the right position
-                                    draggedCondition.ParentGroupId = composite.UniqueId;
-                                    draggedCondition.NestingLevel = composite.NestingLevel + 1;
+                                    draggedCondition.parentGroupId = composite.uniqueId;
+                                    draggedCondition.nestingLevel = composite.nestingLevel + 1;
 
                                     // Re-evaluate target index after removal
                                     targetIndex = _conditions.IndexOf(composite);
@@ -397,10 +397,10 @@ namespace Animation.Flow.Editor.Panels.Conditions
                                         _conditions.Add(draggedCondition); // Fallback if composite not found
 
                                     // Reinsert all children with updated parent references
-                                    foreach (ConditionData child in childConditions)
+                                    foreach (FlowCondition child in childConditions)
                                     {
                                         // Don't change the parent ID, as it still points to the dragged composite
-                                        child.NestingLevel = draggedCondition.NestingLevel + 1;
+                                        child.nestingLevel = draggedCondition.nestingLevel + 1;
                                         _conditions.Add(
                                             child); // Add at the end, order will be fixed in RefreshConditionsList
                                     }
@@ -408,8 +408,8 @@ namespace Animation.Flow.Editor.Panels.Conditions
                             }
                             else if (_conditions.Remove(draggedCondition)) // If we're moving a regular condition
                             {
-                                draggedCondition.ParentGroupId = composite.UniqueId;
-                                draggedCondition.NestingLevel = composite.NestingLevel + 1;
+                                draggedCondition.parentGroupId = composite.uniqueId;
+                                draggedCondition.nestingLevel = composite.nestingLevel + 1;
 
                                 // Re-evaluate target index after removal
                                 targetIndex = _conditions.IndexOf(composite);
@@ -430,7 +430,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
                     int dropIndex = GetDropIndex(evt.localMousePosition);
 
                     // If dragging a composite, handle it and all its children
-                    if (draggedCondition.Type == ConditionType.Composite &&
+                    if (draggedCondition.ConditionType == ConditionType.Composite &&
                         _conditions.Contains(draggedCondition))
                     {
                         // Get all children before removing them
@@ -438,23 +438,23 @@ namespace Animation.Flow.Editor.Panels.Conditions
 
                         // Remove the composite and all its children
                         _conditions.Remove(draggedCondition);
-                        foreach (ConditionData child in childConditions)
+                        foreach (FlowCondition child in childConditions)
                         {
                             _conditions.Remove(child);
                         }
 
                         // Reset parent for the composite when dropping into empty space
-                        draggedCondition.ParentGroupId = string.Empty;
-                        draggedCondition.NestingLevel = 0;
+                        draggedCondition.parentGroupId = string.Empty;
+                        draggedCondition.nestingLevel = 0;
 
                         // Revalidate drop index after removal
                         dropIndex = Mathf.Clamp(dropIndex, 0, _conditions.Count);
                         _conditions.Insert(dropIndex, draggedCondition);
 
                         // Reinsert all children (their parent ID still points to the composite)
-                        foreach (ConditionData child in childConditions)
+                        foreach (FlowCondition child in childConditions)
                         {
-                            child.NestingLevel = draggedCondition.NestingLevel + 1;
+                            child.nestingLevel = draggedCondition.nestingLevel + 1;
                             _conditions.Add(child); // Add at the end, order will be fixed in RefreshConditionsList
                         }
 
@@ -464,8 +464,8 @@ namespace Animation.Flow.Editor.Panels.Conditions
                     else if (_conditions.Remove(draggedCondition)) // For regular conditions
                     {
                         // Reset parent group id when dropping into empty space
-                        draggedCondition.ParentGroupId = string.Empty;
-                        draggedCondition.NestingLevel = 0;
+                        draggedCondition.parentGroupId = string.Empty;
+                        draggedCondition.nestingLevel = 0;
 
                         // Revalidate drop index after removal
                         dropIndex = Mathf.Clamp(dropIndex, 0, _conditions.Count);
@@ -563,29 +563,69 @@ namespace Animation.Flow.Editor.Panels.Conditions
 
         #region Condition Management
 
-        private ConditionData CreateConditionFromParameter(FlowParameter parameter)
+        private FlowCondition CreateConditionFromParameter(FlowParameter parameter)
         {
-            // Create a base condition with a unique ID
-            var condition = new ConditionData
+            // Create appropriate condition type based on parameter type
+            if (parameter.ParameterType == typeof(bool))
             {
-                UniqueId = Guid.NewGuid().ToString(),
-                Type = ConditionType.ParameterComparison,
-                ParameterName = parameter.Name,
-                IsNegated = false
-            };
+                return new BoolCondition(parameter.Name)
+                {
+                    uniqueId = Guid.NewGuid().ToString(),
+                    ParameterName = parameter.Name,
+                    BoolValue = true,
+                    nestingLevel = 0,
+                    parentGroupId = string.Empty
+                };
+            }
 
-            return condition;
+            if (parameter.ParameterType == typeof(int))
+            {
+                return new IntCondition(parameter.Name, 0)
+                {
+                    uniqueId = Guid.NewGuid().ToString(),
+                    ParameterName = parameter.Name,
+                    IntValue = 0,
+                    nestingLevel = 0,
+                    parentGroupId = string.Empty
+                };
+            }
+
+            if (parameter.ParameterType == typeof(float))
+            {
+                return new FloatCondition(parameter.Name, 0f)
+                {
+                    uniqueId = Guid.NewGuid().ToString(),
+                    ParameterName = parameter.Name,
+                    FloatValue = 0f,
+                    nestingLevel = 0,
+                    parentGroupId = string.Empty
+                };
+            }
+
+            if (parameter.ParameterType == typeof(string))
+            {
+                return new StringCondition(parameter.Name, "")
+                {
+                    uniqueId = Guid.NewGuid().ToString(),
+                    ParameterName = parameter.Name,
+                    StringValue = "",
+                    nestingLevel = 0,
+                    parentGroupId = string.Empty
+                };
+            }
+
+            Debug.LogWarning($"Unsupported parameter type: {parameter.ParameterType}");
+            return null;
         }
 
-     
+
         /// <summary>
         ///     Creates a new composite condition (AND/OR group)
         /// </summary>
-        private ConditionData CreateCompositeCondition() => new()
+        private FlowCondition CreateCompositeCondition() => new CompositeCondition
         {
-            UniqueId = Guid.NewGuid().ToString(),
-            Type = ConditionType.Composite,
-            StringValue = nameof(CompositeType.And)
+            uniqueId = Guid.NewGuid().ToString(),
+            StringValue = nameof(CompositeType.All)
         };
 
         private void RefreshConditionsList()
@@ -600,19 +640,19 @@ namespace Animation.Flow.Editor.Panels.Conditions
                 return;
             }
 
-            RenderConditions(_conditions.Where(c => string.IsNullOrEmpty(c.ParentGroupId)), Content);
+            RenderConditions(_conditions.Where(c => string.IsNullOrEmpty(c.parentGroupId)), Content);
         }
 
-        private void RenderConditions(IEnumerable<ConditionData> conditions, VisualElement parentElement)
+        private void RenderConditions(IEnumerable<FlowCondition> conditions, VisualElement parentElement)
         {
-            foreach (ConditionData condition in conditions)
+            foreach (FlowCondition condition in conditions)
             {
                 VisualElement view = _viewFactory.CreateView(condition);
                 parentElement.Add(view);
 
-                if (condition.Type == ConditionType.Composite && view is CompositeConditionView compositeView)
+                if (condition.ConditionType == ConditionType.Composite && view is CompositeConditionView compositeView)
                 {
-                    var childConditions = _conditions.Where(c => c.ParentGroupId == condition.UniqueId);
+                    var childConditions = _conditions.Where(c => c.parentGroupId == condition.uniqueId);
                     RenderConditions(childConditions, compositeView.ChildContainer);
                 }
             }

@@ -1,7 +1,6 @@
 ﻿using System;
 using Animation.Flow.Conditions.Core;
 using Animation.Flow.Interfaces;
-using UnityEngine;
 
 namespace Animation.Flow.Conditions.SpecialConditions
 {
@@ -11,11 +10,15 @@ namespace Animation.Flow.Conditions.SpecialConditions
     [Serializable]
     public class AnimationCompleteCondition : FlowCondition
     {
-        public AnimationCompleteCondition() 
-            : base("Animation Complete") { }
+        public AnimationCompleteCondition()
+            : base("Animation Complete")
+        {
+        }
 
         public AnimationCompleteCondition(bool isNegated = false)
-            : base("Animation Complete", isNegated) { }
+            : base("Animation Complete", isNegated)
+        {
+        }
 
         /// <summary>
         ///     Gets the condition type
@@ -36,9 +39,6 @@ namespace Animation.Flow.Conditions.SpecialConditions
         /// <summary>
         ///     Creates a clone of this condition
         /// </summary>
-        public override FlowCondition Clone()
-        {
-            return new AnimationCompleteCondition(_isNegated);
-        }
+        public override FlowCondition Clone() => new AnimationCompleteCondition(isNegated);
     }
 }

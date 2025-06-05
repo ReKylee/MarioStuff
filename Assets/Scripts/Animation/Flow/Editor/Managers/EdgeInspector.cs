@@ -22,7 +22,7 @@ namespace Animation.Flow.Editor.Managers
         // Private properties
         private AnimationFlowEdge CurrentEdge { get; set; }
 
-        private List<ConditionData> Conditions { get; set; }
+        private List<FlowCondition> Conditions { get; set; }
 
         private string CurrentEdgeId { get; set; }
 
@@ -59,14 +59,14 @@ namespace Animation.Flow.Editor.Managers
 
             Conditions = !string.IsNullOrEmpty(CurrentEdgeId)
                 ? EdgeConditionManager.Instance.GetConditions(CurrentEdgeId)
-                : new List<ConditionData>();
+                : new List<FlowCondition>();
 
             // Use the panel directly if it exists in the AnimationFlowGraphView
             _editorPanel?.Show(edge);
         }
 
         // Save conditions for the current edge
-        public void SaveConditions(List<ConditionData> conditions)
+        public void SaveConditions(List<FlowCondition> conditions)
         {
             if (CurrentEdge == null || string.IsNullOrEmpty(CurrentEdgeId))
                 return;

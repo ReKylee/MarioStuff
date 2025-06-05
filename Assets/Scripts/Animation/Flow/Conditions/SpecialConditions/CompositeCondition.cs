@@ -1,19 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using Animation.Flow.Conditions.Core;
+using Animation.Flow.Core.Types;
 using Animation.Flow.Interfaces;
 using UnityEngine;
 
 namespace Animation.Flow.Conditions
 {
-    /// <summary>
-    ///     Types of composite conditions
-    /// </summary>
-    public enum CompositeType
-    {
-        And,
-        Or
-    }
 
     /// <summary>
     ///     Condition that combines multiple conditions with AND or OR logic
@@ -21,30 +14,24 @@ namespace Animation.Flow.Conditions
     [Serializable]
     public class CompositeCondition : FlowCondition
     {
-        [SerializeField] private CompositeType _compositeType = CompositeType.And;
+        [SerializeField] private CompositeType compositeType = CompositeType.All;
         [SerializeField] private List<FlowCondition> _conditions = new();
 
-        public CompositeCondition() : base("Composite Condition") { }
+        public CompositeCondition() : base("Composite Condition")
+        {
+        }
 
         public CompositeCondition(CompositeType compositeType, bool isNegated = false)
-            : base(compositeType == CompositeType.And ? "All conditions" : "Any condition", isNegated)
+            : base(compositeType == CompositeType.All ? "All Conditions" : "Any Condition", isNegated)
         {
-            _compositeType = compositeType;
+            this.compositeType = compositeType;
         }
 
-        public CompositeCondition(CompositeType compositeType, IEnumerable<FlowCondition> conditions, bool isNegated = false)
-            : this(compositeType, isNegated)
-        {
-            if (conditions != null)
-            {
-                _conditions.AddRange(conditions);
-            }
-        }
 
         /// <summary>
         ///     Gets the composite type (AND/OR)
         /// </summary>
-        public CompositeType CompositeType => _compositeType;
+        public CompositeType CompositeType => compositeType;
 
         /// <summary>
         ///     Gets the conditions in this composite
@@ -59,27 +46,22 @@ namespace Animation.Flow.Conditions
         /// <summary>
         ///     Adds a condition to this composite
         /// </summary>
-        public void AddCondition(ICondition condition)
+        public void AddCondition(FlowCondition condition)
         {
-            if (condition == null) return;
-
-            if (condition is FlowCondition flowCondition)
-            {
-                _conditions.Add(flowCondition);
-            }
-            else
-            {
-                Debug.LogWarning("Cannot add non-FlowCondition to CompositeCondition");
-            }
+            if (condition is null) return;
+            _conditions.Add(condition);
         }
+        public void AddConditions(List<FlowCondition> condition)
+        {
+            if (condition is null) return;
+            _conditions.AddRange(condition);
+        }
+
 
         /// <summary>
         ///     Removes a condition from this composite
         /// </summary>
-        public bool RemoveCondition(FlowCondition condition)
-        {
-            return _conditions.Remove(condition);
-        }
+        public bool RemoveCondition(FlowCondition condition) => _conditions.Remove(condition);
 
         /// <summary>
         ///     Clears all conditions from this composite
@@ -97,13 +79,13 @@ namespace Animation.Flow.Conditions
             if (_conditions.Count == 0)
                 return true; // Empty composite is always true
 
-            bool result = _compositeType == CompositeType.And;
+            bool result = compositeType == CompositeType.All;
 
-            foreach (var condition in _conditions)
+            foreach (FlowCondition condition in _conditions)
             {
                 bool conditionResult = condition.Evaluate(context);
 
-                if (_compositeType == CompositeType.And)
+                if (compositeType == CompositeType.All)
                 {
                     // AND logic - one false means all false
                     if (!conditionResult)
@@ -126,9 +108,9 @@ namespace Animation.Flow.Conditions
         /// </summary>
         public override FlowCondition Clone()
         {
-            var clone = new CompositeCondition(_compositeType, _isNegated);
+            CompositeCondition clone = new(compositeType, isNegated);
 
-            foreach (var condition in _conditions)
+            foreach (FlowCondition condition in _conditions)
             {
                 clone.AddCondition(condition.Clone());
             }

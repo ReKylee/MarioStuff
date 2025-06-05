@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using Animation.Flow.Parameters;
-using UnityEngine;
-
 namespace Animation.Flow.Interfaces
 {
     /// <summary>
@@ -15,10 +10,6 @@ namespace Animation.Flow.Interfaces
         /// </summary>
         IAnimator Animator { get; }
 
-        /// <summary>
-        ///     Gets the entity this context is for
-        /// </summary>
-        GameObject Entity { get; }
 
         /// <summary>
         ///     Check if a parameter exists in this context
@@ -34,7 +25,5 @@ namespace Animation.Flow.Interfaces
         ///     Set a parameter value in this context
         /// </summary>
         void SetParameter<T>(string parameterName, T value);
-
-    
     }
 }

@@ -16,12 +16,15 @@ namespace Animation.Flow.Conditions.ParameterConditions
         [SerializeField] private ComparisonType _comparisonType = ComparisonType.Equal;
         [SerializeField] private bool _ignoreCase = true;
 
-        public StringCondition() { }
+        public StringCondition()
+        {
+        }
 
-        public StringCondition(string parameterName, string compareValue, 
-            ComparisonType comparisonType = ComparisonType.Equal, 
+        public StringCondition(string parameterName, string compareValue,
+            ComparisonType comparisonType = ComparisonType.Equal,
             bool ignoreCase = true, bool isNegated = false)
-            : base(parameterName, $"Parameter '{parameterName}' {GetComparisonText(comparisonType)} '{compareValue}'", isNegated)
+            : base(parameterName, $"Parameter '{parameterName}' {GetComparisonText(comparisonType)} '{compareValue}'",
+                isNegated)
         {
             _compareValue = compareValue;
             _comparisonType = comparisonType;
@@ -51,12 +54,11 @@ namespace Animation.Flow.Conditions.ParameterConditions
             if (!ParameterExists(context))
                 return false;
 
-            string value = context.GetParameter<string>(_parameterName);
+            string value = context.GetParameter<string>(parameterName);
             if (value == null) value = string.Empty;
             if (_compareValue == null) _compareValue = string.Empty;
 
-            StringComparison comparison = _ignoreCase ? 
-                StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+            StringComparison comparison = _ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
             return _comparisonType switch
             {
@@ -72,10 +74,8 @@ namespace Animation.Flow.Conditions.ParameterConditions
         /// <summary>
         ///     Creates a clone of this condition
         /// </summary>
-        public override FlowCondition Clone()
-        {
-            return new StringCondition(_parameterName, _compareValue, _comparisonType, _ignoreCase, _isNegated);
-        }
+        public override FlowCondition Clone() =>
+            new StringCondition(parameterName, _compareValue, _comparisonType, _ignoreCase, isNegated);
 
         /// <summary>
         ///     Gets a string representation of the comparison type

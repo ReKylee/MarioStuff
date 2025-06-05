@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using Animation.Flow.Conditions;
 using Animation.Flow.Conditions.Core;
+using Animation.Flow.Core.Types;
+using Animation.Flow.Interfaces;
 using Animation.Flow.States;
 using UnityEngine;
 
@@ -12,16 +15,15 @@ namespace Animation.Flow.Core
     [Serializable]
     public class FlowTransition
     {
-        [Tooltip("ID of the source state")] public string FromStateId;
+        [Tooltip("ID of the source state")] [SerializeField]
+        public string fromStateId;
 
-        [Tooltip("ID of the destination state")]
-        public string ToStateId;
+        [Tooltip("ID of the destination state")] [SerializeField]
+        public string toStateId;
 
-        [Tooltip("Conditions that must be met for this transition")]
-        public List<ConditionData> Conditions = new();
+        [Tooltip("Conditions that must be met for this transition")] [SerializeReference]
+        public CompositeCondition rootCondition = new(CompositeType.All);
 
-        [Tooltip("Editor position of the transition connection")]
-        public Vector2[] ConnectionPoints;
 
         /// <summary>
         ///     Create an empty transition data object
@@ -35,28 +37,40 @@ namespace Animation.Flow.Core
         /// </summary>
         public FlowTransition(string fromStateId, string toStateId)
         {
-            FromStateId = fromStateId;
-            ToStateId = toStateId;
+            this.fromStateId = fromStateId;
+            this.toStateId = toStateId;
         }
 
         /// <summary>
         ///     Create a fully qualified transition data object
         /// </summary>
-        public FlowTransition(string fromStateId, AnimationStateType fromStateType,
-            string toStateId, AnimationStateType toStateType)
+        public FlowTransition(string fromStateId, FlowStateType fromStateType,
+            string toStateId, FlowStateType toStateType)
         {
-            FromStateId = fromStateId;
-            ToStateId = toStateId;
+            this.fromStateId = fromStateId;
+            this.toStateId = toStateId;
         }
-
+        public bool CanTransition(IAnimationContext context) => rootCondition.Evaluate(context);
         /// <summary>
         ///     Add a condition to this transition
         /// </summary>
-        public void AddCondition(ConditionData condition)
+        public void AddCondition(FlowCondition condition)
         {
             if (condition != null)
             {
-                Conditions.Add(condition);
+                rootCondition.AddCondition(condition);
+            }
+        }
+        public void AddConditions(List<FlowCondition> conditions)
+        {
+            if (conditions == null || conditions.Count == 0) return;
+            rootCondition.AddConditions(conditions);
+        }
+        public void RemoveCondition(FlowCondition condition)
+        {
+            if (condition != null)
+            {
+                rootCondition.RemoveCondition(condition);
             }
         }
 
@@ -67,28 +81,34 @@ namespace Animation.Flow.Core
         {
             FlowTransition clone = new()
             {
-                FromStateId = FromStateId,
-                ToStateId = ToStateId
+                fromStateId = fromStateId,
+                toStateId = toStateId
             };
 
-            // Clone conditions
-            if (Conditions is { Count: > 0 })
-            {
-                clone.Conditions = new List<ConditionData>();
-                foreach (ConditionData condition in Conditions)
-                {
-                    clone.Conditions.Add(condition.Clone());
-                }
-            }
-
-            // Clone connection points if they exist
-            if (ConnectionPoints is { Length: > 0 })
-            {
-                clone.ConnectionPoints = new Vector2[ConnectionPoints.Length];
-                Array.Copy(ConnectionPoints, clone.ConnectionPoints, ConnectionPoints.Length);
-            }
-
+            clone.rootCondition = rootCondition.Clone() as CompositeCondition;
             return clone;
+        }
+
+        public void Validate()
+        {
+            if (string.IsNullOrEmpty(fromStateId))
+            {
+                Debug.LogError("FlowTransition: fromStateId cannot be null or empty");
+            }
+
+            if (string.IsNullOrEmpty(toStateId))
+            {
+                Debug.LogError("FlowTransition: toStateId cannot be null or empty");
+            }
+
+            if (rootCondition == null)
+            {
+                Debug.LogError("FlowTransition: rootCondition cannot be null");
+            }
+            else
+            {
+                rootCondition.Validate();
+            }
         }
     }
 }

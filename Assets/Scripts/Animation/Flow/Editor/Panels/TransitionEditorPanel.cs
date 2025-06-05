@@ -20,10 +20,11 @@ namespace Animation.Flow.Editor.Panels
 
         #region Constructor
 
-        public TransitionEditorPanel(VisualElement parentContainer, IAnimator animator)
+        public TransitionEditorPanel(VisualElement parentContainer, IAnimator animator, AnimationFlowAsset flowAsset)
         {
             _parentContainer = parentContainer;
             _animator = animator;
+            _flowAsset = flowAsset;
 
             // Load and apply stylesheets from Editor Resources
             StyleSheet styleSheet = Resources.Load<StyleSheet>("Stylesheets/TransitionEditorPanel");
@@ -32,8 +33,6 @@ namespace Animation.Flow.Editor.Panels
             {
                 styleSheets.Add(styleSheet);
             }
-
-           
 
             Initialize();
         }
@@ -44,11 +43,11 @@ namespace Animation.Flow.Editor.Panels
 
         private void Initialize()
         {
-            // Create parameter panel (left side)
-            _parameterPanel = new ParameterPanel(_parentContainer);
+            // Create parameter panel with parameters from flow asset
+            var parameters = GetParametersFromAsset();
+            _parameterPanel = new ParameterPanel(_parentContainer, parameters);
             _parameterPanel.OnParameterDragStart += OnParameterDragStart;
             _parentContainer.Add(_parameterPanel);
-            // Parameter panel should always be visible
 
             // Create condition panel (right side)
             _conditionPanel = new ConditionListPanel(_parentContainer);
@@ -65,11 +64,41 @@ namespace Animation.Flow.Editor.Panels
         #region Fields
 
         private readonly VisualElement _parentContainer;
+        private readonly AnimationFlowAsset _flowAsset;
         private ParameterPanel _parameterPanel;
         private ConditionListPanel _conditionPanel;
         private AnimationFlowEdge _currentEdge;
-        private IAnimator _animator;
+        private readonly IAnimator _animator;
         private string _edgeId;
+
+        #endregion
+
+        #region Asset Data Retrieval
+
+        private List<FlowParameter> GetParametersFromAsset()
+        {
+            if (_flowAsset == null)
+            {
+                Debug.LogWarning("No flow asset available for TransitionEditorPanel");
+                return new List<FlowParameter>();
+            }
+
+            var assetParameters = _flowAsset.GetAllParameters();
+            return new List<FlowParameter>(assetParameters);
+        }
+
+        private List<FlowState> GetStatesFromAsset()
+        {
+            if (_flowAsset == null)
+            {
+                Debug.LogWarning("No flow asset available for TransitionEditorPanel");
+                return new List<FlowState>();
+            }
+
+            return new List<FlowState>(_flowAsset.states);
+        }
+
+        private AnimationContext GetContextFromAsset() => _flowAsset?.GetContext();
 
         #endregion
 
@@ -98,14 +127,15 @@ namespace Animation.Flow.Editor.Panels
             var conditions = EdgeConditionManager.Instance.GetConditions(_edgeId);
 
             // Create deep copies of conditions to avoid reference issues
-            var conditionCopies = new List<ConditionData>();
-            foreach (var condition in conditions)
+            var conditionCopies = new List<FlowCondition>();
+            foreach (FlowCondition condition in conditions)
             {
                 if (condition != null)
                 {
                     conditionCopies.Add(condition.Clone());
                 }
             }
+
 
             // Only show condition panel as parameter panel should already be visible
             _conditionPanel.Show(conditionCopies, GetTransitionTitle());
@@ -116,6 +146,7 @@ namespace Animation.Flow.Editor.Panels
             _conditionPanel.Hide();
             // Parameter panel should always remain visible
         }
+
 
         // Called when the panel is about to be destroyed
         public void Cleanup()
@@ -134,7 +165,7 @@ namespace Animation.Flow.Editor.Panels
             _edgeId = null;
         }
 
-                    public bool IsBeingInteracted() => _conditionPanel.IsBeingInteracted();
+        public bool IsBeingInteracted() => _conditionPanel.IsBeingInteracted();
 
         #endregion
 
@@ -160,7 +191,7 @@ namespace Animation.Flow.Editor.Panels
             }
         }
 
-        private void OnConditionsChanged(List<ConditionData> conditions)
+        private void OnConditionsChanged(List<FlowCondition> conditions)
         {
             if (string.IsNullOrEmpty(_edgeId) || _currentEdge == null)
             {
@@ -168,105 +199,53 @@ namespace Animation.Flow.Editor.Panels
                 return;
             }
 
-            // Store a copy of the conditions in the manager
+            // Store conditions in the manager
             EdgeConditionManager.Instance.SetConditions(_edgeId, conditions);
 
-            // Verify nodes are valid animation state nodes
-            if (_currentEdge.output?.node is not AnimationStateNode sourceNode || 
+            // Update the edge conditions
+            _currentEdge.Conditions = conditions;
+
+            // Update the flow asset if possible
+            UpdateAssetTransitions(conditions);
+
+            // Mark the editor window as dirty to ensure changes are saved
+            EditorUtility.SetDirty(EditorWindow.GetWindow<AnimationFlowEditorWindow>());
+        }
+
+        private void UpdateAssetTransitions(List<FlowCondition> conditions)
+        {
+            if (_flowAsset == null || _currentEdge?.output?.node is not AnimationStateNode sourceNode ||
                 _currentEdge.input?.node is not AnimationStateNode targetNode)
             {
-                Debug.LogWarning("Cannot update conditions: Invalid animation state nodes");
                 return;
             }
 
-            // Check if we have a valid animator reference
-            if (_animator == null)
+            // Find the source state in the asset
+            FlowState sourceState = FindStateInAsset(sourceNode.ID);
+            if (sourceState == null)
             {
-                Debug.LogWarning("Cannot update conditions: No animator reference available");
-                // Still update the edge, but can't update the animation system
-                _currentEdge.Conditions = conditions;
+                Debug.LogWarning($"Cannot find source state {sourceNode.ID} in flow asset");
                 return;
             }
 
-            _currentEdge.Conditions = conditions;
+            // Update transitions in the asset would require changes to FlowState structure
+            // For now, just log the update
+            Debug.Log($"Updated transition conditions from {sourceNode.AnimationName} to {targetNode.AnimationName}");
+        }
 
-            // Find the source and target states in the registry
-            var source = StateRegistry.GetState(sourceNode.AnimationName);
-            var target = StateRegistry.GetState(targetNode.AnimationName);
+        private FlowState FindStateInAsset(string stateId)
+        {
+            if (_flowAsset == null) return null;
 
-            if (source == null || target == null)
+            foreach (FlowState state in _flowAsset.states)
             {
-                Debug.LogWarning($"Cannot update conditions: States not found in registry - {sourceNode.AnimationName} or {targetNode.AnimationName}");
-                _currentEdge.Conditions = conditions;
-                return;
-            }
-
-            // Get the transition between these states
-            var transition = StateRegistry.GetTransition(source, target);
-            if (transition == null)
-            {
-                Debug.LogWarning($"Cannot update conditions: No transition found from {sourceNode.AnimationName} to {targetNode.AnimationName}");
-                _currentEdge.Conditions = conditions;
-                return;
-            }
-
-            // Apply the conditions to the transition
-            transition.Conditions.Clear();
-            foreach (var condition in conditions)
-            {
-                if (condition != null)
+                if (state.Id == stateId)
                 {
-                    transition.AddCondition(condition.Clone());
+                    return state;
                 }
             }
 
-            // Update the conditions on the edge
-            _currentEdge.Conditions = conditions;
-
-            // Notify that transition has been updated - method name depends on the actual API
-            StateRegistry.NotifyTransitionModified(transition);
-
-            // Mark the editor window as dirty to ensure changes are saved
-            EditorUtility.SetDirty(EditorWindow.GetWindow<AnimationFlowEditorWindow>());
-            {
-                Debug.LogWarning($"Cannot update conditions: Transition not found from {sourceNode.AnimationName} to {targetNode.AnimationName}");
-                return;
-            }
-
-            // Clear existing conditions and add the new ones
-            transition.Conditions.Clear();
-
-            // Add each condition as a clone to avoid reference issues
-            foreach (var condition in conditions)
-            {
-                if (condition != null)
-                {
-                    transition.AddCondition(condition.Clone());
-                }
-            }
-
-            // Also update the conditions directly on the edge
-            _currentEdge.Conditions = conditions;
-
-            // Notify the system that the transition has been modified
-            activeContext.OnTransitionModified(transition);
-
-            // Mark the editor window as dirty to ensure changes are saved
-            EditorUtility.SetDirty(EditorWindow.GetWindow<AnimationFlowEditorWindow>());
-
-                // Apply conditions to the transition in the active context
-                activeContext.SetTransitionConditions(
-                    sourceNode.AnimationName,
-                    targetNode.AnimationName,
-                    conditionCopies
-                );
-            }
-
-            // Also update the conditions directly on the edge
-            _currentEdge.Conditions = conditions;
-
-            // Mark the editor window as dirty to ensure changes are saved
-            EditorUtility.SetDirty(EditorWindow.GetWindow<AnimationFlowEditorWindow>());
+            return null;
         }
 
         #endregion

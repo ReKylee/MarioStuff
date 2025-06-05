@@ -13,7 +13,9 @@ namespace Animation.Flow.Conditions.ParameterConditions
     {
         [SerializeField] private bool _expectedValue = true;
 
-        public BoolCondition() { }
+        public BoolCondition()
+        {
+        }
 
         public BoolCondition(string parameterName, bool expectedValue = true, bool isNegated = false)
             : base(parameterName, $"Parameter '{parameterName}' == {expectedValue}", isNegated)
@@ -34,16 +36,13 @@ namespace Animation.Flow.Conditions.ParameterConditions
             if (!ParameterExists(context))
                 return false;
 
-            bool value = context.GetParameter<bool>(_parameterName);
+            bool value = context.GetParameter<bool>(parameterName);
             return value == _expectedValue;
         }
 
         /// <summary>
         ///     Creates a clone of this condition
         /// </summary>
-        public override FlowCondition Clone()
-        {
-            return new BoolCondition(_parameterName, _expectedValue, _isNegated);
-        }
+        public override FlowCondition Clone() => new BoolCondition(parameterName, _expectedValue, isNegated);
     }
 }

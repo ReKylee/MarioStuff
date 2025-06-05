@@ -9,15 +9,17 @@ namespace Animation.Flow.Parameters
     [Serializable]
     public abstract class FlowParameter
     {
-        [SerializeField] private string _name;
-        [SerializeField] private string _description;
+        [SerializeField] private string name;
+        [SerializeField] private string description;
 
-        protected FlowParameter() { }
+        protected FlowParameter()
+        {
+        }
 
         protected FlowParameter(string name, string description = "")
         {
-            _name = name;
-            _description = description;
+            this.name = name;
+            this.description = description;
         }
 
         /// <summary>
@@ -25,14 +27,14 @@ namespace Animation.Flow.Parameters
         /// </summary>
         public string Name
         {
-            get => _name;
-            set => _name = value;
+            get => name;
+            set => name = value;
         }
 
         /// <summary>
         ///     Gets the description of the parameter
         /// </summary>
-        public string Description => _description;
+        public string Description => description;
 
         /// <summary>
         ///     Gets the parameter type
@@ -52,9 +54,6 @@ namespace Animation.Flow.Parameters
         /// <summary>
         ///     Validates parameter settings
         /// </summary>
-        public virtual bool Validate()
-        {
-            return !string.IsNullOrEmpty(_name);
-        }
+        public virtual bool Validate() => !string.IsNullOrEmpty(name);
     }
 }

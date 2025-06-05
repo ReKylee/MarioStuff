@@ -6,7 +6,7 @@ namespace Animation.Flow.States
     /// <summary>
     ///     State that plays an animation in a loop
     /// </summary>
-    public class LoopingState : AnimationStateBase
+    public class LoopingState : FlowState
     {
         /// <summary>
         ///     Create a new looping animation state

@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Animation.Flow.Editor.Managers;
 using Animation.Flow.Interfaces;
-using Animation.Flow.Parameters;
 using UnityEngine;
 #if UNITY_EDITOR
 #endif
@@ -89,6 +87,42 @@ namespace Animation.Flow.Core
             // This is a good place to reset any static data
         }
 
+        #region Parameter Management
+
+        /// <summary>
+        ///     Set the animation context
+        /// </summary>
+        public void SetAnimationContext(AnimationContext context)
+        {
+            if (context == null) return;
+
+            // Keep the existing animator and entity
+            if (_animator != null)
+            {
+                context.SetAnimator(_animator);
+            }
+
+
+            _animationContext = context;
+        }
+
+        #endregion
+
+        public void SetParameter(string paramName, object value)
+        {
+            if (_animationContext is null)
+            {
+                Debug.LogWarning(
+                    $"[{GetType().Name}] Animation context is not set. Cannot set parameter '{paramName}'.",
+                    this);
+
+                return;
+            }
+
+            _animationContext.SetParameter(paramName, value);
+        }
+
+
         #region Unity Lifecycle
 
         protected virtual void Awake()
@@ -136,9 +170,6 @@ namespace Animation.Flow.Core
             if (_currentState is null)
                 return;
 
-            // Update time in current state
-            _timeInCurrentState += Time.deltaTime;
-            _animationContext.SetParameter("StateTime", _timeInCurrentState);
 
             // Update current state
             _currentState.OnUpdate(_animationContext, Time.deltaTime);
@@ -252,9 +283,9 @@ namespace Animation.Flow.Core
                 }
 
                 // Create animation context with the animator
-                _animationContext = new AnimationContext(_animator, gameObject);
+                _animationContext = new AnimationContext(_animator);
 
-                
+
             }
             catch (Exception ex)
             {
@@ -285,7 +316,7 @@ namespace Animation.Flow.Core
             // Make sure we have an animation context
             if (_animationContext is null)
             {
-                _animationContext = new AnimationContext(_animator, gameObject);
+                _animationContext = new AnimationContext(_animator);
             }
 
             // Build from asset if available
@@ -344,8 +375,6 @@ namespace Animation.Flow.Core
             if (state is null) return;
             _states[state.Id] = state;
 
-            // Register state with the global registry
-            StateRegistry.RegisterState(state, this);
         }
 
         /// <summary>
@@ -357,8 +386,6 @@ namespace Animation.Flow.Core
             _currentState = null;
             _timeInCurrentState = 0f;
 
-            // Unregister all states owned by this controller from the registry
-            StateRegistry.UnregisterStatesForOwner(this);
         }
 
         /// <summary>
@@ -369,186 +396,6 @@ namespace Animation.Flow.Core
             initialStateId = stateId;
         }
 
-        /// <summary>
-        ///     Force a transition to a specific state
-        /// </summary>
-        public bool ForceTransition(string stateId)
-        {
-            // First check local state cache
-            if (_states.TryGetValue(stateId, out IAnimationState state))
-            {
-                TransitionToState(state);
-                return true;
-            }
-
-            // Then check global registry
-            state = StateRegistry.GetState(stateId);
-            if (state != null)
-            {
-                // Add to local cache
-                _states[stateId] = state;
-                TransitionToState(state);
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        ///     Force a transition to a specific state type
-        /// </summary>
-        public bool ForceTransition<T>(string stateId) where T : class, IAnimationState
-        {
-            // Check in registry for the specific type
-            T typedState = StateRegistry.GetState<T>(stateId);
-            if (typedState != null)
-            {
-                // Add to local cache if not already there
-                if (!_states.ContainsKey(stateId))
-                {
-                    _states[stateId] = typedState;
-                }
-
-                TransitionToState(typedState);
-                return true;
-            }
-
-            // Fall back to regular transition
-            return ForceTransition(stateId);
-        }
-
-        /// <summary>
-        ///     Get the current state ID
-        /// </summary>
-        public string GetCurrentStateId() => _currentState?.Id;
-
-        /// <summary>
-        ///     Get the current state as a specific type
-        /// </summary>
-        public T GetCurrentState<T>() where T : class, IAnimationState => _currentState as T;
-
-        /// <summary>
-        ///     Check if a state with the given ID exists
-        /// </summary>
-        public bool HasState(string stateId) => _states.ContainsKey(stateId) || StateRegistry.StateExists(stateId);
-
-        /// <summary>
-        ///     Get all state IDs
-        /// </summary>
-        public IEnumerable<string> GetStateIds() => _states.Keys;
-
-        #endregion
-
-        #region Parameter Management
-
-        /// <summary>
-        ///     Set a parameter in the animation context
-        /// </summary>
-        public void SetParameter<T>(string name, T value)
-        {
-            if (_animationContext is null)
-            {
-                // Create context if it doesn't exist yet
-                if (_animator is null)
-                {
-                    InitializeAnimator();
-                }
-
-                if (_animator is not null)
-                {
-                    _animationContext = new AnimationContext(_animator, gameObject);
-                }
-                else
-                {
-                    Debug.LogWarning(
-                        $"[{GetType().Name}] Cannot set parameter '{name}' - animation context not initialized.", this);
-
-                    return;
-                }
-            }
-
-            _animationContext.SetParameter(name, value);
-
-            // If we have a flow asset, add the parameter to it as well
-            if (flowAsset != null)
-            {
-                AddParameterToAsset(name, value);
-            }
-        }
-
-        /// <summary>
-        ///     Get a parameter from the animation context
-        /// </summary>
-        public T GetParameter<T>(string name)
-        {
-            if (_animationContext is null)
-                return default;
-
-            return _animationContext.GetParameter<T>(name);
-        }
-
-        /// <summary>
-        ///     Check if a parameter exists
-        /// </summary>
-        public bool HasParameter(string name) => _animationContext is not null && _animationContext.HasParameter(name);
-
-        /// <summary>
-        ///     Set the animation context
-        /// </summary>
-        public void SetAnimationContext(AnimationContext context)
-        {
-            if (context == null) return;
-
-            // Keep the existing animator and entity
-            if (_animator != null)
-            {
-                context.SetAnimator(_animator);
-            }
-
-            context.SetEntity(gameObject);
-
-            _animationContext = context;
-        }
-
-        /// <summary>
-        ///     Add a parameter to the flow asset
-        /// </summary>
-        private void AddParameterToAsset<T>(string name, T value)
-        {
-            if (!flowAsset || string.IsNullOrEmpty(name))
-                return;
-
-            // Get existing parameter
-            var existingParam = flowAsset.GetParameter(name);
-            if (existingParam != null)
-                return; // Parameter already exists in the asset
-
-            // Create parameter based on type
-            FlowParameter newParam = null;
-
-            if (typeof(T) == typeof(bool))
-            {
-                newParam = new Parameters.ConcreteParameters.BoolParameter(name, (bool)(object)value);
-            }
-            else if (typeof(T) == typeof(int))
-            {
-                newParam = new Parameters.ConcreteParameters.IntParameter(name, (int)(object)value);
-            }
-            else if (typeof(T) == typeof(float))
-            {
-                newParam = new Parameters.ConcreteParameters.FloatParameter(name, (float)(object)value);
-            }
-            else if (typeof(T) == typeof(string))
-            {
-                newParam = new Parameters.ConcreteParameters.StringParameter(name, (string)(object)value);
-            }
-
-            if (newParam != null)
-            {
-                flowAsset.AddParameter(newParam);
-            }
-        }
-
         #endregion
 
         #region Animation Interface
@@ -556,18 +403,7 @@ namespace Animation.Flow.Core
         /// <summary>
         ///     Get available animations from the controller's animator
         /// </summary>
-        public List<string> GetAvailableAnimations()
-        {
-            if (_animator is null)
-            {
-                InitializeAnimator();
-
-                if (_animator is null)
-                    return new List<string>();
-            }
-
-            return _animator.GetAvailableAnimations();
-        }
+        public List<string> GetAvailableAnimations() => _animator?.GetAvailableAnimations();
 
         /// <summary>
         ///     Play a specific animation directly

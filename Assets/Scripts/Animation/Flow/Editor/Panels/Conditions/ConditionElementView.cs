@@ -1,10 +1,10 @@
 ﻿using Animation.Flow.Conditions.Core;
 using Animation.Flow.Conditions.ParameterConditions;
+using Animation.Flow.Editor.Factories;
 using Animation.Flow.Editor.Utilities;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Animation.Flow.Editor;
 
 namespace Animation.Flow.Editor.Panels.Conditions
 {
@@ -75,11 +75,12 @@ namespace Animation.Flow.Editor.Panels.Conditions
             middleContainer.Add(comparisonButton);
 
             // Value field based on parameter type
-            VisualElement valueField = ValueEditorFactory.CreateEditor(_condition, (condition) => 
+            VisualElement valueField = ValueEditorFactory.CreateEditor(_condition, condition =>
             {
                 // When the value changes, update the condition in the panel
                 _panel.UpdateCondition(condition);
             });
+
             middleContainer.Add(valueField);
 
             // Remove button
@@ -88,21 +89,20 @@ namespace Animation.Flow.Editor.Panels.Conditions
             Add(removeButton);
         }
 
-
         #endregion
 
         #region Constructor
 
-        public ConditionElementView(ConditionData condition, ConditionListPanel panel)
+        public ConditionElementView(FlowCondition condition, ConditionListPanel panel)
         {
             _condition = condition;
             _panel = panel;
             userData = condition;
 
             AddToClassList("condition-element");
-            style.marginLeft = condition.NestingLevel * 20; // Keep this dynamic based on nesting level
+            style.marginLeft = condition.nestingLevel * 20; // Keep this dynamic based on nesting level
 
-            _comparisonSelector = new ComparisonTypeSelector(condition.ParameterValueType);
+            _comparisonSelector = new ComparisonTypeSelector(condition);
             CreateUI();
 
             // Make element droppable
@@ -120,7 +120,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
             if (evt.target is VisualElement target && (target == this || target.ClassListContains("drag-handle")))
             {
                 DragAndDrop.PrepareStartDrag();
-                DragAndDrop.SetGenericData("ConditionData", _condition);
+                DragAndDrop.SetGenericData("FlowCondition", _condition);
                 DragAndDrop.StartDrag(_condition.ParameterName);
                 evt.StopPropagation();
             }
@@ -130,7 +130,7 @@ namespace Animation.Flow.Editor.Panels.Conditions
 
         #region Fields
 
-        private readonly ConditionData _condition;
+        private readonly FlowCondition _condition;
         private readonly ConditionListPanel _panel;
         private readonly ComparisonTypeSelector _comparisonSelector;
 

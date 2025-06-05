@@ -25,6 +25,7 @@ namespace Animation.Flow.Editor
 
         // Clipboard data for copy/paste operations
         private List<ISelectable> _copiedElements = new();
+        private AnimationFlowAsset _flowAsset;
 
         // Track if we're currently handling a selection change to prevent recursion
         private bool _isHandlingSelection;
@@ -62,7 +63,7 @@ namespace Animation.Flow.Editor
                 styleSheets.Add(contextMenuStyleSheet);
 
 
-            _transitionEditorPanel = new TransitionEditorPanel(this, _targetAnimator);
+            _transitionEditorPanel = new TransitionEditorPanel(this, _targetAnimator, _flowAsset);
 
             // Register keyboard shortcuts
             RegisterKeyboardShortcuts();
@@ -151,7 +152,7 @@ namespace Animation.Flow.Editor
         /// <summary>
         ///     Create a new animation state node
         /// </summary>
-        public AnimationStateNode CreateStateNode(AnimationStateType stateType, string animationName, Rect position,
+        public AnimationStateNode CreateStateNode(FlowStateType stateType, string animationName, Rect position,
             string customId = null, bool isInitialState = false)
         {
             // Create a new animation state node
@@ -273,7 +274,7 @@ namespace Animation.Flow.Editor
                     // Initialize with empty conditions list
                     if (!string.IsNullOrEmpty(edgeId))
                     {
-                        var emptyConditions = new List<ConditionData>();
+                        var emptyConditions = new List<FlowCondition>();
                         EdgeConditionManager.Instance.SetConditions(edgeId, emptyConditions);
                     }
                 }
@@ -300,18 +301,17 @@ namespace Animation.Flow.Editor
             // Add "Create Animation State" as a submenu with all node types
             try
             {
-                var stateTypes = StateRegistry.GetRegisteredStateTypes();
-                if (stateTypes != null)
+
+                foreach (FlowStateType nodeType in Enum.GetValues(typeof(FlowStateType)))
                 {
-                    foreach (AnimationStateType nodeType in stateTypes)
-                    {
-                        menuEvent.menu.AppendAction($"✨ Create Animation State/{nodeType}",
-                            _ => CreateStateNode(nodeType, "NewAnimation",
-                                new Rect(localMousePosition, new Vector2(150, 200))),
-                            _ => DropdownMenuAction.Status.Normal,
-                            "create-action");
-                    }
+                    menuEvent.menu.AppendAction($"✨ Create Animation State/{nodeType}",
+                        _ => CreateStateNode(nodeType, "NewAnimation",
+                            new Rect(localMousePosition, new Vector2(150, 200))),
+                        _ => DropdownMenuAction.Status.Normal,
+                        "create-action");
                 }
+
+
             }
             catch (Exception ex)
             {
@@ -649,6 +649,10 @@ namespace Animation.Flow.Editor
                     }
                 }
             }
+        }
+        public void SetFlowAsset(AnimationFlowAsset flowAsset)
+        {
+            _flowAsset = flowAsset;
         }
     }
 }

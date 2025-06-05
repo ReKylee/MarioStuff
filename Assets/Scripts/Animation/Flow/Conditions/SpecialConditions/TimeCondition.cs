@@ -12,15 +12,18 @@ namespace Animation.Flow.Conditions.SpecialConditions
     [Serializable]
     public class TimeCondition : FlowCondition
     {
+
+        private const string StateTimeParameter = "StateTime";
         [SerializeField] private float _duration = 1.0f;
         [SerializeField] private ComparisonType _comparisonType = ComparisonType.GreaterOrEqual;
 
-        private const string StateTimeParameter = "StateTime";
+        public TimeCondition()
+            : base("Time Condition")
+        {
+        }
 
-        public TimeCondition() 
-            : base("Time Condition") { }
-
-        public TimeCondition(float duration, ComparisonType comparisonType = ComparisonType.GreaterOrEqual, bool isNegated = false)
+        public TimeCondition(float duration, ComparisonType comparisonType = ComparisonType.GreaterOrEqual,
+            bool isNegated = false)
             : base($"State time {GetComparisonSymbol(comparisonType)} {duration}s", isNegated)
         {
             _duration = duration;
@@ -67,10 +70,7 @@ namespace Animation.Flow.Conditions.SpecialConditions
         /// <summary>
         ///     Creates a clone of this condition
         /// </summary>
-        public override FlowCondition Clone()
-        {
-            return new TimeCondition(_duration, _comparisonType, _isNegated);
-        }
+        public override FlowCondition Clone() => new TimeCondition(_duration, _comparisonType, isNegated);
 
         /// <summary>
         ///     Gets a string representation of the comparison type

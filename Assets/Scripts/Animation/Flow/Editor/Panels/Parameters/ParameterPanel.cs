@@ -1,16 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Animation.Flow.Conditions.Core;
-using Animation.Flow.Core;
-using Animation.Flow.Editor.Managers;
 using Animation.Flow.Parameters;
 using Animation.Flow.Parameters.ConcreteParameters;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
-using PopupWindow = UnityEditor.PopupWindow;
-
 
 namespace Animation.Flow.Editor.Panels.Parameters
 {
@@ -22,14 +18,12 @@ namespace Animation.Flow.Editor.Panels.Parameters
 
         #region Constructor
 
-        public ParameterPanel(VisualElement parentContainer)
+        public ParameterPanel(VisualElement parentContainer, List<FlowParameter> parameters = null)
             : base(parentContainer, "Parameters", new Vector2(20, 100))
         {
-            // Default is already bottom-right
             // Set resize handle to bottom right
             ResizeHandlePos = ResizeHandlePosition.BottomRight;
-            // Set resize handle to bottom right
-            ResizeHandlePos = ResizeHandlePosition.BottomRight;
+
             // Add class for specific styling
             AddToClassList("parameter-panel");
 
@@ -41,6 +35,20 @@ namespace Animation.Flow.Editor.Panels.Parameters
                 styleSheets.Add(parameterPanelStylesheet);
             }
 
+            _parameters = parameters ?? new List<FlowParameter>();
+            RefreshParameterList();
+        }
+
+        #endregion
+
+        #region Public Methods
+
+        /// <summary>
+        ///     Update the parameters list and refresh the UI
+        /// </summary>
+        public void UpdateParameters(List<FlowParameter> parameters)
+        {
+            _parameters = parameters ?? new List<FlowParameter>();
             RefreshParameterList();
         }
 
@@ -48,6 +56,7 @@ namespace Animation.Flow.Editor.Panels.Parameters
 
         #region Fields
 
+        private List<FlowParameter> _parameters;
         public event Action<FlowParameter> OnParameterDragStart;
 
         #endregion
@@ -97,13 +106,15 @@ namespace Animation.Flow.Editor.Panels.Parameters
         #region Parameter Management
 
         /// <summary>
-        ///     Refreshes the parameter list with the latest parameters from AnimationContextAccessor
+        ///     Refreshes the parameter list with the current parameters
         /// </summary>
         public void RefreshParameterList()
         {
             Content.Clear();
 
-            foreach (FlowParameter parameter in ParameterRegistry.GetAllParameterDefinitions())
+            if (_parameters == null) return;
+
+            foreach (FlowParameter parameter in _parameters)
             {
                 VisualElement element = CreateParameterElement(parameter);
                 Content.Add(element);
@@ -121,8 +132,8 @@ namespace Animation.Flow.Editor.Panels.Parameters
             typeIcon.AddToClassList("parameter-type-icon");
 
             // Add type-specific class
-            string typeName = parameter.ParameterType.Name.ToLower();
-            typeIcon.AddToClassList(typeName);
+            string typeName = GetTypeDisplayName(parameter.ParameterType);
+            typeIcon.AddToClassList(typeName.ToLower());
 
             element.Add(typeIcon);
 
@@ -130,10 +141,9 @@ namespace Animation.Flow.Editor.Panels.Parameters
             nameLabel.AddToClassList("parameter-name");
             element.Add(nameLabel);
 
-            Label typeLabel = new(parameter.ParameterType.Name);
+            Label typeLabel = new(typeName);
             typeLabel.AddToClassList("parameter-type-label");
-            // Add type-specific class
-            typeLabel.AddToClassList(typeName);
+            typeLabel.AddToClassList(typeName.ToLower());
             element.Add(typeLabel);
 
             // Make draggable
@@ -149,14 +159,34 @@ namespace Animation.Flow.Editor.Panels.Parameters
         {
             if (parameterType == typeof(bool))
                 return "☑";
-            else if (parameterType == typeof(float))
+
+            if (parameterType == typeof(float))
                 return "◈";
-            else if (parameterType == typeof(int))
+
+            if (parameterType == typeof(int))
                 return "◆";
-            else if (parameterType == typeof(string))
+
+            if (parameterType == typeof(string))
                 return "◉";
-            else
-                return "○";
+
+            return "○";
+        }
+
+        private string GetTypeDisplayName(Type parameterType)
+        {
+            if (parameterType == typeof(bool))
+                return "Bool";
+
+            if (parameterType == typeof(float))
+                return "Float";
+
+            if (parameterType == typeof(int))
+                return "Int";
+
+            if (parameterType == typeof(string))
+                return "String";
+
+            return parameterType.Name;
         }
 
         private void OnParameterMouseDown(MouseDownEvent evt, FlowParameter parameter)
@@ -177,16 +207,16 @@ namespace Animation.Flow.Editor.Panels.Parameters
             GenericMenu menu = new();
 
             menu.AddItem(new GUIContent("Boolean"), false,
-                () => AddNewParameter("New Bool", ParameterValueType.Bool, false));
+                () => AddNewParameter("New Bool", typeof(bool), false));
 
             menu.AddItem(new GUIContent("Float"), false,
-                () => AddNewParameter("New Float", ParameterValueType.Float, 0f));
+                () => AddNewParameter("New Float", typeof(float), 0f));
 
             menu.AddItem(new GUIContent("Integer"), false,
-                () => AddNewParameter("New Int", ParameterValueType.Int, 0));
+                () => AddNewParameter("New Int", typeof(int), 0));
 
             menu.AddItem(new GUIContent("String"), false,
-                () => AddNewParameter("New String", ParameterValueType.String, ""));
+                () => AddNewParameter("New String", typeof(string), ""));
 
             menu.ShowAsContext();
         }
@@ -206,53 +236,76 @@ namespace Animation.Flow.Editor.Panels.Parameters
             if (EditorUtility.DisplayDialog("Confirm Delete",
                     $"Are you sure you want to delete the parameter '{parameter.Name}'?", "Delete", "Cancel"))
             {
-                ParameterRegistry.UnregisterParameter(parameter.Name);
+                _parameters?.Remove(parameter);
                 RefreshParameterList();
             }
         }
 
-        private void AddNewParameter(string defaultName, ParameterValueType paramType, object defaultValue)
+        private void AddNewParameter(string defaultName, Type paramType, object defaultValue)
         {
             // Generate a unique name
             string uniqueName = GenerateUniqueName(defaultName);
 
             // Create the parameter based on its type
-            FlowParameter newParameter;
+            FlowParameter newParameter = CreateParameterByType(uniqueName, paramType, defaultValue);
 
-            switch (paramType)
+            if (newParameter != null)
             {
-                case ParameterValueType.Bool:
-                    newParameter = new BoolParameter(uniqueName, (bool)defaultValue);
-                    break;
-                case ParameterValueType.Int:
-                    newParameter = new IntParameter(uniqueName, (int)defaultValue);
-                    break;
-                case ParameterValueType.Float:
-                    newParameter = new FloatParameter(uniqueName, (float)defaultValue);
-                    break;
-                case ParameterValueType.String:
-                    newParameter = new StringParameter(uniqueName, (string)defaultValue);
-                    break;
-                default:
-                    Debug.LogError($"Unsupported parameter type: {paramType}");
-                    return;
+                _parameters ??= new List<FlowParameter>();
+                _parameters.Add(newParameter);
+                RefreshParameterList();
             }
+        }
 
-            // Add to parameter manager and refresh UI
-            ParameterRegistry.RegisterParameter(newParameter);
-            RefreshParameterList();
+        private FlowParameter CreateParameterByType(string paramName, Type paramType, object defaultValue)
+        {
+            try
+            {
+                if (paramType == typeof(bool))
+                    return new BoolParameter(paramName, (bool)defaultValue);
 
+                if (paramType == typeof(int))
+                    return new IntParameter(paramName, (int)defaultValue);
+
+                if (paramType == typeof(float))
+                    return new FloatParameter(paramName, (float)defaultValue);
+
+                if (paramType == typeof(string))
+                    return new StringParameter(paramName, (string)defaultValue);
+
+                Debug.LogError($"Unsupported parameter type: {paramType}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to create parameter of type {paramType}: {ex.Message}");
+                return null;
+            }
         }
 
         private string GenerateUniqueName(string baseName)
         {
+            if (_parameters == null || _parameters.Count == 0)
+                return baseName;
+
             // Check if name already exists
-            int count = ParameterRegistry.GetAllParameterDefinitions().Count((parameter => parameter.Name == baseName));
-            string newName = $"{baseName}_{count + 1}";
+            var existingNames = _parameters.Where(p => p.Name.StartsWith(baseName)).Select(p => p.Name).ToList();
+
+            if (!existingNames.Contains(baseName))
+                return baseName;
+
+            // Find the next available number
+            int counter = 1;
+            string newName;
+            do
+            {
+                newName = $"{baseName}_{counter}";
+                counter++;
+            } while (existingNames.Contains(newName));
+
             return newName;
         }
 
-       
         #endregion
 
     }
