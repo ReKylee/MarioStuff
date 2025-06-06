@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using BehaviorDesigner.Runtime;
 using GabrielBigardi.SpriteAnimator;
 using Kirby.Abilities;
 using UnityEngine;
@@ -13,7 +14,7 @@ namespace Kirby.Core.Components
         private KirbyStats baseStats;
 
         [SerializeField] private CopyAbilityData currentCopyAbility;
-
+        [SerializeField] private Behavior behavior;
         private readonly List<IAbilityModule> _activeAbilities = new();
         private readonly List<IMovementAbilityModule> _movementAbilities = new();
         private SpriteAnimator _animator;
@@ -29,14 +30,17 @@ namespace Kirby.Core.Components
         public InputContext CurrentInput { get; private set; }
         public KirbyStats Stats { get; private set; }
         public bool IsGrounded => _groundCheck?.IsGrounded ?? false;
-        public float GroundSlopeAngle => _groundCheck?.GroundSlopeAngle ?? 0;
-        public Vector2 GroundNormal => _groundCheck?.GroundNormal ?? Vector2.zero;
 
+        public KirbyGroundCheck.SurfaceType GroundType =>
+            _groundCheck?.CurrentSurface ?? KirbyGroundCheck.SurfaceType.None;
+
+        public Vector2 GroundNormal => _groundCheck?.GroundNormal ?? Vector2.zero;
+        public Vector2 Velocity => Rigidbody?.linearVelocity ?? Vector2.zero;
         private void Awake()
         {
             _groundCheck = GetComponent<KirbyGroundCheck>();
             Rigidbody = GetComponent<Rigidbody2D>();
-
+            behavior = GetComponent<Behavior>();
             _animator = GetComponent<SpriteAnimator>();
 
 
@@ -84,6 +88,13 @@ namespace Kirby.Core.Components
                 ability.ProcessAbility(CurrentInput);
             }
 
+            behavior.SetVariableValue("IsGrounded", IsGrounded);
+            behavior.SetVariableValue("IsFalling", !IsGrounded && Rigidbody.linearVelocity.y < 0);
+            behavior.SetVariableValue("IsFlying",
+                !IsGrounded && Rigidbody.linearVelocity.y > 0 && CurrentInput.JumpPressed);
+
+            behavior.SetVariableValue("JumpPressed", CurrentInput.JumpPressed);
+            behavior.SetVariableValue("SurfaceType", GroundType.ToString());
         }
 
         private void FixedUpdate()

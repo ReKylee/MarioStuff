@@ -1,6 +1,7 @@
+using Kirby.Abilities;
 using UnityEngine;
 
-namespace Kirby.Abilities.Modules
+namespace Kirby.Core.Abilities.Modules
 {
     /// <summary>
     ///     Jump ability for Kirby - handles jumping mechanics including variable height jumps
