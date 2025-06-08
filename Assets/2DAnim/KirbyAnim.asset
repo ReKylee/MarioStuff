@@ -120,6 +120,13 @@ MonoBehaviour:
     - {fileID: 1162242309, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     - {fileID: -1732532390, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     SpriteAnimationType: 0
+  - Name: Float
+    FPS: 12
+    Frames:
+    - {fileID: 2083466730, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -1821868657, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    - {fileID: -723435894, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
+    SpriteAnimationType: 0
   - Name: Slide
     FPS: 3
     Frames:
@@ -129,7 +136,6 @@ MonoBehaviour:
   - Name: BounceOffFloor
     FPS: 15
     Frames:
-    - {fileID: 1581613033, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     - {fileID: -1113136369, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     - {fileID: 1325542747, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}
     - {fileID: 624087993, guid: bbf0bd170a13d514ea8c08c695060b78, type: 3}

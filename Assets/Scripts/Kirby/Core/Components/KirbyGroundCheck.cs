@@ -8,7 +8,7 @@ namespace Kirby.Core.Components
     /// </summary>
     public class KirbyGroundCheck : MonoBehaviour
     {
-        public enum SurfaceType
+        public enum SlopeType
         {
             None,
             Flat,
@@ -17,7 +17,7 @@ namespace Kirby.Core.Components
         }
 
         [Header("Ground Detection Settings")] [SerializeField]
-        private LayerMask groundLayers;
+        public LayerMask groundLayers;
 
         [SerializeField] private Vector2 groundCheckOffset = Vector2.zero;
         [SerializeField] private Vector2 groundCheckSize = new(0.5f, 0.2f);
@@ -47,7 +47,7 @@ namespace Kirby.Core.Components
         /// <summary>
         ///     Returns the surface types the character is standing on
         /// </summary>
-        public SurfaceType CurrentSurface { get; private set; } = SurfaceType.None;
+        public SlopeType CurrentSlope { get; private set; } = SlopeType.None;
 
 
         private void FixedUpdate()
@@ -81,11 +81,11 @@ namespace Kirby.Core.Components
                 if (GroundSlopeAngle < 0) slopeDir = -slopeDir;
 
                 // Color based on surface types
-                Gizmos.color = CurrentSurface switch
+                Gizmos.color = CurrentSlope switch
                 {
-                    SurfaceType.Flat => Color.green,
-                    SurfaceType.Slope => Color.yellow,
-                    SurfaceType.DeepSlope => new Color(1f, 0.5f, 0f), // Orange
+                    SlopeType.Flat => Color.green,
+                    SlopeType.Slope => Color.yellow,
+                    SlopeType.DeepSlope => new Color(1f, 0.5f, 0f), // Orange
                     _ => Color.white
                 };
 
@@ -94,7 +94,7 @@ namespace Kirby.Core.Components
 #if UNITY_EDITOR
                 // Draw text label with slope angle and types in the scene view
                 Handles.Label(boxPosition + Vector2.up * 0.3f,
-                    $"{CurrentSurface}: {GroundSlopeAngle:F1}°");
+                    $"{CurrentSlope}: {GroundSlopeAngle:F1}°");
 #endif
             }
 
@@ -117,7 +117,7 @@ namespace Kirby.Core.Components
             IsGrounded = false;
             GroundNormal = Vector2.up;
             GroundSlopeAngle = 0f;
-            CurrentSurface = SurfaceType.None;
+            CurrentSlope = SlopeType.None;
 
             Vector2 boxPosition = (Vector2)transform.position + groundCheckOffset;
 
@@ -153,15 +153,15 @@ namespace Kirby.Core.Components
             float absSlopeAngle = Mathf.Abs(GroundSlopeAngle);
             if (absSlopeAngle <= slopeThreshold)
             {
-                CurrentSurface = SurfaceType.Flat;
+                CurrentSlope = SlopeType.Flat;
             }
             else if (absSlopeAngle < deepSlopeThreshold)
             {
-                CurrentSurface = SurfaceType.Slope;
+                CurrentSlope = SlopeType.Slope;
             }
             else
             {
-                CurrentSurface = SurfaceType.DeepSlope;
+                CurrentSlope = SlopeType.DeepSlope;
             }
         }
     }

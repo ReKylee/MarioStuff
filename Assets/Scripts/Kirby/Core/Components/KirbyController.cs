@@ -25,17 +25,19 @@ namespace Kirby.Core.Components
 
         private InputHandler _inputHandler;
         internal Collider2D Collider;
+
         internal Rigidbody2D Rigidbody;
 
         public InputContext CurrentInput { get; private set; }
         public KirbyStats Stats { get; private set; }
         public bool IsGrounded => _groundCheck?.IsGrounded ?? false;
 
-        public KirbyGroundCheck.SurfaceType GroundType =>
-            _groundCheck?.CurrentSurface ?? KirbyGroundCheck.SurfaceType.None;
+        public KirbyGroundCheck.SlopeType GroundType =>
+            _groundCheck?.CurrentSlope ?? KirbyGroundCheck.SlopeType.None;
 
         public Vector2 GroundNormal => _groundCheck?.GroundNormal ?? Vector2.zero;
         public Vector2 Velocity => Rigidbody?.linearVelocity ?? Vector2.zero;
+        public LayerMask GroundLayers => _groundCheck?.groundLayers ?? 0;
         private void Awake()
         {
             _groundCheck = GetComponent<KirbyGroundCheck>();
@@ -47,6 +49,7 @@ namespace Kirby.Core.Components
             Collider = GetComponent<Collider2D>();
 
             _inputHandler = GetComponent<InputHandler>();
+
 
             if (!_inputHandler)
             {
@@ -82,21 +85,15 @@ namespace Kirby.Core.Components
 
             CurrentInput = _inputHandler.CurrentInput;
 
+
             // Process all non-movement abilities in Update
             foreach (IAbilityModule ability in _activeAbilities.Where(a => a is not IMovementAbilityModule))
             {
                 ability.ProcessAbility(CurrentInput);
             }
 
-            behavior.SetVariableValue("IsGrounded", IsGrounded);
-            behavior.SetVariableValue("IsFalling", !IsGrounded && Rigidbody.linearVelocity.y < 0);
-            behavior.SetVariableValue("IsFlying",
-                !IsGrounded && Rigidbody.linearVelocity.y > 0 && CurrentInput.JumpPressed);
 
-            behavior.SetVariableValue("JumpPressed", CurrentInput.JumpPressed);
-            behavior.SetVariableValue("SurfaceType", GroundType.ToString());
         }
-
         private void FixedUpdate()
         {
             if (!_inputHandler) return;

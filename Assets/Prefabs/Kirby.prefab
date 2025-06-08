@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 8366726474898352353}
   - component: {fileID: 6721081069958752657}
   - component: {fileID: 8999338311238094815}
+  - component: {fileID: 6585266452513566623}
   m_Layer: 6
   m_Name: Kirby
   m_TagString: Player
@@ -305,6 +306,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseStats: {fileID: 11400000, guid: 04a28ba00a6144d4c9c8eac58736b7ab, type: 2}
   currentCopyAbility: {fileID: 11400000, guid: 93d3dd7efcee3664b82913cdc905ad48, type: 2}
+  behavior: {fileID: 0}
+--- !u!114 &6585266452513566623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3926891512402252426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bd097e18583878408449aca587fba1b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  settings:
+    runInputThreshold: 0.7
+    moveInputThreshold: 0.1
+    fallTimeBeforeBounce: 1
+    bounceHeightThreshold: 3
+    bounceForce: 5
+    preFloorBounceDistance: 0.5
+    flyFlapForce: 8
+    flyGravityScale: 0.5
+    floatDescentSpeed: 1
+  animator: {fileID: 644453172252926475}
+  kirbyController: {fileID: 8999338311238094815}
+  inputHandler: {fileID: 8366726474898352353}
+  spriteRenderer: {fileID: 6599342503957296432}
 --- !u!1 &5139845219191842715
 GameObject:
   m_ObjectHideFlags: 0
