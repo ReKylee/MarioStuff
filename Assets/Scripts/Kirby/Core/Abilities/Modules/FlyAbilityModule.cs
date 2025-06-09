@@ -1,3 +1,5 @@
+using Kirby.Core.Abilities;
+using Kirby.Core.Abilities.Interfaces;
 using UnityEngine;
 
 namespace Kirby.Abilities

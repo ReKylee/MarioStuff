@@ -1,5 +1,5 @@
 #if UNITY_EDITOR
-using Kirby.Abilities;
+using Kirby.Core.Abilities;
 using UnityEditor;
 using UnityEngine;
 

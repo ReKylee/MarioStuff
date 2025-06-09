@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
+using Kirby.Core.Abilities.Interfaces;
 using Kirby.Core.Components;
 using UnityEngine;
 
-namespace Kirby.Abilities
+namespace Kirby.Core.Abilities
 {
     /// <summary>
     ///     Base class for all ability ScriptableObjects

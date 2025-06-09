@@ -12,8 +12,8 @@ namespace Hazards
     public class MovingPlatform2D : MonoBehaviour
     {
 
-        private const float PlatformReachedThreshold = 0.01f; // Threshold for checking if target is reached
-        private const float PlayerOnTopNormalYThreshold = -0.5f; // Y-normal threshold to consider player on top
+        private const float PlatformReachedThreshold = 0.01f;
+        private const float PlayerOnTopNormalYThreshold = -0.5f;
 
         [Header("Platform Movement Settings")] [SerializeField]
         private float speed = 2f;

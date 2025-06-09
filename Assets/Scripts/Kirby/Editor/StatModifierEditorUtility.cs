@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kirby.Abilities;
+using Kirby.Core.Abilities;
 using UnityEditor;
 using UnityEngine;
 

@@ -1,6 +1,6 @@
 using Kirby.Core.Components;
 
-namespace Kirby.Abilities
+namespace Kirby.Core.Abilities.Interfaces
 {
     /// <summary>
     ///     Base interface for all ability components

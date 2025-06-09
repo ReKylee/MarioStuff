@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Kirby.Abilities
+namespace Kirby.Core.Abilities
 {
     /// <summary>
     ///     Defines a modification to a stat - used across abilities and stats.
@@ -20,7 +20,6 @@ namespace Kirby.Abilities
         [SerializeField] private ModType modificationType;
         [SerializeField] private float value;
 
-        // Parameterless constructor for serializer
         private StatModifier()
         {
         }

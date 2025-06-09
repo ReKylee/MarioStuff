@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Kirby.Abilities
+namespace Kirby.Core.Abilities
 {
     /// <summary>
     ///     Data for a Kirby copy ability
@@ -11,7 +11,6 @@ namespace Kirby.Abilities
     [CreateAssetMenu(fileName = "NewCopyAbility", menuName = "Kirby/Copy Ability")]
     public class CopyAbilityData : ScriptableObject
     {
-        // Enum to represent the result of attempting to add an ability
         public enum AbilityAddResult
         {
             Success,
@@ -61,7 +60,6 @@ namespace Kirby.Abilities
                 return AbilityAddResult.InvalidAbility;
             }
 
-            // Use LINQ for a more concise check
             return abilities.Any(module =>
                 module?.GetType() == addedAbilityType &&
                 !module.AllowMultipleInstances)

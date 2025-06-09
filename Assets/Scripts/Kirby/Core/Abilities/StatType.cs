@@ -1,4 +1,4 @@
-﻿namespace Kirby.Abilities
+﻿namespace Kirby.Core.Abilities
 {
     /// <summary>
     ///     Enum of all stats that abilities can modify

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using Kirby.Abilities;
+using Kirby.Core.Abilities;
+using Kirby.Core.Abilities.Interfaces;
 using Kirby.Extensions;
 using UnityEngine;
 
@@ -117,7 +118,7 @@ namespace Kirby.Core.Components
             _activeAbilities.Clear();
             _movementAbilities.Clear();
 
-            currentCopyAbility = newAbilityData; // Assign the new ability data
+            currentCopyAbility = newAbilityData;
 
 
             // Stats are refreshed by RefreshRuntimeStats below

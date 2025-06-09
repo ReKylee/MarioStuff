@@ -13,7 +13,6 @@ namespace Health
             healthSlider.value = (float)currentHp / maxHp;
             healthSlider.maxValue = 1f;
 
-
         }
     }
 }

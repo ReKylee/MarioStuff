@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace Kirby.Abilities
+namespace Kirby.Core.Abilities
 {
     /// <summary>
     ///     Attribute to mark a stat field in KirbyStats and associate it with a StatType
@@ -110,7 +110,9 @@ namespace Kirby.Abilities
         {
             (FieldInfo field, _) = GetStatInfo(statType);
             return field != null ? (float)field.GetValue(this) : 1.0f;
-        } // ReSharper disable Unity.PerformanceAnalysis
+        }
+
+        // ReSharper disable Unity.PerformanceAnalysis
         /// <summary>
         ///     Set a stat value by its enum types
         /// </summary>
@@ -127,7 +129,7 @@ namespace Kirby.Abilities
             }
         }
 
-        public static (FieldInfo field, string category) GetStatInfo(StatType statType) =>
+        private static (FieldInfo field, string category) GetStatInfo(StatType statType) =>
             _statInfoCache.GetValueOrDefault(statType, (null, "Other"));
 
         public static string GetStatCategory(StatType statType) => GetStatInfo(statType).category;

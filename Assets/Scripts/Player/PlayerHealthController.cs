@@ -34,10 +34,7 @@ namespace Player
 
         private void OnDestroy()
         {
-            if (_model != null)
-            {
-                _model.Dispose();
-            }
+            _model?.Dispose();
 
             ResetManager.Instance?.Unregister(this);
         }

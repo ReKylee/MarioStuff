@@ -1,4 +1,4 @@
-﻿using Kirby.Abilities;
+﻿using Kirby.Core.Abilities;
 using PowerUps._Base;
 using UnityEngine;
 

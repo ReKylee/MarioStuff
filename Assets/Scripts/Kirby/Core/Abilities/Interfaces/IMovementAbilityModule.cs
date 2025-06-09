@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Kirby.Abilities
+namespace Kirby.Core.Abilities.Interfaces
 {
     /// <summary>
     ///     Interface for abilities that modify movement mechanics

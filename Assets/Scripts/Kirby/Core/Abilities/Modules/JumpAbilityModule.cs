@@ -1,4 +1,4 @@
-using Kirby.Abilities;
+using Kirby.Core.Abilities.Interfaces;
 using UnityEngine;
 
 namespace Kirby.Core.Abilities.Modules

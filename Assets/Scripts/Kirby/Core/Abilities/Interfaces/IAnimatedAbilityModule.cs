@@ -1,6 +1,6 @@
 using GabrielBigardi.SpriteAnimator;
 
-namespace Kirby.Abilities
+namespace Kirby.Core.Abilities.Interfaces
 {
     /// <summary>
     ///     Interface for abilities that provide animation data

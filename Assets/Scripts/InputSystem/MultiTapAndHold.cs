@@ -5,9 +5,9 @@ using UnityEngine.InputSystem;
 // Required for InitializeOnLoad
 
 #if UNITY_EDITOR
-namespace InputSystem.Interactions // It's good practice to put custom interactions in a namespace
+namespace InputSystem
 {
-    [InitializeOnLoad] // Ensures static constructor is called in the editor
+    [InitializeOnLoad]
 #endif
     public class MultiTapAndHold : IInputInteraction
     {
