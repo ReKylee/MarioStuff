@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using BehaviorDesigner.Runtime;
-using GabrielBigardi.SpriteAnimator;
 using Kirby.Abilities;
 using UnityEngine;
 
@@ -14,10 +12,8 @@ namespace Kirby.Core.Components
         private KirbyStats baseStats;
 
         [SerializeField] private CopyAbilityData currentCopyAbility;
-        [SerializeField] private Behavior behavior;
         private readonly List<IAbilityModule> _activeAbilities = new();
         private readonly List<IMovementAbilityModule> _movementAbilities = new();
-        private SpriteAnimator _animator;
 
         private InputContext _fixedInput;
 
@@ -42,12 +38,7 @@ namespace Kirby.Core.Components
         {
             _groundCheck = GetComponent<KirbyGroundCheck>();
             Rigidbody = GetComponent<Rigidbody2D>();
-            behavior = GetComponent<Behavior>();
-            _animator = GetComponent<SpriteAnimator>();
-
-
             Collider = GetComponent<Collider2D>();
-
             _inputHandler = GetComponent<InputHandler>();
 
 
@@ -111,7 +102,7 @@ namespace Kirby.Core.Components
         }
 
 
-        private void EquipAbility(CopyAbilityData newAbilityData)
+        public void EquipAbility(CopyAbilityData newAbilityData)
         {
             // Deactivate and clear previous abilities
             foreach (IAbilityModule ability in _activeAbilities)
@@ -124,10 +115,8 @@ namespace Kirby.Core.Components
 
             currentCopyAbility = newAbilityData; // Assign the new ability data
 
-            // Update animation data when ability changes
 
             // Stats are refreshed by RefreshRuntimeStats below
-
             if (currentCopyAbility)
             {
                 // Initialize and categorize abilities from CopyAbilityData
@@ -153,7 +142,7 @@ namespace Kirby.Core.Components
                 }
             }
 
-            RefreshRuntimeStats(); // This will calculate and apply all stats
+            RefreshRuntimeStats();
         }
 
         /// <summary>

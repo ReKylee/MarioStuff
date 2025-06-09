@@ -16,16 +16,25 @@ namespace Kirby.Abilities
             Override // Completely override the value
         }
 
-        private StatModifier(StatType statType, float value, ModType modificationType)
+        [SerializeField] private StatType statType;
+        [SerializeField] private ModType modificationType;
+        [SerializeField] private float value;
+
+        // Parameterless constructor for serializer
+        private StatModifier()
         {
-            StatType = statType;
-            Value = value;
-            ModificationType = modificationType;
         }
 
-        public float Value { get; private set; }
-        public ModType ModificationType { get; private set; }
-        public StatType StatType { get; private set; }
+        private StatModifier(StatType statType, float value, ModType modificationType)
+        {
+            this.statType = statType;
+            this.value = value;
+            this.modificationType = modificationType;
+        }
+
+        public float Value => value;
+        public ModType ModificationType => modificationType;
+        public StatType StatType => statType;
 
         /// <summary>
         ///     Factory method to create a new StatModifier.

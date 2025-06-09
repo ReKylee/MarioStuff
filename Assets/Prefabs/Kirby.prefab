@@ -306,7 +306,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseStats: {fileID: 11400000, guid: 04a28ba00a6144d4c9c8eac58736b7ab, type: 2}
   currentCopyAbility: {fileID: 11400000, guid: 93d3dd7efcee3664b82913cdc905ad48, type: 2}
-  behavior: {fileID: 0}
 --- !u!114 &6585266452513566623
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -325,10 +324,7 @@ MonoBehaviour:
     fallTimeBeforeBounce: 1
     bounceHeightThreshold: 3
     bounceForce: 5
-    preFloorBounceDistance: 0.5
-    flyFlapForce: 8
-    flyGravityScale: 0.5
-    floatDescentSpeed: 1
+    preFloorBounceDistance: 0.68
   animator: {fileID: 644453172252926475}
   kirbyController: {fileID: 8999338311238094815}
   inputHandler: {fileID: 8366726474898352353}
