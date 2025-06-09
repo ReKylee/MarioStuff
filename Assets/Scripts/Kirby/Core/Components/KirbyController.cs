@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kirby.Abilities;
+using Kirby.Extensions;
 using UnityEngine;
 
 namespace Kirby.Core.Components
@@ -25,8 +26,11 @@ namespace Kirby.Core.Components
         internal Rigidbody2D Rigidbody;
 
         public InputContext CurrentInput { get; private set; }
+
         public KirbyStats Stats { get; private set; }
-        public bool IsGrounded => _groundCheck?.IsGrounded ?? false;
+
+        // public bool IsGrounded => _groundCheck?.IsGrounded ?? false;
+        public bool IsGrounded => !_groundCheck.IsInAir();
 
         public KirbyGroundCheck.SlopeType GroundType =>
             _groundCheck?.CurrentSlope ?? KirbyGroundCheck.SlopeType.None;
