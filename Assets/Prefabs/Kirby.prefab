@@ -323,8 +323,8 @@ MonoBehaviour:
     moveInputThreshold: 0.1
     fallTimeBeforeBounce: 1
     bounceHeightThreshold: 3
-    bounceForce: 5
-    preFloorBounceDistance: 0.68
+    bounceForce: 6
+    preFloorBounceDistance: 1
   animator: {fileID: 644453172252926475}
   kirbyController: {fileID: 8999338311238094815}
   inputHandler: {fileID: 8366726474898352353}

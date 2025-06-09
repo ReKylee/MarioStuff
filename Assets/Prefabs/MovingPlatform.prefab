@@ -102,7 +102,7 @@ Rigidbody2D:
   m_GameObject: {fileID: 1089753706237988366}
   m_BodyType: 1
   m_Simulated: 1
-  m_UseFullKinematicContacts: 1
+  m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
   m_LinearDamping: 0
@@ -179,8 +179,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 2
   waitTime: 1
-  startPoint: {fileID: 2881628031987178730}
-  endPoint: {fileID: 3978918636601893821}
+  startPosition: {x: -3.44248, y: -1.08113}
+  endPosition: {x: -0.4424801, y: -1.08113}
   playerTag: Player
 --- !u!1 &2465286036543276029
 GameObject:
