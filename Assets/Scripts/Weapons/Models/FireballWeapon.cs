@@ -1,3 +1,4 @@
+using Projectiles;
 using Resettables;
 using UnityEngine;
 using Weapons.Interfaces;
@@ -9,9 +10,9 @@ namespace Weapons.Models
         [SerializeField] private GameObject fireball;
         [SerializeField] private Transform spawnPoint;
         [SerializeField] private float cooldownTime = 0.3f;
+        [SerializeField] private FireballPool fireballPool;
         private bool _isEquipped;
         private float _nextFireTime;
-
         private UsableWeaponResetter _resetter;
         private void Start()
         {
@@ -27,17 +28,18 @@ namespace Weapons.Models
             if (!fireball || !_isEquipped)
                 return;
 
-            // Use spawn point if available, otherwise use this transform
-            Vector3 spawnPosition = spawnPoint ? spawnPoint.position : transform.position;
 
-            GameObject curFireball = Instantiate(fireball, spawnPosition, Quaternion.identity);
+            GameObject curFireball = fireballPool.Get();
+            Vector3 spawnPosition = spawnPoint ? spawnPoint.position : transform.position;
+            curFireball.transform.position = spawnPosition;
+            curFireball.transform.rotation = Quaternion.identity;
 
             if (curFireball.TryGetComponent(out ProjectileFireball scFireball))
             {
                 curFireball.layer = gameObject.layer;
                 float direction = transform.parent?.localScale.x ?? 1;
-
-                scFireball.Shoot(direction);
+                scFireball.Direction = direction;
+                scFireball.Fire();
 
                 // Set cooldown
                 _nextFireTime = Time.time + cooldownTime;

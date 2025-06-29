@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ExplosionAnimations
   m_EditorClassIdentifier: 
   SpriteAnimations:
-  - Name: 
+  - Name: Explosion
     FPS: 12
     Frames:
     - {fileID: 4256981802211915850, guid: ce58fbb2210543d4187221705e6dc9b0, type: 3}
@@ -22,4 +22,4 @@ MonoBehaviour:
     - {fileID: -358414374721757537, guid: ce58fbb2210543d4187221705e6dc9b0, type: 3}
     - {fileID: 2778134663153173818, guid: ce58fbb2210543d4187221705e6dc9b0, type: 3}
     - {fileID: -5867029096058627916, guid: ce58fbb2210543d4187221705e6dc9b0, type: 3}
-    SpriteAnimationType: 0
+    SpriteAnimationType: 1

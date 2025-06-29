@@ -15,15 +15,13 @@ namespace Projectiles.OverEngineeredLaser
 
         public GameObject Construct() =>
             _builder
-                .SetSpeed(15f)
-                .SetDamage(1)
+                .SetSpeed(new Vector2(0, 12f))
                 .Build();
 
 
         public GameObject ConstructFastLaser() =>
             _builder
-                .SetSpeed(30f)
-                .SetDamage(1)
+                .SetSpeed(new Vector2(0, 30f))
                 .Build();
     }
 }

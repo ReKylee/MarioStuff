@@ -301,16 +301,10 @@ namespace Kirby.Core.Abilities.Animation
         }
 
         private bool IsJumpRelatedState(AnimState state) =>
-            state == AnimState.JumpStart ||
-            state == AnimState.Jump ||
-            state == AnimState.Fall ||
-            state == AnimState.BounceOffFloor;
+            state is AnimState.JumpStart or AnimState.Jump or AnimState.Fall or AnimState.BounceOffFloor;
 
         private bool CanInterruptWithGroundLanding(AnimState state) =>
-            state == AnimState.Jump ||
-            state == AnimState.Fall ||
-            state == AnimState.JumpToFly ||
-            state == AnimState.BounceOffFloor;
+            state is AnimState.Jump or AnimState.Fall or AnimState.JumpToFly or AnimState.BounceOffFloor;
 
         #region State Update Methods
 

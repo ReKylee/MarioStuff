@@ -15,16 +15,12 @@ namespace Projectiles.OverEngineeredLaser
         }
 
 
-        public LaserBuilder SetSpeed(float speed)
+        public LaserBuilder SetSpeed(Vector2 speed)
         {
             _projectileLaserComponent?.SetSpeed(speed);
             return this;
         }
 
-
-        public LaserBuilder SetDamage(int damage) =>
-            //  _projectileLaserComponent?.Damage = damage;
-            this;
 
         public GameObject Build() => _projectileInstance;
     }

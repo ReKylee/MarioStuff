@@ -1,28 +1,40 @@
+using System;
 using System.Collections;
+using Projectiles.Core;
 using UnityEngine;
 
-public class ProjectileFireball : MonoBehaviour
+namespace Projectiles
 {
-    public float speed = 5.0f;
-    public float destroyTime = 5f;
-    private Rigidbody2D _rigid;
-
-    public void Awake()
+    public class ProjectileFireball : BaseProjectile
     {
-        _rigid = GetComponent<Rigidbody2D>();
-    }
+        public float destroyTime = 5f;
+        [NonSerialized] public float Direction;
+        private void OnEnable()
+        {
+            StartCoroutine(DestroyObject());
+        }
+        private void OnBecameInvisible()
+        {
+            ReturnToPool();
+        }
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if (other.CompareTag("Player"))
+                return;
 
-    public void Shoot(float direction)
-    {
-        if (!_rigid) return;
-        transform.localScale = new Vector3(direction, 1, 1);
-        _rigid.AddForce(new Vector3(speed * direction, 0, 0));
-        StartCoroutine(DestroyObject());
-    }
+            Debug.Log($"Laser hit {other.gameObject.name}.");
+            ReturnToPool();
+        }
+        private IEnumerator DestroyObject()
+        {
+            yield return new WaitForSeconds(destroyTime);
+            ReturnToPool();
+        }
 
-    private IEnumerator DestroyObject()
-    {
-        yield return new WaitForSeconds(destroyTime);
-        Destroy(gameObject);
+
+        protected override void Move()
+        {
+            Rb.linearVelocity = new Vector2(speed.x * Direction, speed.y);
+        }
     }
 }

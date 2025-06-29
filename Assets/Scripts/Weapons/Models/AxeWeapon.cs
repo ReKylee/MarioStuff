@@ -1,4 +1,5 @@
 using System;
+using Projectiles;
 using Resettables;
 using UnityEngine;
 using Weapons.Interfaces;
@@ -11,7 +12,8 @@ namespace Weapons.Models
         [SerializeField] private Transform spawnPoint;
         [SerializeField] private int maxAmmo = 3;
         [SerializeField] private float cooldownTime = 0.5f;
-        [SerializeField] private int defaultAmmo; // Ammo to start with and reset to
+        [SerializeField] private int defaultAmmo;
+        [SerializeField] private AxePool axePool;
         private AmmoResetter _ammoResetter;
 
         private float _nextFireTime;
@@ -57,10 +59,10 @@ namespace Weapons.Models
             if (!axe || !HasAmmo)
                 return;
 
-            // Use spawn point if available, otherwise use this transform
+            GameObject curAxe = axePool.Get();
             Vector3 spawnPosition = spawnPoint ? spawnPoint.position : transform.position;
-
-            GameObject curAxe = Instantiate(axe, spawnPosition, Quaternion.identity);
+            curAxe.transform.position = spawnPosition;
+            curAxe.transform.rotation = Quaternion.identity;
 
             if (curAxe.TryGetComponent(out ProjectileAxe scAxe))
             {
@@ -70,11 +72,13 @@ namespace Weapons.Models
                 SetAmmo(CurrentAmmo - 1);
 
                 float direction = transform.parent?.localScale.x ?? 1;
-                scAxe.Shoot(direction);
+                scAxe.Direction = direction;
+                scAxe.Fire();
 
                 // Set cooldown
                 _nextFireTime = Time.time + cooldownTime;
             }
+
         }
 
         // IAmmoWeapon implementation - Reload now adds ammo in specific increments

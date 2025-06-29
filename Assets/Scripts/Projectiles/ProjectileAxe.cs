@@ -1,29 +1,47 @@
+using System;
 using System.Collections;
+using GabrielBigardi.SpriteAnimator;
+using Projectiles.Core;
 using UnityEngine;
 
-public class ProjectileAxe : MonoBehaviour
+namespace Projectiles
 {
-    public float xSpeed = 5.0f;
-    public float ySpeed = 5.0f;
-    public float destroyTime = 5f;
-    private Rigidbody2D _rigid;
-
-    public void Awake()
+    public class ProjectileAxe : BaseProjectile
     {
-        _rigid = GetComponent<Rigidbody2D>();
-    }
+        [SerializeField] private float explodeTime = 1f;
+        [SerializeField] private SpriteAnimator explosionAnimator;
+        private bool _exploding;
+        [NonSerialized] public float Direction;
 
-    public void Shoot(float direction)
-    {
-        if (!_rigid) return;
-        transform.localScale = new Vector3(direction, 1, 1);
-        _rigid.AddForce(new Vector3(xSpeed * direction, ySpeed, 0));
-        StartCoroutine(DestroyObject());
-    }
+        private void OnBecameInvisible()
+        {
+            ReturnToPool();
+        }
+        private void OnCollisionEnter2D(Collision2D other)
+        {
+            if (other.gameObject.CompareTag("Player"))
+                return;
 
-    private IEnumerator DestroyObject()
-    {
-        yield return new WaitForSeconds(destroyTime);
-        Destroy(gameObject);
+            Debug.Log($"Axe hit {other.gameObject.name}.");
+            if (!_exploding)
+                StartCoroutine(Explode());
+
+        }
+
+        private IEnumerator Explode()
+        {
+            _exploding = true;
+            yield return new WaitForSeconds(explodeTime);
+            explosionAnimator.gameObject.SetActive(true);
+            yield return new WaitUntil(() => explosionAnimator.AnimationCompleted);
+            explosionAnimator.gameObject.SetActive(false);
+            _exploding = false;
+            ReturnToPool();
+        }
+        protected override void Move()
+        {
+            transform.localScale = new Vector3(Direction, 1, 1);
+            Rb.AddForce(new Vector2(speed.x * Direction, speed.y), ForceMode2D.Impulse);
+        }
     }
 }

@@ -2,42 +2,23 @@
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace Projectiles.OverEngineeredLaser
+namespace Projectiles
 {
-
-    public class LaserPoolManager : MonoBehaviour
+    public class AxePool : MonoBehaviour
     {
+        [SerializeField] private GameObject axePrefab;
 
-        [SerializeField] private GameObject laserPrefab;
         private IObjectPool<GameObject> _pool;
 
         private void Awake()
         {
-
             _pool = new ObjectPool<GameObject>(
-                CreateNewLaserForPool,
+                CreateNewAxeForPool,
                 OnTakeFromPool,
                 OnReturnToPool,
                 OnDestroyPoolObject,
                 true, 10, 100);
         }
-
-
-        private GameObject CreateNewLaserForPool()
-        {
-            Debug.Log("Pool is creating a new laser using the Director/Builder.");
-            LaserDirector director = new(laserPrefab);
-            GameObject newLaser = director.Construct();
-            newLaser.transform.parent = transform;
-            // Give the projectile a reference to the pool so it can return itself.
-            if (newLaser.TryGetComponent(out BaseProjectile projectile))
-            {
-                projectile.Pool = _pool;
-            }
-
-            return newLaser;
-        }
-
         private void OnTakeFromPool(GameObject laser)
         {
             Debug.Log("Laser taken from pool.");
@@ -53,8 +34,19 @@ namespace Projectiles.OverEngineeredLaser
         {
             DestroyImmediate(laser);
         }
+        private GameObject CreateNewAxeForPool()
+        {
+            Debug.Log("Pool is creating a new laser using the Director/Builder.");
+            GameObject newLaser = Instantiate(axePrefab, transform);
+            // Give the projectile a reference to the pool so it can return itself.
+            if (newLaser.TryGetComponent(out BaseProjectile projectile))
+            {
+                projectile.Pool = _pool;
 
+            }
 
+            return newLaser;
+        }
         public GameObject Get() => _pool.Get();
     }
 }

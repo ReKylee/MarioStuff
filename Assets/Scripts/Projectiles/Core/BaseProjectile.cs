@@ -5,7 +5,7 @@ namespace Projectiles.Core
 {
     public abstract class BaseProjectile : MonoBehaviour
     {
-        [SerializeField] protected float speed = 12f;
+        [SerializeField] protected Vector2 speed = new(12f, 0f);
 
         protected Rigidbody2D Rb;
         public IObjectPool<GameObject> Pool { get; set; }
@@ -27,9 +27,16 @@ namespace Projectiles.Core
 
         protected void ReturnToPool()
         {
+            if (!gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
             if (Pool != null)
             {
                 Debug.Log($"Projectile '{gameObject.name}' returning to pool.");
+                Rb.linearVelocity = Vector2.zero;
+
                 Pool.Release(gameObject);
             }
             else

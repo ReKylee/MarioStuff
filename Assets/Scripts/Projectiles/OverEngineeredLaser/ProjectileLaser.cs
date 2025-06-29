@@ -30,7 +30,7 @@ namespace Projectiles.OverEngineeredLaser
         }
 
 
-        public void SetSpeed(float newSpeed)
+        public void SetSpeed(Vector2 newSpeed)
         {
             speed = newSpeed;
         }

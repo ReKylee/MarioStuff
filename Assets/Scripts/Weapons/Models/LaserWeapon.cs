@@ -9,6 +9,7 @@ namespace Weapons.Models
     public class LaserWeapon : MonoBehaviour, IUseableWeapon
     {
         [SerializeField] private float cooldownTime = 0.3f;
+        [SerializeField] private LaserPoolManager laserPoolManager;
         private bool _isEquipped;
         private LaserFactory _laserFactory;
         private float _nextFireTime;
@@ -16,7 +17,7 @@ namespace Weapons.Models
         private UsableWeaponResetter _resetter;
         private void Awake()
         {
-            _laserFactory = new LaserFactory();
+            _laserFactory = new LaserFactory(laserPoolManager);
         }
         private void Start()
         {
@@ -33,15 +34,13 @@ namespace Weapons.Models
             Vector3 spawnPosition = transform.position + Vector3.up;
             laserInstance.transform.position = spawnPosition;
             laserInstance.transform.rotation = Quaternion.identity;
+            laserInstance.layer = gameObject.layer;
 
             if (laserInstance.TryGetComponent(out BaseProjectile projectile))
             {
                 projectile.Fire();
             }
-            else
-            {
-                Debug.LogError("The object provided by the factory does not have a BaseProjectile component!");
-            }
+
 
             _nextFireTime = Time.time + cooldownTime;
         }

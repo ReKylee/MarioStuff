@@ -137,7 +137,9 @@ namespace Kirby.Core.Abilities.Animation
             if (Mathf.Abs(horizontalInput) > moveInputThreshold)
             {
                 _stateTracker.LastNonZeroHorizontalInput = horizontalInput;
-                _spriteRenderer.flipX = horizontalInput < 0;
+                // NOTE: SPRITE FLIPPING DOESN'T CHANGE WEAPON FIRE DIRECTION
+                // _spriteRenderer.flipX = horizontalInput < 0;
+                _kirbyController.transform.localScale = new Vector3(horizontalInput < 0 ? -1 : 1, 1, 1);
             }
         }
 
