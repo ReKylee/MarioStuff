@@ -16,7 +16,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: dfad6f09ce6882e4cbf3573980289f39, type: 2}
   - {fileID: 11400000, guid: 789e713ff88781b4c8b2badd462ecaf8, type: 2}
   abilityName: Rider
-  abilityIcon: {fileID: 0}
+  abilityIcon: {fileID: -8676269919709583968, guid: 5e3b36e46a0f9f4449fac3ceeaf2ada0, type: 3}
   statModifiers:
   - statType: 0
     modificationType: 1

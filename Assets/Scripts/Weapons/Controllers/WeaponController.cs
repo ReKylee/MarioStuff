@@ -19,20 +19,17 @@ namespace Weapons.Controllers
 
         private void Awake()
         {
-            // Initialize input actions
             _inputActions = new InputSystem_Actions();
 
-            // Initialize each weapon mapping
             foreach (WeaponMapping mapping in weaponMappings)
             {
-                // Initialize the mapping with our input actions
                 mapping.Initialize(_inputActions);
             }
         }
 
         private void OnEnable()
         {
-            _inputActions.Enable(); // Enable the input actions asset
+            _inputActions.Enable();
 
             // Subscribe all weapon mappings to their actions
             foreach (WeaponMapping mapping in weaponMappings)
@@ -49,7 +46,7 @@ namespace Weapons.Controllers
                 mapping.Unsubscribe();
             }
 
-            _inputActions.Disable(); // Disable the input actions asset
+            _inputActions.Disable();
         }
 
         [Serializable]
@@ -64,7 +61,6 @@ namespace Weapons.Controllers
             [SerializeField]
             private string actionName;
 
-            // Reference to the resolved action
             private InputAction _action;
 
             // Property for easy access to the weapon component as IWeapon
@@ -116,10 +112,7 @@ namespace Weapons.Controllers
             // Handle the action event
             private void OnActionPerformed(InputAction.CallbackContext context)
             {
-                if (WeaponComponent != null)
-                {
-                    WeaponComponent.Shoot();
-                }
+                WeaponComponent?.Shoot();
             }
         }
     }

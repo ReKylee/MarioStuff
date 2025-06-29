@@ -74,7 +74,7 @@ namespace Kirby.Core.Abilities.Animation
                 else if (state == AnimState.Jump && _stateTracker.IsFull)
                 {
                     // If we've already played Jump_Full, use the air version
-                    string jumpAnimName = _stateTracker.HasPlayedJumpFullAnimation ? "Jump_Full_Air" : "Jump_Full";
+                    string jumpAnimName = "Jump_Full";
 
                     // If we're playing Jump_Full for the first time, mark it
                     if (jumpAnimName == "Jump_Full")

@@ -1,0 +1,31 @@
+using UnityEngine;
+
+namespace Projectiles.OverEngineeredLaser
+{
+
+    public class LaserBuilder
+    {
+        private readonly GameObject _projectileInstance;
+        private readonly ProjectileLaser _projectileLaserComponent;
+
+        public LaserBuilder(GameObject prefab)
+        {
+            _projectileInstance = Object.Instantiate(prefab);
+            _projectileLaserComponent = _projectileInstance.GetComponent<ProjectileLaser>();
+        }
+
+
+        public LaserBuilder SetSpeed(float speed)
+        {
+            _projectileLaserComponent?.SetSpeed(speed);
+            return this;
+        }
+
+
+        public LaserBuilder SetDamage(int damage) =>
+            //  _projectileLaserComponent?.Damage = damage;
+            this;
+
+        public GameObject Build() => _projectileInstance;
+    }
+}

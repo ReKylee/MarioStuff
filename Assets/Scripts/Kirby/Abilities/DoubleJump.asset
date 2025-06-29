@@ -17,6 +17,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 293b987737e96bb48b6acadd7413bd66, type: 2}
   - {fileID: 11400000, guid: aed0a4505ebcc5b48a360898d0044a08, type: 2}
   abilityName: DoubleJump
-  abilityIcon: {fileID: 0}
+  abilityIcon: {fileID: 1915941963212445638, guid: 5e3b36e46a0f9f4449fac3ceeaf2ada0, type: 3}
   statModifiers: []
   abilityType: 2
